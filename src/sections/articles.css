@@ -1,0 +1,46 @@
+.article {
+	ul {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		column-gap: 10px;
+		row-gap: 1lh;
+
+		&[data-even] {
+			grid-template-columns: repeat(2, 1fr);
+
+			a {
+				width: 90%;
+			}
+		}
+	}
+
+	a {
+		position: relative;
+		z-index: 0;
+		display: block;
+		color: currentColor;
+		text-decoration: none;
+		width: 100%;
+		height: 100%;
+		place-self: center;
+	}
+
+	img {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 3/2;
+		object-fit: cover;
+		object-position: center;
+		border: var(--border);
+	}
+
+	.title {
+		font-size: smaller;
+		text-wrap: balance;
+	}
+
+	.subtitle {
+		font-size: x-small;
+		text-wrap: pretty;
+	}
+}

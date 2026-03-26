@@ -6,13 +6,23 @@
 	--theme: oklch(30% 0.08 148);
 	--bg: oklch(from var(--theme) 12% c h);
 	--bg-accent: oklch(from var(--theme) 23% 0.05 h);
-	--color: oklch(from var(--theme) 91% 0.04 h);
+	--color: oklch(from var(--theme) 91% 0.03 h);
 	--border: 1px solid var(--bg-accent);
 
 	background-color: var(--bg);
 	color: var(--color);
 	font-family: Menlo, Monaco, 'Courier New', monospace;
 	font-variant-numeric: tabular-nums;
+}
+
+p {
+	margin: 0;
+}
+
+ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }
 
 body {

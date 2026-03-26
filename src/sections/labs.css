@@ -7,7 +7,6 @@
 
 	ul {
 		display: contents;
-		list-style: none;
 	}
 
 	div[data-separator] {
@@ -53,7 +52,6 @@
 	}
 
 	p {
-		margin: 0;
 		position: absolute;
 		z-index: 0;
 		top: 0;
