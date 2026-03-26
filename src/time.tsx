@@ -1,4 +1,4 @@
-import { createSignal, Match, onCleanup, Show, Switch } from "solid-js"
+import { createSignal, onCleanup, Show } from "solid-js"
 
 function getTime() {
 	return new Intl.DateTimeFormat(new Intl.Locale(navigator.language, { numberingSystem: "latn" }), { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format()

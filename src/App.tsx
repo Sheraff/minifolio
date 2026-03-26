@@ -1,5 +1,3 @@
-import { createSignal } from 'solid-js'
-import './App.css'
 import { Glitch } from "./svg/glitch"
 import { Mask } from "./svg/mask"
 import { Github } from "./svg/github"
