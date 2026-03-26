@@ -6,6 +6,7 @@ import { Contributions } from "./github/contributions"
 import { Time, TimeDifference } from "./time"
 import { Repositories } from "./github/repositories"
 import { Articles } from "./github/articles"
+import { Labs } from "./github/labs"
 
 
 function App() {
@@ -59,7 +60,7 @@ function App() {
 			</section>
 			<hr />
 			<section>
-				some of the https://sheraff.github.io/vite-labs/ demos w/ images?
+				<Labs />
 			</section>
 			<hr data-big />
 			<section>

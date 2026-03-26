@@ -31,6 +31,22 @@ app.get('/api/hello', (c) => {
   return c.json(hello())
 })
 
+app.get('/api/projects', async (c) => {
+  try {
+    const response = await fetch('https://sheraff.github.io/vite-labs/projects.json')
+
+    if (!response.ok) {
+      throw new Error(`Projects request failed with ${response.status}`)
+    }
+
+    c.header('Cache-Control', 'public, max-age=3600')
+    return c.json(await response.json())
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Unable to load projects' }, 502)
+  }
+})
+
 app.get('/api/github/contributions', async (c) => {
   try {
     c.header('Cache-Control', 'public, max-age=3600')
