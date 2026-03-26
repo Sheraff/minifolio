@@ -5,6 +5,7 @@ import { Bluesky } from "./svg/bluesky"
 import { Contributions } from "./github/contributions"
 import { Time, TimeDifference } from "./time"
 import { Repositories } from "./github/repositories"
+import { Articles } from "./github/articles"
 
 
 function App() {
@@ -50,10 +51,7 @@ function App() {
 			</section>
 			<hr />
 			<section>
-				<ul>
-					<li>https://tanstack.com/blog/tanstack-start-5x-ssr-throughput</li>
-					<li>https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite</li>
-				</ul>
+				<Articles />
 			</section>
 			<hr data-big />
 			<section>

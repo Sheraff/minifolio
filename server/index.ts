@@ -10,6 +10,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response'
 import { Hono } from 'hono'
 import type { ViteDevServer } from 'vite'
+import { fetchTanstackArticles } from './articles.ts'
 import { hello } from "./hello.ts"
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
@@ -47,6 +48,16 @@ app.get('/api/github/repositories', async (c) => {
   } catch (error) {
     console.error(error)
     return c.json({ error: 'Unable to load contributed GitHub repositories' }, 502)
+  }
+})
+
+app.get('/api/articles/tanstack', async (c) => {
+  try {
+    c.header('Cache-Control', 'public, max-age=3600')
+    return c.json(await fetchTanstackArticles())
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Unable to load TanStack articles' }, 502)
   }
 })
 
