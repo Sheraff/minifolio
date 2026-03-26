@@ -8,7 +8,7 @@
 
 	.graph {
 		grid-column: 2 / 3;
-		border-inline: 1px solid var(--bg-accent);
+		border-inline: var(--border);
 
 		display: grid;
 		grid-template-columns: repeat(53, 1fr);

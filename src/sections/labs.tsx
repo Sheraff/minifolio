@@ -1,5 +1,6 @@
-import { createResource, For, Match, Switch } from "solid-js"
+import { createResource, For, Match, Show, Switch } from "solid-js"
 import * as v from 'valibot'
+import './labs.css'
 
 const fetchData = async () => {
 	const response = await fetch('/api/projects')
@@ -27,19 +28,26 @@ const fetchData = async () => {
 export function Labs() {
 	const [data] = createResource(fetchData)
 	return (
-		<section>
+		<section class="labs">
 			<Switch>
 				<Match when={data.loading}>
 					<ul />
 				</Match>
 				<Match when={data()}>
-					<ul>
+					<ul role="list">
 						<For each={data()}>
-							{(item) =>
-								<li>
-									<img src={`https://sheraff.github.io/${item.image!}`} height="20" width="20" />
-									<a>{item.title}</a>
-								</li>
+							{(item, index) =>
+								<>
+									<Show when={index() > 0}>
+										<div data-separator />
+									</Show>
+									<li role="listitem">
+										<a href={`https://sheraff.github.io/vite-labs/${item.route}`}>
+											<img src={`https://sheraff.github.io/${item.image!}`} />
+											<p>{item.title}</p>
+										</a>
+									</li>
+								</>
 							}
 						</For>
 					</ul>

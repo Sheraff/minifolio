@@ -7,6 +7,7 @@
 	--bg: oklch(from var(--theme) 12% c h);
 	--bg-accent: oklch(from var(--theme) 23% 0.05 h);
 	--color: oklch(from var(--theme) 91% 0.04 h);
+	--border: 1px solid var(--bg-accent);
 
 	background-color: var(--bg);
 	color: var(--color);
@@ -20,11 +21,11 @@ body {
 	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(10px, 1fr);
 
 	&::before {
-		border-bottom: 1px solid var(--bg-accent);
+		border-bottom: var(--border);
 	}
 
 	&::after {
-		border-top: 1px solid var(--bg-accent);
+		border-top: var(--border);
 	}
 
 	&::before,
@@ -39,12 +40,12 @@ body {
 hr {
 	all: initial;
 	grid-column: 1 / 4;
-	border-top: 1px solid var(--bg-accent);
+	border-top: var(--border);
 
 	&[data-big] {
 		height: 2lh;
 		background-size: 10px 10px;
-		border-bottom: 1px solid var(--bg-accent);
+		border-bottom: var(--border);
 		background-image: repeating-linear-gradient(315deg, var(--bg-accent) 0, var(--bg-accent) 1px, transparent 0, transparent 50%);
 		display: grid;
 		grid-template-columns: subgrid;
@@ -53,7 +54,7 @@ hr {
 			content: '';
 			display: block;
 			grid-column: 2 / 3;
-			border-inline: 1px solid var(--bg-accent);
+			border-inline: var(--border);
 		}
 	}
 }
@@ -61,7 +62,7 @@ hr {
 section {
 	padding: 10px;
 	grid-column: 2 / 3;
-	border-inline: 1px solid var(--bg-accent);
+	border-inline: var(--border);
 }
 
 svg {
@@ -76,7 +77,7 @@ svg {
 	a {
 		cursor: pointer;
 		padding: 10px;
-		border-inline-start: 1px solid var(--bg-accent);
+		border-inline-start: var(--border);
 		display: flex;
 		color: currentColor;
 	}
@@ -96,7 +97,7 @@ svg {
 	position: relative;
 
 	svg {
-		border: 1px solid var(--bg-accent);
+		border: var(--border);
 		border-radius: 50%;
 		padding: 20px;
 		overflow: inherit;
@@ -129,6 +130,10 @@ h1 {
 		filter: url(#glitch);
 		;
 	}
+}
+
+h2 {
+	text-align: center;
 }
 
 .identity {
