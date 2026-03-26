@@ -162,10 +162,6 @@ h1 {
 		grid-auto-flow: column;
 		gap: 1px;
 
-		&:not(:empty) {
-			background-color: var(--bg-accent);
-		}
-
 		&:empty::before {
 			content: '';
 			display: block;

@@ -11,6 +11,7 @@ import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response'
 import { Hono } from 'hono'
 import type { ViteDevServer } from 'vite'
 import { hello } from "./hello.ts"
+import { fetchGitHubContributions } from './github.ts'
 
 const isDev = process.argv.includes('--dev')
 const port = Number(process.env.PORT ?? 5743)
@@ -26,6 +27,16 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 
 app.get('/api/hello', (c) => {
   return c.json(hello())
+})
+
+app.get('/api/github/contributions', async (c) => {
+  try {
+    c.header('Cache-Control', 'public, max-age=3600')
+    return c.json(await fetchGitHubContributions())
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Unable to load GitHub contributions' }, 502)
+  }
 })
 
 let vite: ViteDevServer | undefined

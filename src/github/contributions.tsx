@@ -2,7 +2,10 @@ import { createResource, For, Match, Switch } from "solid-js"
 import * as v from 'valibot'
 
 const fetchData = async () => {
-	const response = await fetch('https://github-contributions-api.jogruber.de/v4/sheraff?y=last')
+	const response = await fetch('/api/github/contributions')
+	if (!response.ok) {
+		throw new Error('Unable to load GitHub contributions')
+	}
 	const json = await response.json()
 	const schema = v.object({
 		total: v.object({
