@@ -1,5 +1,7 @@
 import { createResource, For, Match, Switch } from "solid-js"
 import * as v from 'valibot'
+import './contributions.css'
+
 
 const fetchData = async () => {
 	const response = await fetch('/api/github/contributions')
@@ -26,16 +28,14 @@ export function Contributions() {
 	return (
 		<Switch>
 			<Match when={data.error}>
-				<></>
+				<section />
 			</Match>
 			<Match when={data.loading}>
-				<hr />
 				<section class="contributions">
 					<div class="graph" />
 				</section>
 			</Match>
 			<Match when={data()}>
-				<hr />
 				<section class="contributions">
 					<div class="graph">
 						<For each={data()!.contributions}>

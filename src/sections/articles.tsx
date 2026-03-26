@@ -37,23 +37,25 @@ const fetchData = async () => {
 export function Articles() {
 	const [data] = createResource(fetchData)
 	return (
-		<Switch>
-			<Match when={data.loading}>
-				<ul />
-			</Match>
-			<Match when={data()}>
-				<ul>
-					<For each={data()}>
-						{(item) =>
-							<li>
-								<img src={item.imageUrl} height="100" />
-								<a>{item.title.slice(0, 40)}</a>
-								<p>{item.description.slice(0, 40)}</p>
-							</li>
-						}
-					</For>
-				</ul>
-			</Match>
-		</Switch>
+		<section>
+			<Switch>
+				<Match when={data.loading}>
+					<ul />
+				</Match>
+				<Match when={data()}>
+					<ul>
+						<For each={data()}>
+							{(item) =>
+								<li>
+									<img src={item.imageUrl} height="100" />
+									<a>{item.title.slice(0, 40)}</a>
+									<p>{item.description.slice(0, 40)}</p>
+								</li>
+							}
+						</For>
+					</ul>
+				</Match>
+			</Switch>
+		</section>
 	)
 }

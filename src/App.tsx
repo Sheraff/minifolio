@@ -2,11 +2,11 @@ import { Glitch } from "./svg/glitch"
 import { Mask } from "./svg/mask"
 import { Github } from "./svg/github"
 import { Bluesky } from "./svg/bluesky"
-import { Contributions } from "./github/contributions"
+import { Contributions } from "./sections/contributions"
 import { Time, TimeDifference } from "./time"
-import { Repositories } from "./github/repositories"
-import { Articles } from "./github/articles"
-import { Labs } from "./github/labs"
+import { Repositories } from "./sections/repositories"
+import { Articles } from "./sections/articles"
+import { Labs } from "./sections/labs"
 
 
 function App() {
@@ -41,27 +41,22 @@ function App() {
 			<section>
 				<h2>Contributions</h2>
 			</section>
+			<hr />
 			<Contributions />
 			<hr />
-			<section class="repositories">
-				<Repositories />
-			</section>
+			<Repositories />
 			<hr data-big />
 			<section>
 				<h2>Articles</h2>
 			</section>
 			<hr />
-			<section>
-				<Articles />
-			</section>
+			<Articles />
 			<hr data-big />
 			<section>
 				<h2>Experiments</h2>
 			</section>
 			<hr />
-			<section>
-				<Labs />
-			</section>
+			<Labs />
 			<hr data-big />
 			<section>
 				design heavily inspired by https://chanhdai.com

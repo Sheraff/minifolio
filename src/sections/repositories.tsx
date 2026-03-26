@@ -36,24 +36,26 @@ const fetchData = async () => {
 export function Repositories() {
 	const [data] = createResource(fetchData)
 	return (
-		<Switch>
-			<Match when={data.loading}>
-				<ul />
-			</Match>
-			<Match when={data()}>
-				<ul>
-					<For each={data()}>
-						{(item) =>
-							<li>
-								<img src={item.owner.avatarUrl} height="20" width="20" />
-								<a>{item.nameWithOwner}</a>
-								{/* <a>{item.lastPullRequest!.title}</a> */}
-								<span> ({item.contributionCount})</span>
-							</li>
-						}
-					</For>
-				</ul>
-			</Match>
-		</Switch>
+		<section class="repositories">
+			<Switch>
+				<Match when={data.loading}>
+					<ul />
+				</Match>
+				<Match when={data()}>
+					<ul>
+						<For each={data()}>
+							{(item) =>
+								<li>
+									<img src={item.owner.avatarUrl} height="20" width="20" />
+									<a href={`https://github.com/${item.nameWithOwner}/issues?q=author%3Asheraff`}>{item.nameWithOwner}</a>
+									{/* <a>{item.lastPullRequest!.title}</a> */}
+									<span> ({item.contributionCount})</span>
+								</li>
+							}
+						</For>
+					</ul>
+				</Match>
+			</Switch>
+		</section>
 	)
 }

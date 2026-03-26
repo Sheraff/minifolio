@@ -27,22 +27,24 @@ const fetchData = async () => {
 export function Labs() {
 	const [data] = createResource(fetchData)
 	return (
-		<Switch>
-			<Match when={data.loading}>
-				<ul />
-			</Match>
-			<Match when={data()}>
-				<ul>
-					<For each={data()}>
-						{(item) =>
-							<li>
-								<img src={`https://sheraff.github.io/${item.image!}`} height="20" width="20" />
-								<a>{item.title}</a>
-							</li>
-						}
-					</For>
-				</ul>
-			</Match>
-		</Switch>
+		<section>
+			<Switch>
+				<Match when={data.loading}>
+					<ul />
+				</Match>
+				<Match when={data()}>
+					<ul>
+						<For each={data()}>
+							{(item) =>
+								<li>
+									<img src={`https://sheraff.github.io/${item.image!}`} height="20" width="20" />
+									<a>{item.title}</a>
+								</li>
+							}
+						</For>
+					</ul>
+				</Match>
+			</Switch>
+		</section>
 	)
 }
