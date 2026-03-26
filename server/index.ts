@@ -12,6 +12,7 @@ import { Hono } from 'hono'
 import type { ViteDevServer } from 'vite'
 import { hello } from "./hello.ts"
 import { fetchGitHubContributions } from './github.ts'
+import { fetchContributedRepositories } from './githubRepositories.ts'
 
 const isDev = process.argv.includes('--dev')
 const port = Number(process.env.PORT ?? 5743)
@@ -36,6 +37,16 @@ app.get('/api/github/contributions', async (c) => {
   } catch (error) {
     console.error(error)
     return c.json({ error: 'Unable to load GitHub contributions' }, 502)
+  }
+})
+
+app.get('/api/github/repositories', async (c) => {
+  try {
+    c.header('Cache-Control', 'public, max-age=3600')
+    return c.json(await fetchContributedRepositories())
+  } catch (error) {
+    console.error(error)
+    return c.json({ error: 'Unable to load contributed GitHub repositories' }, 502)
   }
 })
 

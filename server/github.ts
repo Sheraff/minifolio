@@ -1,9 +1,6 @@
 import * as v from 'valibot'
-import { getGitHubToken } from "./getGithubToken.ts"
+import { fetchGitHubGraphql, GITHUB_LOGIN, ONE_DAY_MS } from './githubApi.ts'
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
-const GITHUB_LOGIN = 'sheraff'
-const GITHUB_GRAPHQL_API = 'https://api.github.com/graphql'
 const CONTRIBUTION_LEVELS = {
 	NONE: 0,
 	FIRST_QUARTILE: 1,
@@ -12,7 +9,7 @@ const CONTRIBUTION_LEVELS = {
 	FOURTH_QUARTILE: 4,
 } as const
 
-const query = `
+const contributionsQuery = `
 	query Contributions($login: String!) {
 		user(login: $login) {
 			contributionsCollection {
@@ -32,6 +29,17 @@ const query = `
 `
 
 type GitHubContributionLevel = keyof typeof CONTRIBUTION_LEVELS
+
+type ContributionsResponse = {
+	total: {
+		lastYear: number
+	}
+	contributions: {
+		date: string
+		count: number
+		level: number
+	}[]
+}
 
 const githubContributionLevelSchema = v.picklist(
 	Object.keys(CONTRIBUTION_LEVELS) as [GitHubContributionLevel, ...GitHubContributionLevel[]],
@@ -59,8 +67,6 @@ const githubContributionsResponseSchema = v.object({
 	}))),
 })
 
-type ContributionsResponse = Awaited<ReturnType<typeof fetchGitHubContributionsFromApi>>
-
 let contributionsCache:
 	| {
 		data: ContributionsResponse
@@ -70,7 +76,7 @@ let contributionsCache:
 
 let contributionsPromise: Promise<ContributionsResponse> | undefined
 
-async function loadGitHubContributions() {
+async function loadGitHubContributions(): Promise<ContributionsResponse> {
 	if (contributionsCache && contributionsCache.expiresAt > Date.now()) {
 		return contributionsCache.data
 	}
@@ -93,29 +99,13 @@ async function loadGitHubContributions() {
 	}
 }
 
-async function fetchGitHubContributionsFromApi() {
-	const token = await getGitHubToken()
-
-	const response = await fetch(GITHUB_GRAPHQL_API, {
-		method: 'POST',
-		headers: {
-			authorization: `Bearer ${token}`,
-			'content-type': 'application/json',
-			'user-agent': 'minifolio',
-		},
-		body: JSON.stringify({
-			query,
-			variables: {
-				login: GITHUB_LOGIN,
-			},
+async function fetchGitHubContributionsFromApi(): Promise<ContributionsResponse> {
+	const json = v.parse(
+		githubContributionsResponseSchema,
+		await fetchGitHubGraphql(contributionsQuery, {
+			login: GITHUB_LOGIN,
 		}),
-	})
-
-	if (!response.ok) {
-		throw new Error(`GitHub API request failed with ${response.status}`)
-	}
-
-	const json = v.parse(githubContributionsResponseSchema, await response.json())
+	)
 
 	if (json.errors?.length) {
 		throw new Error(json.errors[0].message)

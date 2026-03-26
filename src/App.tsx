@@ -4,6 +4,7 @@ import { Github } from "./svg/github"
 import { Bluesky } from "./svg/bluesky"
 import { Contributions } from "./github/contributions"
 import { Time, TimeDifference } from "./time"
+import { Repositories } from "./github/repositories"
 
 
 function App() {
@@ -40,8 +41,8 @@ function App() {
 			</section>
 			<Contributions />
 			<hr />
-			<section>
-				list all repos (except sheraff/*)
+			<section class="repositories">
+				<Repositories />
 			</section>
 			<hr data-big />
 			<section>
