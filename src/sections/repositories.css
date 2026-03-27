@@ -1,0 +1,132 @@
+.repositories {
+	--repositories-gap: 10px;
+	overflow: hidden;
+	padding-inline: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+
+	.row {
+		display: flex;
+		gap: var(--repositories-gap);
+		overflow: hidden;
+		background:
+			repeating-linear-gradient(90deg, transparent 0, transparent 19px, color-mix(in oklch, var(--bg-accent) 50%, transparent) 20px),
+			var(--bg);
+		mask-image: linear-gradient(to right, rgba(0 0 0 / 0.3), black 6%, black 94%, rgba(0 0 0 / 0.3));
+	}
+
+	ul {
+		display: flex;
+		align-items: center;
+		gap: var(--repositories-gap);
+		flex-shrink: 0;
+		min-width: max-content;
+		animation: repositories-marquee calc(var(--count) * 6s) linear infinite;
+	}
+
+	.row[data-direction='ltr'] ul {
+		animation-direction: reverse;
+	}
+
+	a {
+		display: grid;
+		grid-template-areas:
+			"image title title"
+			"image key-a val-a"
+			"image key-b val-b";
+		grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+		align-items: center;
+		column-gap: 8px;
+		padding: 12px;
+		border: var(--border);
+		background: linear-gradient(135deg, color-mix(in oklch, var(--bg-accent) 60%, transparent), transparent 70%);
+		color: currentColor;
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	img {
+		grid-area: image;
+		display: block;
+		width: 60px;
+		height: 60px;
+		object-fit: cover;
+	}
+
+	p {
+		grid-area: title;
+		margin-bottom: 4px;
+		font-size: small;
+	}
+
+	dl {
+		display: contents;
+	}
+
+	dt {
+		font-size: small;
+	}
+
+	dd {
+		margin: 0;
+		font-size: small;
+		opacity: 0.75;
+	}
+
+	@media (hover: hover) {
+		.row:hover ul {
+			animation-play-state: paused;
+		}
+
+		a:hover {
+			background: linear-gradient(135deg, color-mix(in oklch, var(--bg-accent) 80%, transparent), transparent 70%);
+		}
+	}
+
+	@media (max-width: 640px) {
+		--repositories-gap: 10px;
+
+		.row {
+			padding: 10px 0;
+			min-height: 84px;
+		}
+
+		ul {
+			gap: var(--repositories-gap);
+			padding-inline: var(--repositories-gap);
+		}
+
+		a {
+			width: min(240px, calc(100vw - 48px));
+			padding: 10px;
+			grid-template-columns: 36px minmax(0, 1fr);
+		}
+
+		img {
+			width: 36px;
+			height: 36px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.row {
+			overflow-x: auto;
+			mask-image: none;
+		}
+
+		ul {
+			animation: none;
+		}
+	}
+}
+
+@keyframes repositories-marquee {
+	from {
+		transform: translateX(0);
+	}
+
+	to {
+		transform: translateX(calc(-100% - var(--repositories-gap)));
+	}
+}
