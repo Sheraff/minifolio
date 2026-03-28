@@ -66,7 +66,8 @@ function App() {
 			<section>
 				design heavily inspired by https://chanhdai.com
 			</section>
-			<Glitch />
+			<div class="rgb-mask" aria-hidden="true" />
+			<Glitch glowIntensity={1.2} />
 		</>
 	)
 }

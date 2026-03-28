@@ -43,6 +43,7 @@ body {
 	margin: 0;
 	display: grid;
 	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(10px, 1fr);
+	filter: url(#glow);
 
 	&::before {
 		border-bottom: var(--border);
@@ -87,6 +88,25 @@ section {
 	padding: 10px;
 	grid-column: 2 / 3;
 	border-inline: var(--border);
+}
+
+.rgb-mask {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 10;
+	opacity: 0.15;
+	background: repeating-linear-gradient(to right,
+			rgba(255, 60, 60, 0.22) 0,
+			rgba(255, 60, 60, 0.22) 1px,
+			rgba(40, 255, 160, 0.03) 1px,
+			rgba(40, 255, 160, 0.03) 2px,
+			rgba(90, 150, 255, 0.22) 2px,
+			rgba(90, 150, 255, 0.22) 3px,
+			transparent 3px,
+			transparent 4px);
+	mix-blend-mode: screen;
+	filter: saturate(1.4);
 }
 
 svg {
@@ -152,7 +172,6 @@ h1 {
 
 	100% {
 		filter: url(#glitch);
-		;
 	}
 }
 
