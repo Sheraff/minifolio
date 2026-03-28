@@ -158,21 +158,8 @@ svg {
 	}
 }
 
-h1 {
-	/* filter: url(#glitch); */
-	animation: 5s steps(4, jump-end) glitch infinite;
-}
-
-@keyframes glitch {
-
-	0%,
-	90% {
-		filter: none;
-	}
-
-	100% {
-		filter: url(#glitch);
-	}
+[data-glitch-active] {
+	filter: url(#glitch);
 }
 
 h2 {

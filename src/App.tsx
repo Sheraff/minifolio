@@ -1,3 +1,5 @@
+import { onCleanup, onMount } from "solid-js"
+import { attachRandomGlitch } from "./glitchText"
 import { Glitch } from "./svg/glitch"
 import { Mask } from "./svg/mask"
 import { Github } from "./svg/github"
@@ -10,6 +12,17 @@ import { Labs } from "./sections/labs"
 
 
 function App() {
+
+	onMount(() => {
+		const cleanups = attachRandomGlitch('h1, h2')
+		onCleanup(() => {
+			for (const cleanup of cleanups) {
+				cleanup()
+			}
+		})
+	})
+
+
 	return (
 		<>
 			<section class="links">
