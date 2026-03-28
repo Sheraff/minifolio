@@ -58,6 +58,7 @@
 		grid-area: title;
 		margin-bottom: 4px;
 		font-size: small;
+		font-weight: 900;
 	}
 
 	dl {
@@ -66,11 +67,13 @@
 
 	dt {
 		font-size: small;
+		font-weight: 300;
 	}
 
 	dd {
 		margin: 0;
 		font-size: small;
+		font-weight: 100;
 		opacity: 0.75;
 	}
 

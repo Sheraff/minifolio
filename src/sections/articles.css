@@ -37,10 +37,12 @@
 	.title {
 		font-size: smaller;
 		text-wrap: balance;
+		font-weight: 200;
 	}
 
 	.subtitle {
 		font-size: x-small;
 		text-wrap: pretty;
+		font-weight: 100;
 	}
 }

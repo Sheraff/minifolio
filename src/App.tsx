@@ -23,7 +23,7 @@ function App() {
 			<hr />
 			<section class="head">
 				<Mask />
-				<h1>@sheraff</h1>
+				<h1><a href="https://github.com/sheraff">@sheraff</a></h1>
 			</section>
 			<hr />
 			<hr data-big />

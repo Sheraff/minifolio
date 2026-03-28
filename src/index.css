@@ -2,6 +2,13 @@
 	box-sizing: border-box;
 }
 
+@font-face {
+	font-family: 'Monaspace Neon';
+	src: url('/fonts/monaspace-neon-var.woff2') format('woff2'),
+		url('/fonts/monaspace-neon-var.woff') format('woff');
+	font-display: swap;
+}
+
 :root {
 	--theme: oklch(30% 0.08 148);
 	--bg: oklch(from var(--theme) 12% c h);
@@ -11,8 +18,8 @@
 
 	background-color: var(--bg);
 	color: var(--color);
-	font-family: Menlo, Monaco, 'Courier New', monospace;
-	font-variant-numeric: tabular-nums;
+	font-family: 'Monaspace Neon', Menlo, Monaco, 'Courier New', monospace;
+	line-height: 1.5;
 }
 
 p {
@@ -146,8 +153,14 @@ h2 {
 	text-align: center;
 }
 
+h1 a {
+	color: currentColor;
+	text-decoration: none;
+}
+
 .identity {
 	position: relative;
+	font-weight: 200;
 
 	&::before {
 		content: '';
