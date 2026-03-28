@@ -23,6 +23,12 @@
 	line-height: 1.5;
 }
 
+::selection {
+	background: oklch(from var(--theme) 100% c h);
+	color: oklch(from var(--theme) 50% 0.3 h);
+	text-shadow: none;
+}
+
 p {
 	margin: 0;
 }
