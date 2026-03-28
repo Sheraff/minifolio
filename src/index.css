@@ -168,6 +168,31 @@ h1 a {
 .identity {
 	position: relative;
 	font-weight: 200;
+	background-color: black;
+
+	dl,
+	dd,
+	dt {
+		margin: 0;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	dt::before {
+		content: '> ';
+	}
+
+	dd::before {
+		content: '  ';
+	}
+
+	dt {
+		color: oklch(from var(--theme) 50% 0.1 h);
+	}
+
+	span {
+		color: oklch(from var(--color) 60% c h);
+	}
 
 	&::before {
 		content: '';

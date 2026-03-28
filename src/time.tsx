@@ -10,7 +10,7 @@ export function Time() {
 	const i = setInterval(() => setTime(getTime()), 500)
 	onCleanup(() => clearInterval(i))
 
-	return <>{time()}</>
+	return <time>{time()}</time>
 }
 
 function getParisDifferenceLabel() {
@@ -36,7 +36,7 @@ export function TimeDifference() {
 	const diff = getParisDifferenceLabel()
 	return (
 		<Show when={diff}>
-			<> // {diff}</>
+			<span> # {diff}</span>
 		</Show>
 	)
 }

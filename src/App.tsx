@@ -28,14 +28,20 @@ function App() {
 			<hr />
 			<hr data-big />
 			<section class="identity">
-				<ul>
-					<li>Staff frontend engineer</li>
-					<li>Paris, France</li>
-					<li>florianpellet.com</li>
-					<li>fpel_TEMP_let [@] en_TEMP_sc [.] fr</li>
-					<li><Time /><TimeDifference /></li>
-					<li>he/him</li>
-				</ul>
+				<dl>
+					<dt>whoami</dt>
+					<dd>sheraff</dd>
+					<dt>hostname -f</dt>
+					<dd>florianpellet.com</dd>
+					<dt>git config user.email</dt>
+					<dd>fpellet@ensc.fr</dd>
+					<dt>date +%H:%M</dt>
+					<dd><Time /><TimeDifference /></dd>
+					{/* <dt>|</dt> */}
+					{/* Staff frontend engineer */}
+					{/* he/him */}
+					{/* Europe/Paris */}
+				</dl>
 			</section>
 			<hr data-big />
 			<section>
