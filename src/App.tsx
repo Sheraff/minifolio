@@ -25,7 +25,6 @@ function App() {
 				<Mask />
 				<h1><a href="https://github.com/sheraff">@sheraff</a></h1>
 			</section>
-			<hr />
 			<hr data-big />
 			<section class="identity">
 				<dl>
