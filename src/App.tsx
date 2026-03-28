@@ -1,14 +1,14 @@
 import { onCleanup, onMount } from "solid-js"
-import { attachRandomGlitch } from "./glitchText"
-import { Glitch } from "./svg/glitch"
-import { Mask } from "./svg/mask"
-import { Github } from "./svg/github"
-import { Bluesky } from "./svg/bluesky"
-import { Contributions } from "./sections/contributions"
-import { Time, TimeDifference } from "./time"
-import { Repositories } from "./sections/repositories"
-import { Articles } from "./sections/articles"
-import { Labs } from "./sections/labs"
+import { attachRandomGlitch } from "#/glitchText"
+import { Glitch } from "#/svg/glitch"
+import { Mask } from "#/svg/mask"
+import { Github } from "#/svg/github"
+import { Bluesky } from "#/svg/bluesky"
+import { Contributions } from "#/sections/contributions"
+import { Repositories } from "#/sections/repositories"
+import { Articles } from "#/sections/articles"
+import { Labs } from "#/sections/labs"
+import { Identity } from "#/sections/identity"
 
 
 function App() {
@@ -39,22 +39,7 @@ function App() {
 				<h1><a href="https://github.com/sheraff">@sheraff</a></h1>
 			</section>
 			<hr data-big />
-			<section class="identity">
-				<dl>
-					<dt>whoami</dt>
-					<dd>sheraff</dd>
-					<dt>hostname -f</dt>
-					<dd>florianpellet.com</dd>
-					<dt>git config user.email</dt>
-					<dd>fpellet@ensc.fr</dd>
-					<dt>date +%H:%M</dt>
-					<dd><Time /><TimeDifference /></dd>
-					{/* <dt>|</dt> */}
-					{/* Staff frontend engineer */}
-					{/* he/him */}
-					{/* Europe/Paris */}
-				</dl>
-			</section>
+			<Identity />
 			<hr data-big />
 			<section>
 				<h2>Contributions</h2>

@@ -1,0 +1,68 @@
+.identity {
+	position: relative;
+	font-weight: 200;
+	background-color: black;
+
+	dl,
+	dd,
+	dt {
+		margin: 0;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	dt::before {
+		content: '> ';
+		flex-shrink: 0;
+	}
+
+	dd::before {
+		content: '  ';
+		flex-shrink: 0;
+	}
+
+	dt {
+		color: oklch(from var(--theme) 50% 0.1 h);
+		display: flex;
+	}
+
+	dd {
+		display: flex;
+	}
+
+	span {
+		color: oklch(from var(--color) 60% c h);
+	}
+
+	&::before {
+		content: '';
+		display: block;
+		position: absolute;
+		inset: 0 auto 0 -10px;
+		width: 1px;
+		background-color: var(--bg-accent);
+	}
+
+	div {
+		color: oklch(from var(--theme) 70% 0.2 h);
+		display: flex;
+
+		&::before {
+			content: '> ';
+			flex-shrink: 0;
+		}
+	}
+
+	textarea {
+		background-color: transparent;
+		outline: none;
+		border: none;
+		color: inherit;
+		width: 100%;
+		display: inline-block;
+		padding: 0;
+		font: inherit;
+		field-sizing: content;
+		resize: none;
+	}
+}
