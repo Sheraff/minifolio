@@ -129,8 +129,11 @@ function List(props: { list: Awaited<ReturnType<typeof fetchData>> }) {
 
 function Card(props: { item: Awaited<ReturnType<typeof fetchData>>[number] }) {
 	return (
-		<a href={`https://sheraff.github.io/vite-labs/${props.item.route}`}>
-			<img src={`https://sheraff.github.io/${props.item.image!}`} />
+		<a href={`https://sheraff.github.io${props.item.url}`}>
+			<img src={`https://sheraff.github.io${props.item.image!}`} />
+			<div>
+				<p>{props.item.title}</p>
+			</div>
 		</a>
 	)
 }
