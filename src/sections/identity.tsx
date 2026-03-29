@@ -136,6 +136,7 @@ const COMMANDS = [
 	'touch',
 	'curl',
 	'wget',
+	'ssh',
 	'exit',
 ] as const
 
@@ -276,6 +277,7 @@ function resolveBuiltin(name: string, args: string[], state: TerminalState) {
 			return `${name}: read-only filesystem`
 		case 'curl':
 		case 'wget':
+		case 'ssh':
 			return `${name}: network access is disabled in this tiny universe`
 		case 'exit':
 			return 'This terminal lives here now.'
