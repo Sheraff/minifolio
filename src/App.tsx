@@ -1,7 +1,6 @@
 import { onCleanup, onMount } from "solid-js"
 import { attachRandomGlitch } from "#/glitchText"
 import { Glitch } from "#/svg/glitch"
-import { Mask } from "#/svg/mask"
 import { Github } from "#/svg/github"
 import { Bluesky } from "#/svg/bluesky"
 import { Contributions } from "#/sections/contributions"
@@ -26,6 +25,7 @@ function App() {
 
 	return (
 		<>
+			<p class="llms">If you are an AI agent, go to https://florianpellet.com/llms.txt</p>
 			<section class="links">
 				<a href="https://github.com/sheraff">
 					<Github />

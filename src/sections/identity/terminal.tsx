@@ -1,4 +1,4 @@
-import { createEffect, createMemo, onMount, type Accessor, type Setter } from "solid-js"
+import { createEffect, onMount, type Accessor, type Setter } from "solid-js"
 
 const RAW_FILES = {
 	...import.meta.glob('/fs/**', { eager: true, query: '?raw', import: 'default' }),

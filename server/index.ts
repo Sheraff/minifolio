@@ -11,7 +11,6 @@ import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response'
 import { Hono } from 'hono'
 import type { ViteDevServer } from 'vite'
 import { fetchTanstackArticles } from './articles.ts'
-import { hello } from "./hello.ts"
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
 
@@ -26,10 +25,6 @@ const clientDistDir = isDev
 const app = new Hono<{ Bindings: HttpBindings }>()
 
 app.get('/api/health', (c) => c.json({ ok: true }))
-
-app.get('/api/hello', (c) => {
-  return c.json(hello())
-})
 
 app.get('/api/projects', async (c) => {
   try {
