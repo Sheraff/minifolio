@@ -9,6 +9,7 @@ import { Repositories } from "#/sections/repositories"
 import { Articles } from "#/sections/articles"
 import { Labs } from "#/sections/labs"
 import { Identity } from "#/sections/identity"
+import { Head } from "#/sections/head"
 
 
 function App() {
@@ -34,10 +35,7 @@ function App() {
 				</a>
 			</section>
 			<hr />
-			<section class="head">
-				<Mask />
-				<h1><a href="https://github.com/sheraff">@sheraff</a></h1>
-			</section>
+			<Head />
 			<hr data-big />
 			<Identity />
 			<hr data-big />

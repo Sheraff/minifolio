@@ -134,41 +134,10 @@ svg {
 	}
 }
 
-.head {
-	padding: 20px;
-	background-image: radial-gradient(var(--bg-accent) 1px, transparent 0);
-	background-size: 10px 10px;
-	display: flex;
-	justify-content: center;
-	position: relative;
-
-	svg {
-		border: var(--border);
-		border-radius: 50%;
-		padding: 20px;
-		overflow: inherit;
-		background: var(--bg);
-		height: 140px;
-	}
-
-	h1 {
-		position: absolute;
-		bottom: 10px;
-		left: 10px;
-		margin: 0;
-		font-size: 1rem;
-	}
-}
-
 [data-glitch-active] {
 	filter: url(#glitch);
 }
 
 h2 {
 	text-align: center;
-}
-
-h1 a {
-	color: currentColor;
-	text-decoration: none;
 }

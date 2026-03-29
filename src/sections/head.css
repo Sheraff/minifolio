@@ -1,0 +1,52 @@
+.head {
+	padding: 20px;
+	background-image: radial-gradient(var(--bg-accent) 1px, transparent 0);
+	background-size: 10px 10px;
+	display: flex;
+	justify-content: center;
+	position: relative;
+
+	figure {
+		position: relative;
+		display: flex;
+		border: var(--border);
+		border-radius: 50%;
+		padding: 20px;
+		background: var(--bg);
+		height: 140px;
+		overflow: hidden;
+	}
+
+	svg {
+		height: 100px;
+	}
+
+	img {
+		position: absolute;
+		inset: 0;
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+		object-position: center;
+		opacity: 0;
+		transition: opacity 300ms ease-out;
+	}
+
+	figure:hover img {
+		transition: opacity 4s ease-in;
+		opacity: 1;
+	}
+
+	h1 {
+		position: absolute;
+		bottom: 10px;
+		left: 10px;
+		margin: 0;
+		font-size: 1rem;
+	}
+
+	h1 a {
+		color: currentColor;
+		text-decoration: none;
+	}
+}
