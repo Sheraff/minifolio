@@ -48,13 +48,6 @@ body {
 	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(10px, 1fr);
 	filter: url(#glow);
 
-	&::before {
-		border-bottom: var(--border);
-	}
-
-	&::after {
-		border-top: var(--border);
-	}
 
 	&::before,
 	&::after {
@@ -63,6 +56,16 @@ body {
 		display: block;
 		grid-column: 1 / 4;
 	}
+
+	&::before {
+		border-bottom: var(--border);
+	}
+
+	&::after {
+		border-top: var(--border);
+		height: 20svh;
+	}
+
 }
 
 hr {

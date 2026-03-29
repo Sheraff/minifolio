@@ -8,6 +8,7 @@ import { Labs } from "#/sections/labs"
 import { Identity } from "#/sections/identity"
 import { Head } from "#/sections/head"
 import { Links } from "#/sections/links"
+import { Footer } from "#/sections/footer"
 
 
 function App() {
@@ -50,11 +51,9 @@ function App() {
 			<hr />
 			<Labs />
 			<hr data-big />
-			<section>
-				design heavily inspired by https://chanhdai.com
-			</section>
+			<Footer />
 			<div class="rgb-mask" aria-hidden="true" />
-			<Glitch glowIntensity={1.2} />
+			<Glitch glowIntensity={1} />
 		</>
 	)
 }

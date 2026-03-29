@@ -1,0 +1,9 @@
+.footer {
+	font-size: smaller;
+	text-align: center;
+
+	a {
+		color: currentColor;
+		text-decoration: none;
+	}
+}

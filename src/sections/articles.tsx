@@ -70,7 +70,6 @@ function Card(props: { item: Item }) {
 						list: segment === ' ' ? segment : randomString() + '\n' + segment,
 					})
 				}
-				console.log(desc.map(c => c.real).join(''))
 				setDesc(desc)
 			}}
 		>
