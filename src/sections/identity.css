@@ -22,13 +22,19 @@
 		flex-shrink: 0;
 	}
 
+	dd,
 	dt {
-		color: oklch(from var(--theme) 50% 0.1 h);
+		line-height: 1.2;
+		padding-block: 0.2lh;
 		display: flex;
 	}
 
+	dt {
+		color: oklch(from var(--theme) 50% 0.1 h);
+
+	}
+
 	dd {
-		display: flex;
 
 		&:empty {
 			display: none;

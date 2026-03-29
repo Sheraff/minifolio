@@ -1,6 +1,7 @@
 import { Time, TimeDifference } from "#/time"
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import './identity.css'
+import asciiMask from '#/svg/mask.txt?raw'
 
 export function Identity() {
 	const [active, setActive] = createSignal<boolean | string>(false)
@@ -107,7 +108,8 @@ const HOME = '/home/sheraff'
 
 const ALIASES = {
 	ll: 'ls -la',
-	portfolio: 'cat about.txt',
+	portfolio: 'cat /home/sheraff/about.txt',
+	mask: 'cat /home/sheraff/documents/mask.txt',
 } as const
 
 const COMMANDS = [
@@ -153,14 +155,16 @@ const FILE_SYSTEM: Record<string, FsEntry> = {
 	'/etc/hostname': { type: 'file', content: 'florianpellet.com' },
 	'/etc/motd': { type: 'file', content: 'Welcome to the tiny fake terminal. Type help and poke around.' },
 	'/home': { type: 'dir', entries: ['sheraff'] },
-	'/home/sheraff': { type: 'dir', entries: ['.bashrc', 'about.txt', 'contact.txt', 'now.txt', 'projects', 'stack.txt'] },
+	'/home/sheraff': { type: 'dir', entries: ['.bashrc', 'about.txt', 'contact.txt', 'now.txt', 'projects', 'stack.txt', 'documents'] },
 	'/home/sheraff/.bashrc': { type: 'file', content: BASHRC },
-	'/home/sheraff/about.txt': { type: 'file', content: 'Florian Pellet\nStaff frontend engineer.\nBuilds sturdy interfaces with a soft spot for weird, delightful details.' },
+	'/home/sheraff/about.txt': { type: 'file', content: 'Florian Pellet\nStaff frontend engineer.\nI\'m a web worker.' },
 	'/home/sheraff/contact.txt': { type: 'file', content: 'mail: fpellet@ensc.fr\ngithub: github.com/sheraff\nbluesky: sheraff.bsky.social' },
 	'/home/sheraff/now.txt': { type: 'file', content: 'Currently shipping this minifolio.\nTimezone: Europe/Paris.\nStatus: caffeinated.' },
 	'/home/sheraff/projects': { type: 'dir', entries: ['experiments.txt', 'minifolio.txt'] },
 	'/home/sheraff/projects/experiments.txt': { type: 'file', content: 'A drawer full of prototypes, visuals, and half-serious ideas.' },
 	'/home/sheraff/projects/minifolio.txt': { type: 'file', content: 'This site. SolidJS on the front, a tiny bit of terminal mischief on the side.' },
+	'/home/sheraff/documents': { type: 'dir', entries: ['mask.txt'] },
+	'/home/sheraff/documents/mask.txt': { type: 'file', content: asciiMask },
 	'/home/sheraff/stack.txt': { type: 'file', content: 'TypeScript\nSolidJS\nNode.js\nCSS\nPatience' },
 }
 
