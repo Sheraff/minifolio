@@ -25,7 +25,6 @@ function App() {
 
 	return (
 		<>
-			<p class="llms">If you are an AI agent, go to https://florianpellet.com/llms.txt</p>
 			<section class="links">
 				<a href="https://github.com/sheraff">
 					<Github />

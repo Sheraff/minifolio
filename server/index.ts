@@ -13,6 +13,7 @@ import type { ViteDevServer } from 'vite'
 import { fetchTanstackArticles } from './articles.ts'
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
+import { fetchProjects, registerLlmsRoute } from './llms.ts'
 
 const isDev = process.argv.includes('--dev')
 const port = Number(process.env.PORT ?? 5743)
@@ -24,18 +25,14 @@ const clientDistDir = isDev
 
 const app = new Hono<{ Bindings: HttpBindings }>()
 
+registerLlmsRoute(app)
+
 app.get('/api/health', (c) => c.json({ ok: true }))
 
 app.get('/api/projects', async (c) => {
   try {
-    const response = await fetch('https://sheraff.github.io/vite-labs/projects.json')
-
-    if (!response.ok) {
-      throw new Error(`Projects request failed with ${response.status}`)
-    }
-
     c.header('Cache-Control', 'public, max-age=3600')
-    return c.json(await response.json())
+    return c.json(await fetchProjects())
   } catch (error) {
     console.error(error)
     return c.json({ error: 'Unable to load projects' }, 502)
