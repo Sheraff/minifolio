@@ -1,0 +1,38 @@
+.links {
+	display: flex;
+	flex-direction: row-reverse;
+	padding: 0;
+	position: relative;
+	z-index: 1;
+
+	a {
+		cursor: pointer;
+		padding: 10px;
+		border-inline-start: var(--border);
+		display: flex;
+		color: currentColor;
+		position: relative;
+
+		p {
+			position: absolute;
+			right: -1px;
+			top: 100%;
+			border-inline: var(--border);
+			border-block: var(--border);
+			padding-inline: 5px;
+			background-color: var(--bg);
+			opacity: 0;
+			transition: opacity 75ms ease;
+			z-index: 1;
+		}
+
+		&:hover p {
+			opacity: 1;
+		}
+	}
+
+	svg {
+		height: 1lh;
+		width: 1lh;
+	}
+}

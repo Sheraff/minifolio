@@ -1,14 +1,13 @@
 import { onCleanup, onMount } from "solid-js"
 import { attachRandomGlitch } from "#/glitchText"
 import { Glitch } from "#/svg/glitch"
-import { Github } from "#/svg/github"
-import { Bluesky } from "#/svg/bluesky"
 import { Contributions } from "#/sections/contributions"
 import { Repositories } from "#/sections/repositories"
 import { Articles } from "#/sections/articles"
 import { Labs } from "#/sections/labs"
 import { Identity } from "#/sections/identity"
 import { Head } from "#/sections/head"
+import { Links } from "#/sections/links"
 
 
 function App() {
@@ -25,14 +24,7 @@ function App() {
 
 	return (
 		<>
-			<section class="links">
-				<a href="https://github.com/sheraff">
-					<Github />
-				</a>
-				<a href="https://bsky.app/profile/sheraff.bsky.social">
-					<Bluesky />
-				</a>
-			</section>
+			<Links />
 			<hr />
 			<Head />
 			<hr data-big />

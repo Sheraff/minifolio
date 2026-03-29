@@ -112,29 +112,6 @@ section {
 	filter: saturate(1.4);
 }
 
-svg {
-	fill: currentColor;
-}
-
-.links {
-	display: flex;
-	flex-direction: row-reverse;
-	padding: 0;
-
-	a {
-		cursor: pointer;
-		padding: 10px;
-		border-inline-start: var(--border);
-		display: flex;
-		color: currentColor;
-	}
-
-	svg {
-		height: 1lh;
-		width: 1lh;
-	}
-}
-
 [data-glitch-active] {
 	filter: url(#glitch);
 }
