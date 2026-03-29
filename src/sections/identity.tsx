@@ -1,5 +1,5 @@
 import { Time, TimeDifference } from "#/time"
-import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
+import { createEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import './identity.css'
 
 const RAW_FILES = {
@@ -53,6 +53,11 @@ export function Identity() {
 function Terminal(props: { initial: string }) {
 	const state: TerminalState = {}
 	const [history, setHistory] = createSignal<Array<{ command: string, result: string }>>([])
+	let historyCursor = 0
+
+	createEffect(() => {
+		historyCursor = history().length
+	})
 
 	return (
 		<>
@@ -64,7 +69,7 @@ function Terminal(props: { initial: string }) {
 			</For>
 			<div>
 				<textarea value={props.initial} autofocus name="tty" on:keydown={e => {
-					if (e.key === "Enter") {
+					if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
 						e.preventDefault()
 						const value = e.currentTarget.value
 						if (value) {
@@ -73,16 +78,38 @@ function Terminal(props: { initial: string }) {
 							else setHistory(p => [...p, entry])
 							e.currentTarget.value = ''
 						}
-					} else if (e.key === 'Tab') {
+					} else if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
 						e.preventDefault()
 						const suggestion = autocomplete(e.currentTarget.value, state)
 						if (suggestion) e.currentTarget.value = suggestion
-					} else if (e.key === 'Escape') {
+					} else if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+						e.preventDefault()
 						e.currentTarget.blur()
 						e.currentTarget.value = ''
-					} else if (e.key === 'k' && e.metaKey) {
+					} else if (e.key === 'k' && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.metaKey) {
 						e.preventDefault()
 						setHistory([])
+					} else if (e.key === 'c' && !e.shiftKey && e.ctrlKey && !e.metaKey && !e.metaKey) {
+						e.preventDefault()
+						setHistory([])
+						e.currentTarget.blur()
+						e.currentTarget.value = ''
+					} else if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+						if (historyCursor > 0) {
+							historyCursor--
+							e.currentTarget.value = history()[historyCursor].command
+							e.preventDefault()
+						}
+					} else if (e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+						if (historyCursor < history().length) {
+							historyCursor++
+							if (historyCursor === history().length) {
+								e.currentTarget.value = ''
+							} else {
+								e.currentTarget.value = history()[historyCursor].command
+							}
+							e.preventDefault()
+						}
 					}
 				}} />
 			</div>
