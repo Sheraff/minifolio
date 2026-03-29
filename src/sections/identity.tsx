@@ -1,7 +1,11 @@
 import { Time, TimeDifference } from "#/time"
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js"
 import './identity.css'
-import asciiMask from '#/svg/mask.txt?raw'
+
+const RAW_FILES = {
+	...import.meta.glob('/fs/**', { eager: true, query: '?raw', import: 'default' }),
+	...import.meta.glob('/fs/**/.*', { eager: true, query: '?raw', import: 'default' }),
+} as Record<string, string>
 
 export function Identity() {
 	const [active, setActive] = createSignal<boolean | string>(false)
@@ -144,29 +148,38 @@ const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'status'] as const
 
 const PATH_COMMANDS = new Set(['cd', 'ls', 'tree', 'cat'])
 
-const BASHRC = Object.entries(ALIASES)
-	.map(([name, value]) => `alias ${name}='${value}'`)
-	.join('\n')
-
 const CLEAR_SIGNAL = '__clear__'
 
-const FILE_SYSTEM: Record<string, FsEntry> = {
-	'/': { type: 'dir', entries: ['etc', 'home'] },
-	'/etc': { type: 'dir', entries: ['hostname', 'motd'] },
-	'/etc/hostname': { type: 'file', content: 'florianpellet.com' },
-	'/etc/motd': { type: 'file', content: 'Welcome to the tiny fake terminal. Type help and poke around.' },
-	'/home': { type: 'dir', entries: ['sheraff'] },
-	'/home/sheraff': { type: 'dir', entries: ['.bashrc', 'about.txt', 'contact.txt', 'now.txt', 'projects', 'stack.txt', 'documents'] },
-	'/home/sheraff/.bashrc': { type: 'file', content: BASHRC },
-	'/home/sheraff/about.txt': { type: 'file', content: 'Florian Pellet\nStaff frontend engineer.\nI\'m a web worker.' },
-	'/home/sheraff/contact.txt': { type: 'file', content: 'mail: fpellet@ensc.fr\ngithub: github.com/sheraff\nbluesky: sheraff.bsky.social' },
-	'/home/sheraff/now.txt': { type: 'file', content: 'Currently shipping this minifolio.\nTimezone: Europe/Paris.\nStatus: caffeinated.' },
-	'/home/sheraff/projects': { type: 'dir', entries: ['experiments.txt', 'minifolio.txt'] },
-	'/home/sheraff/projects/experiments.txt': { type: 'file', content: 'A drawer full of prototypes, visuals, and half-serious ideas.' },
-	'/home/sheraff/projects/minifolio.txt': { type: 'file', content: 'This site. SolidJS on the front, a tiny bit of terminal mischief on the side.' },
-	'/home/sheraff/documents': { type: 'dir', entries: ['mask.txt'] },
-	'/home/sheraff/documents/mask.txt': { type: 'file', content: asciiMask },
-	'/home/sheraff/stack.txt': { type: 'file', content: 'TypeScript\nSolidJS\nNode.js\nCSS\nPatience' },
+const FILE_SYSTEM = buildFileSystem(RAW_FILES)
+
+function buildFileSystem(rawFiles: Record<string, string>): Record<string, FsEntry> {
+	const directories = new Map<string, Set<string>>([['/', new Set()]])
+	const files: Record<string, FileEntry> = {}
+
+	for (const [key, content] of Object.entries(rawFiles)) {
+		const path = key.slice(3)
+		const segments = path.split('/').filter(Boolean)
+		const name = segments.at(-1)
+		if (!name) continue
+
+		let current = '/'
+		for (const segment of segments.slice(0, -1)) {
+			directories.get(current)?.add(segment)
+			current = joinPath(current, segment)
+			if (!directories.has(current)) directories.set(current, new Set())
+		}
+
+		directories.get(current)?.add(name)
+		files[path] = { type: 'file', content }
+	}
+
+	return {
+		...Object.fromEntries([...directories.entries()].map(([path, entries]) => [path, {
+			type: 'dir' as const,
+			entries: [...entries],
+		}])),
+		...files,
+	}
 }
 
 function autocomplete(command: string, state: TerminalState): string {

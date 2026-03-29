@@ -1,0 +1,3 @@
+mail: fpellet@ensc.fr
+github: github.com/sheraff
+bluesky: sheraff.bsky.social

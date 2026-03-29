@@ -1,0 +1,5 @@
+TypeScript
+SolidJS
+Node.js
+CSS
+Patience
