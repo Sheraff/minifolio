@@ -33,7 +33,7 @@ export function Identity() {
 				<dd>fpellet@ensc.fr</dd>
 				<dt>date +%H:%M</dt>
 				<dd><Time /><TimeDifference /></dd>
-				<Show when={active()}>
+				<Show when={active()} fallback={<div />}>
 					<Terminal initial={typeof active() === 'string' ? active() as string : ''} />
 				</Show>
 				{/* <dt>|</dt> */}
