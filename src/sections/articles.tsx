@@ -1,4 +1,4 @@
-import { createResource, For, Match, Switch } from "solid-js"
+import { createResource, createSignal, For, Match, Show, Switch } from "solid-js"
 import * as v from 'valibot'
 import './articles.css'
 
@@ -22,11 +22,9 @@ const fetchData = async () => {
 	})
 
 	return v.parse(schema, json).articles
-	// const res = v.parse(schema, json).articles
-	// res.push(res[0])
-	// // res.push(res[0])
-	// return res
 }
+
+type Item = Awaited<ReturnType<typeof fetchData>>[number]
 
 export function Articles() {
 	const [data] = createResource(fetchData)
@@ -37,21 +35,70 @@ export function Articles() {
 					<ul />
 				</Match>
 				<Match when={data()}>
-					<ul role="list" data-even={data()!.length % 2 === 0 ? 'true' : undefined}>
+					<ul role="list">
 						<For each={data()}>
-							{(item) =>
-								<li role="listitem">
-									<a href={item.link}>
-										<img src={item.imageUrl} height="100" />
-										<p class="title">{item.title}</p>
-										{/* <p class="subtitle">{item.description}</p> */}
-									</a>
-								</li>
-							}
+							{(item) => <Card item={item} />}
 						</For>
 					</ul>
 				</Match>
 			</Switch>
 		</section>
+	)
+}
+
+type Char = { real: string, list: string }
+const scramble = '&@#=*$%01+{}µ~<>[]'.split('')
+const COUNT = 6
+function randomString() {
+	const arr = new Array(COUNT)
+	for (let i = 0; i < COUNT; i++) {
+		arr[i] = scramble[Math.floor(Math.random() * scramble.length)]
+	}
+	return arr.join('\n')
+}
+
+function Card(props: { item: Item }) {
+	const [desc, setDesc] = createSignal<Char[] | null>(null)
+	return (
+		<li role="listitem"
+			on:mouseenter={() => {
+				const segmenter = new Intl.Segmenter('en-US', { granularity: 'grapheme' })
+				const desc: Char[] = []
+				for (const { segment } of segmenter.segment(props.item.description)) {
+					desc.push({
+						real: segment,
+						list: segment === ' ' ? segment : randomString() + '\n' + segment,
+					})
+				}
+				console.log(desc.map(c => c.real).join(''))
+				setDesc(desc)
+			}}
+		>
+			<a href={props.item.link}>
+				<figure>
+					<img src={props.item.imageUrl} />
+					<figcaption>
+						{props.item.title}
+					</figcaption>
+				</figure>
+				<div>
+					<p>
+						<Show when={desc()} fallback={props.item.description}>
+							<For each={desc()}>
+								{(char, i) => <span
+									data-chars={char.list}
+									style={{
+										'--delay': i(),
+										'--count': ((char.list.length - 1) / 2)
+									}}
+								>
+									{char.real}
+								</span>}
+							</For>
+						</Show>
+					</p>
+				</div>
+			</a>
+		</li>
 	)
 }

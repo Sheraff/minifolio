@@ -31,7 +31,8 @@
 	text-shadow: none;
 }
 
-p {
+p,
+figure {
 	margin: 0;
 }
 

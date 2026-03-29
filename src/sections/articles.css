@@ -1,48 +1,132 @@
 .article {
+	padding: 10px 0;
+	container-type: inline-size;
+
 	ul {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		column-gap: 10px;
+		font-size: smaller;
 		row-gap: 1lh;
 
-		&[data-even] {
-			grid-template-columns: repeat(2, 1fr);
+		--count: 2;
+		--gap: 30px;
+		--width: calc((100cqw - var(--gap) * (var(--count) - 1)) / var(--count));
+		--ch-width: calc(round(down, var(--width), 1ch));
 
-			a {
-				width: 90%;
-			}
+		--img-ratio: calc(3 / 2);
+		--img-height: calc(round(nearest, (var(--ch-width) / var(--img-ratio)), 1lh));
+
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-evenly;
+
+		@media (width < 550px) {
+			--count: 1;
 		}
 	}
 
 	a {
+		width: var(--ch-width);
 		position: relative;
 		z-index: 0;
 		display: block;
 		color: currentColor;
 		text-decoration: none;
-		width: 100%;
 		height: 100%;
 		place-self: center;
+
+		&::after {
+			content: '';
+			display: block;
+			position: absolute;
+			inset: 0;
+			background: var(--bg);
+			opacity: 0;
+			z-index: 1;
+			pointer-events: none;
+			transition: opacity 250ms ease;
+		}
+
+		&:hover::after {
+			opacity: 0.9;
+		}
 	}
 
 	img {
+		box-shadow: 0 0 0 1px var(--bg-accent);
+		display: block;
 		width: 100%;
-		height: auto;
-		aspect-ratio: 3/2;
+		height: var(--img-height);
 		object-fit: cover;
 		object-position: center;
-		border: var(--border);
 	}
 
-	.title {
-		font-size: smaller;
+	figcaption {
 		text-wrap: balance;
 		font-weight: 200;
 	}
 
-	.subtitle {
-		font-size: x-small;
-		text-wrap: pretty;
-		font-weight: 100;
+	div {
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		padding: 1lh 3ch;
+		pointer-events: none;
+	}
+
+	p {
+		overflow: hidden;
+		color: transparent;
+		opacity: 0;
+		transition: opacity 250ms ease;
+		max-height: 100%;
+
+		a:hover & {
+			opacity: 1;
+			pointer-events: all;
+		}
+
+		@starting-style {
+			opacity: 0;
+		}
+
+		span {
+			position: relative;
+			overflow: hidden;
+			white-space: pre-wrap;
+			clip-path: inset(-1em 0 -1em);
+			color: transparent;
+
+			&::after {
+				content: attr(data-chars);
+				color: var(--color);
+				inset: auto 0 0;
+				width: 1ch;
+				position: absolute;
+				word-break: break-all;
+				line-height: 3em;
+				animation:
+					hide-scrambled 0ms linear calc(var(--delay) * 10ms) backwards,
+					unscramble 400ms steps(var(--count), jump-end) calc(var(--delay) * 10ms) both;
+			}
+		}
+	}
+}
+
+@keyframes hide-scrambled {
+	from {
+		color: transparent;
+	}
+
+	to {
+		color: var(--color);
+	}
+}
+
+@keyframes unscramble {
+	from {
+		transform: translateY(calc(100% - 2em));
+	}
+
+	to {
+		transform: translateY(1em);
 	}
 }
