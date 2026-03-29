@@ -5,7 +5,7 @@ const RAW_FILES = {
 	...import.meta.glob('/fs/**/.*', { eager: true, query: '?raw', import: 'default' }),
 } as Record<string, string>
 
-export type HistoryEntry = { command: string, result: string }
+export type HistoryEntry = { command: string, result: string | symbol }
 
 export function InteractiveTerminal(props: {
 	history: Accessor<HistoryEntry[]>

@@ -1,9 +1,21 @@
 import { Time, TimeDifference } from "#/time"
-import { createSignal, For, lazy, onCleanup, onMount, Show, Suspense } from "solid-js"
+import { createSignal, For, lazy, onCleanup, onMount, Show, Suspense, type Accessor, type Setter } from "solid-js"
 import './identity.css'
 import type { HistoryEntry } from "#/sections/identity/terminal"
 
 const InteractiveTerminal = lazy(() => import("#/sections/identity/terminal").then(m => ({ default: m.InteractiveTerminal })))
+
+const liveTime = Symbol()
+
+const specialLines = {
+	[liveTime]: () => <><Time /><TimeDifference /></>
+}
+
+function toOutput(result: HistoryEntry['result']) {
+	if (typeof result === 'string') return result
+	if (result in specialLines) return specialLines[result as keyof typeof specialLines]()
+	throw new Error('Invalid TTY result')
+}
 
 export function Identity() {
 	const [active, setActive] = createSignal<boolean | string>(false)
@@ -21,6 +33,13 @@ export function Identity() {
 	}, { signal: controller.signal }))
 	onCleanup(() => controller.abort())
 
+	const [history, setHistory] = createSignal<HistoryEntry[]>([
+		{ command: 'whoami', result: 'sheraff' },
+		{ command: 'hostname -f', result: 'florianpellet.com' },
+		{ command: 'git config user.email', result: 'fpellet@ensc.fr' },
+		{ command: 'date +%H:%M', result: liveTime },
+	])
+
 	return (
 		<section class="identity" on:click={(e) => {
 			setActive(true)
@@ -28,44 +47,37 @@ export function Identity() {
 			if (area) area.focus()
 		}}>
 			<dl>
-				<dt>whoami</dt>
-				<dd>sheraff</dd>
-				<dt>hostname -f</dt>
-				<dd>florianpellet.com</dd>
-				<dt>git config user.email</dt>
-				<dd>fpellet@ensc.fr</dd>
-				<dt>date +%H:%M</dt>
-				<dd><Time /><TimeDifference /></dd>
+				<For each={history()}>
+					{entry => <>
+						<dt>{entry.command}</dt>
+						<dd>{toOutput(entry.result)}</dd>
+					</>}
+				</For>
 				<Show when={active()} fallback={<div />}>
-					<Terminal initial={typeof active() === 'string' ? active() as string : ''} />
+					<Terminal
+						initial={typeof active() === 'string' ? active() as string : ''}
+						history={history}
+						setHistory={setHistory}
+					/>
 				</Show>
 			</dl>
 		</section>
 	)
 }
 
-function Terminal(props: { initial: string }) {
-	const [history, setHistory] = createSignal<HistoryEntry[]>([])
+function Terminal(props: { initial: string, history: Accessor<HistoryEntry[]>, setHistory: Setter<HistoryEntry[]> }) {
 	const [input, setInput] = createSignal(props.initial)
 
 	return (
-		<>
-			<For each={history()}>
-				{entry => <>
-					<dt>{entry.command}</dt>
-					<dd>{entry.result}</dd>
-				</>}
-			</For>
-			<div>
-				<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" />}>
-					<InteractiveTerminal
-						history={history}
-						setHistory={setHistory}
-						input={input}
-						setInput={setInput}
-					/>
-				</Suspense>
-			</div>
-		</>
+		<div>
+			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" />}>
+				<InteractiveTerminal
+					history={props.history}
+					setHistory={props.setHistory}
+					input={input}
+					setInput={setInput}
+				/>
+			</Suspense>
+		</div>
 	)
 }
