@@ -28,6 +28,10 @@
 
 	dd {
 		display: flex;
+
+		&:empty {
+			display: none;
+		}
 	}
 
 	span {
