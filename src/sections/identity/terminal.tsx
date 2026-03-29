@@ -1,4 +1,4 @@
-import { createEffect, onMount, type Accessor, type Setter } from "solid-js"
+import { createEffect, createMemo, onMount, type Accessor, type Setter } from "solid-js"
 
 const RAW_FILES = {
 	...import.meta.glob('/fs/**', { eager: true, query: '?raw', import: 'default' }),
@@ -10,7 +10,8 @@ export type HistoryEntry = { command: string, result: string }
 export function InteractiveTerminal(props: {
 	history: Accessor<HistoryEntry[]>
 	setHistory: Setter<HistoryEntry[]>
-	initial: string
+	input: Accessor<string>
+	setInput: Setter<string>
 }) {
 	const state: TerminalState = {}
 	let historyCursor = 0
@@ -22,51 +23,71 @@ export function InteractiveTerminal(props: {
 	let textarea: HTMLTextAreaElement | undefined
 	onMount(() => textarea?.focus())
 
+
+	// handle accumulated lines that might have happened while lazy loading
+	const lines = props.input().split('\n')
+	if (lines.length > 1) {
+		for (let i = 0; i < lines.length - 1; i++) {
+			handleSubmit(lines[i])
+		}
+		props.setInput(lines.at(-1)!)
+	}
+
+	function handleSubmit(value: string) {
+		const entry = resolveCommand(value, state)
+		if (entry.clear) props.setHistory([])
+		else props.setHistory(p => [...p, entry])
+	}
+
 	return (
-		<textarea ref={textarea} value={props.initial} autofocus name="tty" on:keydown={e => {
-			if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
-				e.preventDefault()
-				const value = e.currentTarget.value
-				if (value) {
-					const entry = resolveCommand(e.currentTarget.value, state)
-					if (entry.clear) props.setHistory([])
-					else props.setHistory(p => [...p, entry])
-					e.currentTarget.value = ''
-				}
-			} else if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
-				e.preventDefault()
-				const suggestion = autocomplete(e.currentTarget.value, state)
-				if (suggestion) e.currentTarget.value = suggestion
-			} else if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
-				e.preventDefault()
-				e.currentTarget.blur()
-				e.currentTarget.value = ''
-			} else if (e.key === 'k' && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.metaKey) {
-				e.preventDefault()
-				props.setHistory([])
-			} else if (e.key === 'c' && !e.shiftKey && e.ctrlKey && !e.metaKey && !e.metaKey) {
-				e.preventDefault()
-				props.setHistory([])
-				e.currentTarget.blur()
-				e.currentTarget.value = ''
-			} else if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
-				if (historyCursor > 0) {
-					historyCursor--
-					e.currentTarget.value = props.history()[historyCursor].command
+		<textarea
+			ref={textarea}
+			autofocus
+			name="tty"
+			value={props.input()}
+			on:input={e => props.setInput(e.target.value)}
+			on:keydown={e => {
+				if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
 					e.preventDefault()
-				}
-			} else if (e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
-				if (historyCursor < props.history().length) {
-					historyCursor++
-					if (historyCursor === props.history().length) {
+					const value = e.currentTarget.value
+					if (value) {
+						handleSubmit(value)
 						e.currentTarget.value = ''
-					} else {
-						e.currentTarget.value = props.history()[historyCursor].command
 					}
+				} else if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
 					e.preventDefault()
+					const suggestion = autocomplete(e.currentTarget.value, state)
+					if (suggestion) e.currentTarget.value = suggestion
+				} else if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+					e.preventDefault()
+					e.currentTarget.blur()
+					e.currentTarget.value = ''
+				} else if (e.key === 'k' && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.metaKey) {
+					e.preventDefault()
+					props.setHistory([])
+				} else if (e.key === 'c' && !e.shiftKey && e.ctrlKey && !e.metaKey && !e.metaKey) {
+					e.preventDefault()
+					props.setHistory([])
+					e.currentTarget.blur()
+					e.currentTarget.value = ''
+				} else if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+					if (historyCursor > 0) {
+						historyCursor--
+						e.currentTarget.value = props.history()[historyCursor].command
+						e.preventDefault()
+					}
+				} else if (e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+					if (historyCursor < props.history().length) {
+						historyCursor++
+						if (historyCursor === props.history().length) {
+							e.currentTarget.value = ''
+						} else {
+							e.currentTarget.value = props.history()[historyCursor].command
+						}
+						e.preventDefault()
+					}
 				}
-			}
-		}} />
+			}} />
 	)
 }
 

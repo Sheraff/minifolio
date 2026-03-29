@@ -1,7 +1,7 @@
 import { Time, TimeDifference } from "#/time"
 import { createSignal, For, lazy, onCleanup, onMount, Show, Suspense } from "solid-js"
 import './identity.css'
-import { type HistoryEntry } from "#/sections/identity/terminal"
+import type { HistoryEntry } from "#/sections/identity/terminal"
 
 const InteractiveTerminal = lazy(() => import("#/sections/identity/terminal").then(m => ({ default: m.InteractiveTerminal })))
 
@@ -46,6 +46,7 @@ export function Identity() {
 
 function Terminal(props: { initial: string }) {
 	const [history, setHistory] = createSignal<HistoryEntry[]>([])
+	const [input, setInput] = createSignal(props.initial)
 
 	return (
 		<>
@@ -56,11 +57,12 @@ function Terminal(props: { initial: string }) {
 				</>}
 			</For>
 			<div>
-				<Suspense fallback={<textarea value={props.initial} autofocus name="tty" />}>
+				<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" />}>
 					<InteractiveTerminal
 						history={history}
 						setHistory={setHistory}
-						initial={props.initial}
+						input={input}
+						setInput={setInput}
 					/>
 				</Suspense>
 			</div>
