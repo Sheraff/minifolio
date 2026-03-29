@@ -66,7 +66,7 @@ function List(props: { list: Awaited<ReturnType<typeof fetchData>> }) {
 				next[index] = to
 				return next
 			})
-		}, 3200)
+		}, 3300)
 
 		// find swap pair
 		let from: number
