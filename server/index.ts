@@ -14,9 +14,22 @@ import { fetchTanstackArticles } from './articles.ts'
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
 import { fetchProjects, registerLlmsRoute } from './llms.ts'
+import { parseArgs } from "node:util"
 
-const isDev = process.argv.includes('--dev')
-const port = Number(process.env.PORT ?? 5743)
+const parsed = parseArgs({
+  options: {
+    dev: {
+      type: 'boolean',
+      default: false,
+    },
+    port: {
+      type: 'string',
+    }
+  }
+})
+
+const isDev = parsed.values.dev
+const port = Number(parsed.values.port ?? process.env.PORT ?? 5743)
 
 const serverDir = fileURLToPath(new URL('.', import.meta.url))
 const clientDistDir = isDev

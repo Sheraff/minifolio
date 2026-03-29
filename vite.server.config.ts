@@ -5,8 +5,8 @@ export default defineConfig({
     ssr: 'server/index.ts',
     outDir: 'dist/server',
     emptyOutDir: false,
-    target: 'node22',
-    rollupOptions: {
+    target: 'node24',
+    rolldownOptions: {
       output: {
         entryFileNames: 'server.js',
       },
