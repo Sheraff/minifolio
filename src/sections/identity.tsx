@@ -94,6 +94,7 @@ type TerminalState = {
 	cwd?: string
 	previousCwd?: string
 	history?: string[]
+	fs?: Record<string, FsEntry | null>
 }
 
 type DirectoryEntry = {
@@ -107,6 +108,11 @@ type FileEntry = {
 }
 
 type FsEntry = DirectoryEntry | FileEntry
+
+type Redirection = {
+	operator: '>' | '>>'
+	target: string
+}
 
 const HOME = '/home/sheraff'
 
@@ -141,12 +147,14 @@ const COMMANDS = [
 	'curl',
 	'wget',
 	'ssh',
+	'cp',
+	'mv',
 	'exit',
 ] as const
 
 const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'status'] as const
 
-const PATH_COMMANDS = new Set(['cd', 'ls', 'tree', 'cat'])
+const PATH_COMMANDS = new Set(['cd', 'ls', 'tree', 'cat', 'cp', 'mv', 'touch', 'mkdir'])
 
 const CLEAR_SIGNAL = '__clear__'
 
@@ -196,6 +204,13 @@ function autocomplete(command: string, state: TerminalState): string {
 		return `${match} `
 	}
 
+	if ((effectiveCommand === 'which' || effectiveCommand === 'man') && rawTokens.length <= 2) {
+		const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
+		const match = findFirstMatch([...COMMANDS, ...Object.keys(ALIASES)], target)
+		if (!match || match === target) return ''
+		return replaceLastToken(command, `${match} `, endsWithSpace)
+	}
+
 	if (effectiveCommand === 'git') {
 		const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
 		const shouldCompleteSubcommand = rawTokens.length === 1 || (rawTokens.length === 2 && !rawTokens[1].startsWith('-')) || (rawTokens.length === 1 && endsWithSpace)
@@ -206,14 +221,24 @@ function autocomplete(command: string, state: TerminalState): string {
 		}
 	}
 
+	if (effectiveCommand === 'echo' && rawTokens.length >= 2) {
+		const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
+		const previous = endsWithSpace ? rawTokens[rawTokens.length - 1] : rawTokens[rawTokens.length - 2]
+		if ((previous === '>' || previous === '>>') && !target.startsWith('-')) {
+			const completion = completePath(target, state.cwd ?? HOME, state, { directoriesOnly: false, allowHidden: target.split('/').at(-1)?.startsWith('.') === true })
+			if (!completion || completion === target) return ''
+			return replaceLastToken(command, completion, endsWithSpace)
+		}
+	}
+
 	if (!PATH_COMMANDS.has(effectiveCommand)) return ''
 
 	const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
 	if (target.startsWith('-')) return ''
 
-	const directoriesOnly = effectiveCommand === 'cd'
+	const directoriesOnly = effectiveCommand === 'cd' || effectiveCommand === 'mkdir'
 	const allowHidden = target.split('/').at(-1)?.startsWith('.') === true || expandedTokens.slice(1).some(arg => arg.startsWith('-') && arg.includes('a'))
-	const completion = completePath(target, state.cwd ?? HOME, { directoriesOnly, allowHidden })
+	const completion = completePath(target, state.cwd ?? HOME, state, { directoriesOnly, allowHidden })
 	if (!completion || completion === target) return ''
 	return replaceLastToken(command, completion, endsWithSpace)
 }
@@ -234,17 +259,26 @@ function resolveCommand(command: string, state: TerminalState) {
 	}
 
 	const [name, ...args] = expandAlias(parsed.args)
-	const result = resolveBuiltin(name, args, state)
+	const redirection = extractRedirection(args)
+	if ('error' in redirection) {
+		return { command: input, result: redirection.error, clear: false }
+	}
+
+	const result = resolveBuiltin(name, redirection.args, state, redirection.redirection)
 	if (result === CLEAR_SIGNAL) {
 		return { command: input, result: '', clear: true }
 	}
 	return { command: input, result, clear: false }
 }
 
-function resolveBuiltin(name: string, args: string[], state: TerminalState) {
+function resolveBuiltin(name: string, args: string[], state: TerminalState, redirection?: Redirection) {
+	if (redirection && name !== 'echo') {
+		return 'shell redirection is only supported with echo in this tiny terminal'
+	}
+
 	switch (name) {
 		case 'help':
-			return 'Supported: help, clear, whoami, hostname, pwd, cd, ls, tree, cat, echo, date, git, uname, id, which, history, man\nAliases: ll, portfolio\nAlso recognized in a mostly joke capacity: sudo, rm, mkdir, touch, curl, exit'
+			return 'Supported: help, clear, whoami, hostname, pwd, cd, ls, tree, cat, echo, date, git, uname, id, which, history, man\nAliases: ll, portfolio\n`echo ... > file`, `echo ... >> file`, `touch`, `mkdir`, `cp`, and `mv` can modify files\nAlso recognized in a mostly joke capacity: sudo, rm, curl, exit'
 		case 'clear':
 			return CLEAR_SIGNAL
 		case 'whoami':
@@ -264,7 +298,7 @@ function resolveBuiltin(name: string, args: string[], state: TerminalState) {
 		case 'cat':
 			return resolveCat(args, state)
 		case 'echo':
-			return args.map(arg => arg === '$PWD' ? (state.cwd ?? HOME) : arg).join(' ')
+			return resolveEcho(args, redirection, state)
 		case 'date':
 			return resolveDate(args)
 		case 'git':
@@ -286,8 +320,13 @@ function resolveBuiltin(name: string, args: string[], state: TerminalState) {
 		case 'rm':
 			return 'rm: this terminal is read-only and emotionally attached to its files'
 		case 'mkdir':
+			return resolveMkdir(args, state)
 		case 'touch':
-			return `${name}: read-only filesystem`
+			return resolveTouch(args, state)
+		case 'cp':
+			return resolveCopy(args, state)
+		case 'mv':
+			return resolveMove(args, state)
 		case 'curl':
 		case 'wget':
 		case 'ssh':
@@ -296,6 +335,20 @@ function resolveBuiltin(name: string, args: string[], state: TerminalState) {
 			return 'This terminal lives here now.'
 		default:
 			return `${name}: command not found`
+	}
+}
+
+function extractRedirection(args: string[]): { args: string[], redirection?: Redirection } | { error: string } {
+	const redirectIndex = args.findIndex(arg => arg === '>' || arg === '>>')
+	if (redirectIndex === -1) return { args }
+	if (args.slice(redirectIndex + 1).length !== 1) return { error: 'unsupported redirection syntax' }
+
+	return {
+		args: args.slice(0, redirectIndex),
+		redirection: {
+			operator: args[redirectIndex] as Redirection['operator'],
+			target: args[redirectIndex + 1],
+		},
 	}
 }
 
@@ -324,24 +377,27 @@ function replaceLastToken(command: string, replacement: string, endsWithSpace: b
 	return `${prefix} ${replacement}`
 }
 
-function completePath(fragment: string, cwd: string, options: { directoriesOnly: boolean, allowHidden: boolean }) {
+function completePath(fragment: string, cwd: string, state: TerminalState, options: { directoriesOnly: boolean, allowHidden: boolean }) {
 	const slashIndex = fragment.lastIndexOf('/')
 	const parentInput = slashIndex === -1 ? '' : fragment.slice(0, slashIndex)
 	const partialName = slashIndex === -1 ? fragment : fragment.slice(slashIndex + 1)
 	const directoryPath = resolvePath(cwd, parentInput || '.')
-	const directory = FILE_SYSTEM[directoryPath]
+	const directory = getEntry(directoryPath, state)
 	if (!directory || directory.type !== 'dir') return ''
 
 	const match = [...directory.entries]
 		.filter(name => options.allowHidden || !name.startsWith('.'))
-		.filter(name => !options.directoriesOnly || FILE_SYSTEM[joinPath(directoryPath, name)].type === 'dir')
+		.filter(name => {
+			if (!options.directoriesOnly) return true
+			return getEntry(joinPath(directoryPath, name), state)?.type === 'dir'
+		})
 		.sort((left, right) => left.localeCompare(right))
 		.find(name => name.startsWith(partialName))
 
 	if (!match) return ''
 
 	const matchedPath = joinPath(directoryPath, match)
-	const suffix = FILE_SYSTEM[matchedPath].type === 'dir' ? '/' : ' '
+	const suffix = getEntry(matchedPath, state)?.type === 'dir' ? '/' : ' '
 	const base = parentInput ? `${parentInput}/` : ''
 	return `${base}${match}${suffix}`
 }
@@ -358,7 +414,7 @@ function resolveCd(args: string[], state: TerminalState) {
 	}
 
 	const target = resolvePath(state.cwd ?? HOME, args[0])
-	const entry = FILE_SYSTEM[target]
+	const entry = getEntry(target, state)
 	if (!entry) return `cd: ${args[0] ?? '~'}: No such file or directory`
 	if (entry.type !== 'dir') return `cd: ${args[0]}: Not a directory`
 
@@ -387,12 +443,12 @@ function resolveLs(args: string[], state: TerminalState) {
 
 	const paths = targets.length > 0 ? targets.map(target => resolvePath(state.cwd ?? HOME, target)) : [state.cwd ?? HOME]
 	return paths
-		.map((path, index) => formatLs(path, targets[index], { showAll, long, showHeader: paths.length > 1 }))
+		.map((path, index) => formatLs(path, targets[index], state, { showAll, long, showHeader: paths.length > 1 }))
 		.join('\n\n')
 }
 
-function formatLs(path: string, rawTarget: string | undefined, options: { showAll: boolean, long: boolean, showHeader: boolean }) {
-	const entry = FILE_SYSTEM[path]
+function formatLs(path: string, rawTarget: string | undefined, state: TerminalState, options: { showAll: boolean, long: boolean, showHeader: boolean }) {
+	const entry = getEntry(path, state)
 	if (!entry) return `ls: cannot access '${rawTarget ?? path}': No such file or directory`
 
 	const lines: string[] = []
@@ -413,13 +469,16 @@ function formatLs(path: string, rawTarget: string | undefined, options: { showAl
 			if (name === '.' || name === '..') {
 				return `drwxr-xr-x 1 sheraff sheraff 96 Mar 29 2026 ${name}/`
 			}
-			return formatLsEntry(name, FILE_SYSTEM[joinPath(path, name)], true)
+			const child = getEntry(joinPath(path, name), state)
+			if (!child) return `?--------- 1 sheraff sheraff   0 Mar 29 2026 ${name}`
+			return formatLsEntry(name, child, true)
 		}))
 	}
 	else {
 		lines.push(names.map(name => {
 			if (name === '.' || name === '..') return `${name}/`
-			return formatLsEntry(name, FILE_SYSTEM[joinPath(path, name)], false)
+			const child = getEntry(joinPath(path, name), state)
+			return child ? formatLsEntry(name, child, false) : name
 		}).join('  '))
 	}
 
@@ -429,24 +488,28 @@ function formatLs(path: string, rawTarget: string | undefined, options: { showAl
 function resolveTree(args: string[], state: TerminalState) {
 	if (args.length > 1) return 'tree: too many arguments'
 	const path = resolvePath(state.cwd ?? HOME, args[0])
-	const entry = FILE_SYSTEM[path]
+	const entry = getEntry(path, state)
 	if (!entry) return `tree: ${args[0] ?? path}: No such file or directory`
 
 	const rootLabel = path === '/' ? '/' : basename(path)
 	if (entry.type === 'file') return rootLabel
 
-	return [rootLabel, ...walkTree(path, '', entry.entries)].join('\n')
+	return [rootLabel, ...walkTree(path, '', state)].join('\n')
 }
 
-function walkTree(path: string, prefix: string, names: string[]): string[] {
-	const visibleNames = [...names].sort((left, right) => left.localeCompare(right)).filter(name => !name.startsWith('.'))
+function walkTree(path: string, prefix: string, state: TerminalState): string[] {
+	const entry = getEntry(path, state)
+	if (!entry || entry.type !== 'dir') return []
+
+	const visibleNames = [...entry.entries].sort((left, right) => left.localeCompare(right)).filter(name => !name.startsWith('.'))
 	return visibleNames.flatMap((name, index) => {
 		const childPath = joinPath(path, name)
-		const child = FILE_SYSTEM[childPath]
+		const child = getEntry(childPath, state)
+		if (!child) return []
 		const last = index === visibleNames.length - 1
 		const branch = `${prefix}${last ? '`-- ' : '|-- '}${name}${child.type === 'dir' ? '/' : ''}`
 		if (child.type !== 'dir') return [branch]
-		return [branch, ...walkTree(childPath, `${prefix}${last ? '    ' : '|   '}`, child.entries)]
+		return [branch, ...walkTree(childPath, `${prefix}${last ? '    ' : '|   '}`, state)]
 	})
 }
 
@@ -455,11 +518,87 @@ function resolveCat(args: string[], state: TerminalState) {
 
 	return args.map(rawPath => {
 		const path = resolvePath(state.cwd ?? HOME, rawPath)
-		const entry = FILE_SYSTEM[path]
+		const entry = getEntry(path, state)
 		if (!entry) return `cat: ${rawPath}: No such file or directory`
 		if (entry.type === 'dir') return `cat: ${rawPath}: Is a directory`
 		return entry.content
 	}).join('\n')
+}
+
+function resolveEcho(args: string[], redirection: Redirection | undefined, state: TerminalState) {
+	const output = args.map(arg => arg === '$PWD' ? (state.cwd ?? HOME) : arg).join(' ')
+	if (!redirection) return output
+	return writeToFile(resolvePath(state.cwd ?? HOME, redirection.target), `${output}\n`, redirection.operator === '>>', state)
+}
+
+function resolveTouch(args: string[], state: TerminalState) {
+	if (args.length === 0) return 'touch: missing file operand'
+
+	for (const rawPath of args) {
+		const path = resolvePath(state.cwd ?? HOME, rawPath)
+		const parentPath = dirname(path)
+		const parent = getEntry(parentPath, state)
+		if (!parent) return `touch: cannot touch '${rawPath}': No such file or directory`
+		if (parent.type !== 'dir') return `touch: cannot touch '${rawPath}': Not a directory`
+
+		const entry = getEntry(path, state)
+		if (entry?.type === 'dir') return `touch: cannot touch '${rawPath}': Is a directory`
+
+		writeEntry(path, entry?.type === 'file' ? entry : { type: 'file', content: '' }, state)
+	}
+
+	return ''
+}
+
+function resolveMkdir(args: string[], state: TerminalState) {
+	if (args.length === 0) return 'mkdir: missing operand'
+
+	for (const rawPath of args) {
+		const path = resolvePath(state.cwd ?? HOME, rawPath)
+		const parentPath = dirname(path)
+		const parent = getEntry(parentPath, state)
+		if (!parent) return `mkdir: cannot create directory '${rawPath}': No such file or directory`
+		if (parent.type !== 'dir') return `mkdir: cannot create directory '${rawPath}': Not a directory`
+		if (getEntry(path, state)) return `mkdir: cannot create directory '${rawPath}': File exists`
+
+		writeEntry(path, { type: 'dir', entries: [] }, state)
+	}
+
+	return ''
+}
+
+function resolveCopy(args: string[], state: TerminalState) {
+	if (args.length < 2) return 'cp: missing file operand'
+	if (args.length > 2) return 'cp: extra operand'
+
+	const sourcePath = resolvePath(state.cwd ?? HOME, args[0])
+	const targetPath = resolveDestinationPath('cp', sourcePath, args[1], state)
+	if ('error' in targetPath) return targetPath.error
+
+	const source = getEntry(sourcePath, state)
+	if (!source) return `cp: cannot stat '${args[0]}': No such file or directory`
+	if (isAncestorPath(sourcePath, targetPath.path)) return `cp: cannot copy '${args[0]}' to a subdirectory of itself`
+
+	copyEntry(sourcePath, targetPath.path, state)
+	return ''
+}
+
+function resolveMove(args: string[], state: TerminalState) {
+	if (args.length < 2) return 'mv: missing file operand'
+	if (args.length > 2) return 'mv: extra operand'
+
+	const sourcePath = resolvePath(state.cwd ?? HOME, args[0])
+	const targetPath = resolveDestinationPath('mv', sourcePath, args[1], state)
+	if ('error' in targetPath) return targetPath.error
+
+	const source = getEntry(sourcePath, state)
+	if (!source) return `mv: cannot stat '${args[0]}': No such file or directory`
+	if (sourcePath === '/') return "mv: cannot move '/': Device or resource busy"
+	if (isAncestorPath(sourcePath, targetPath.path)) return `mv: cannot move '${args[0]}' to a subdirectory of itself`
+
+	copyEntry(sourcePath, targetPath.path, state)
+	removeEntry(sourcePath, state)
+	return ''
 }
 
 function resolveDate(args: string[]) {
@@ -514,7 +653,8 @@ function parseCommand(command: string): { args: string[] } | { error: string } {
 	let escaped = false
 	let inToken = false
 
-	for (const char of command) {
+	for (let index = 0; index < command.length; index += 1) {
+		const char = command[index]
 		if (escaped) {
 			current += char
 			escaped = false
@@ -541,8 +681,24 @@ function parseCommand(command: string): { args: string[] } | { error: string } {
 			continue
 		}
 
-		if ('|&;<>'.includes(char)) {
+		if ('|&;'.includes(char)) {
 			return { error: 'shell pipes and redirects are disabled in this tiny terminal' }
+		}
+
+		if (char === '>') {
+			if (inToken) {
+				args.push(current)
+				current = ''
+				inToken = false
+			}
+			if (command[index + 1] === '>') {
+				args.push('>>')
+				index += 1
+			}
+			else {
+				args.push('>')
+			}
+			continue
 		}
 
 		if (/\s/.test(char)) {
@@ -571,6 +727,107 @@ function resolvePath(cwd: string, input?: string) {
 	return normalizePath(`${cwd}/${input}`)
 }
 
+function getEntry(path: string, state: TerminalState) {
+	if (state.fs && path in state.fs) return state.fs[path] ?? undefined
+	return FILE_SYSTEM[path]
+}
+
+function resolveDestinationPath(command: 'cp' | 'mv', sourcePath: string, rawTarget: string, state: TerminalState): { path: string } | { error: string } {
+	const requestedPath = resolvePath(state.cwd ?? HOME, rawTarget)
+	const target = getEntry(requestedPath, state)
+	if (target?.type === 'dir') {
+		return { path: joinPath(requestedPath, basename(sourcePath)) }
+	}
+
+	const parentPath = dirname(requestedPath)
+	const parent = getEntry(parentPath, state)
+	if (!parent) return { error: `${command}: cannot create '${rawTarget}': No such file or directory` }
+	if (parent.type !== 'dir') return { error: `${command}: cannot create '${rawTarget}': Not a directory` }
+	return { path: requestedPath }
+}
+
+function writeToFile(path: string, content: string, append: boolean, state: TerminalState) {
+	const parentPath = dirname(path)
+	const parent = getEntry(parentPath, state)
+	if (!parent) return `echo: ${path}: No such file or directory`
+	if (parent.type !== 'dir') return `echo: ${parentPath}: Not a directory`
+
+	const existing = getEntry(path, state)
+	if (existing?.type === 'dir') return `echo: ${path}: Is a directory`
+
+	writeEntry(path, {
+		type: 'file',
+		content: append && existing?.type === 'file' ? `${existing.content}${content}` : content,
+	}, state)
+
+	return ''
+}
+
+function writeEntry(path: string, entry: FsEntry, state: TerminalState) {
+	state.fs ??= {}
+	state.fs[path] = entry
+
+	if (path === '/') return
+
+	const parentPath = dirname(path)
+	const parent = getEntry(parentPath, state)
+	if (!parent || parent.type !== 'dir') return
+
+	state.fs[parentPath] = {
+		type: 'dir',
+		entries: [...new Set([...parent.entries, basename(path)])],
+	}
+}
+
+function copyEntry(sourcePath: string, targetPath: string, state: TerminalState) {
+	const source = getEntry(sourcePath, state)
+	if (!source) return
+
+	if (source.type === 'file') {
+		writeEntry(targetPath, { type: 'file', content: source.content }, state)
+		return
+	}
+
+	writeEntry(targetPath, { type: 'dir', entries: [] }, state)
+	for (const name of source.entries) {
+		copyEntry(joinPath(sourcePath, name), joinPath(targetPath, name), state)
+	}
+	const copied = getEntry(targetPath, state)
+	if (copied?.type === 'dir') {
+		state.fs ??= {}
+		state.fs[targetPath] = { type: 'dir', entries: [...source.entries] }
+	}
+}
+
+function removeEntry(path: string, state: TerminalState) {
+	const entry = getEntry(path, state)
+	if (!entry) return
+
+	if (entry.type === 'dir') {
+		for (const name of entry.entries) {
+			removeEntry(joinPath(path, name), state)
+		}
+	}
+
+	state.fs ??= {}
+	state.fs[path] = null
+
+	if (path === '/') return
+
+	const parentPath = dirname(path)
+	const parent = getEntry(parentPath, state)
+	if (!parent || parent.type !== 'dir') return
+
+	state.fs[parentPath] = {
+		type: 'dir',
+		entries: parent.entries.filter(name => name !== basename(path)),
+	}
+}
+
+function isAncestorPath(path: string, candidate: string) {
+	return candidate === path || candidate.startsWith(`${path}/`)
+}
+
 function normalizePath(path: string) {
 	const parts: string[] = []
 	for (const segment of path.split('/')) {
@@ -589,6 +846,13 @@ function basename(path: string) {
 	if (path === '/') return '/'
 	const parts = path.split('/')
 	return parts[parts.length - 1] ?? path
+}
+
+function dirname(path: string) {
+	if (path === '/') return '/'
+	const parts = path.split('/').filter(Boolean)
+	parts.pop()
+	return `/${parts.join('/')}` || '/'
 }
 
 function formatLsEntry(name: string, entry: FsEntry, long: boolean) {
