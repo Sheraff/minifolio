@@ -47,36 +47,36 @@ export function InteractiveTerminal(props: {
 			value={props.input()}
 			on:input={e => props.setInput(e.target.value)}
 			on:keydown={e => {
-				if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+				if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault()
 					const value = e.currentTarget.value
 					if (value) {
 						handleSubmit(value)
 						e.currentTarget.value = ''
 					}
-				} else if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+				} else if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault()
 					const suggestion = autocomplete(e.currentTarget.value, state)
 					if (suggestion) e.currentTarget.value = suggestion
-				} else if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+				} else if (e.key === 'Escape' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault()
 					e.currentTarget.blur()
 					e.currentTarget.value = ''
-				} else if (e.key === 'k' && !e.shiftKey && !e.ctrlKey && !e.metaKey && e.metaKey) {
+				} else if (e.key === 'k' && !e.shiftKey && !e.ctrlKey && e.metaKey && !e.altKey) {
 					e.preventDefault()
 					props.setHistory([])
-				} else if (e.key === 'c' && !e.shiftKey && e.ctrlKey && !e.metaKey && !e.metaKey) {
+				} else if (e.key === 'c' && !e.shiftKey && e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault()
 					props.setHistory([])
 					e.currentTarget.blur()
 					e.currentTarget.value = ''
-				} else if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+				} else if (e.key === 'ArrowUp' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					if (historyCursor > 0) {
 						historyCursor--
 						e.currentTarget.value = props.history()[historyCursor].command
 						e.preventDefault()
 					}
-				} else if (e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.metaKey) {
+				} else if (e.key === 'ArrowDown' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					if (historyCursor < props.history().length) {
 						historyCursor++
 						if (historyCursor === props.history().length) {
