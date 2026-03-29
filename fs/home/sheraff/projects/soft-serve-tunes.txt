@@ -1,0 +1,5 @@
+sheraff/soft-serve-tunes
+- my own music app that i use every day
+- NextJS
+- PWA
+- local first

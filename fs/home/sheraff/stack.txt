@@ -1,5 +1,11 @@
+# for this site
 TypeScript
 SolidJS
-Node.js
+Hono
 CSS
-Patience
+
+# in general
+TypeScript
+React
+TanStack
+Fastify

@@ -1,3 +1,3 @@
-Currently shipping this minifolio.
-Timezone: Europe/Paris.
-Status: caffeinated.
+Timezone: Europe/Paris
+Employment: Matera
+Contributor: TanStack

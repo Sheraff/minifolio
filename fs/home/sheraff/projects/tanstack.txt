@@ -1,0 +1,5 @@
+tanstack/router
+- route-matching algorithm
+- client-side performance
+- SSR performance
+- benchmarking

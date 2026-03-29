@@ -1,1 +1,3 @@
-This site. SolidJS on the front, a tiny bit of terminal mischief on the side.
+This site.
+I wanted to try SolidJS.
+And the obligatory "remade my personal site for the 20th time".
