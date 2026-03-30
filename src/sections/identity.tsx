@@ -70,7 +70,7 @@ function Terminal(props: { initial: string, history: Accessor<HistoryEntry[]>, s
 
 	return (
 		<div>
-			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" />}>
+			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" spellcheck={false} autocorrect="off" autocapitalize="off" />}>
 				<InteractiveTerminal
 					history={props.history}
 					setHistory={props.setHistory}

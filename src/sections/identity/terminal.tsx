@@ -44,6 +44,9 @@ export function InteractiveTerminal(props: {
 			ref={textarea}
 			autofocus
 			name="tty"
+			spellcheck={false}
+			autocorrect="off"
+			autocapitalize="off"
 			value={props.input()}
 			on:input={e => props.setInput(e.target.value)}
 			on:keydown={e => {
