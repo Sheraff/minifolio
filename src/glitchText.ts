@@ -19,7 +19,7 @@ const attachGlitchLoop = (element: HTMLElement, initialDelay: number) => {
 				return
 			}
 
-			const duration = Math.round(randomBetween(180, 420))
+			const duration = Math.round(randomBetween(220, 660))
 			element.dataset.glitchActive = 'true'
 
 			stopTimer = window.setTimeout(() => {
