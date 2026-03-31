@@ -7,8 +7,9 @@
 		row-gap: 1lh;
 
 		--count: 2;
-		--gap: 30px;
-		--width: calc((100cqw - var(--gap) * (var(--count) - 1)) / var(--count));
+		--gap: 10px;
+		--pad: 10px;
+		--width: calc((100cqw - var(--gap) * (var(--count) - 1) - var(--pad) * 2) / var(--count));
 		--ch-width: calc(round(down, var(--width), 1ch));
 
 		--img-ratio: calc(3 / 2);
@@ -16,7 +17,8 @@
 
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: space-evenly;
+		justify-content: space-between;
+		padding-inline: calc((100% - var(--ch-width) * var(--count)) / (2 + (var(--count) - 1)));
 
 		@media (width < 550px) {
 			--count: 1;
