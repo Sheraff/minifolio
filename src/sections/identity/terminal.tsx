@@ -629,9 +629,9 @@ function resolveGit(args: string[]) {
 		case 'branch':
 			return '* main'
 		case 'log':
-			return 'commit 7e1f0lio\nAuthor: sheraff <fpellet@ensc.fr>\n\n    Ship a tiny terminal easter egg\n\ncommit c0ffee42\nAuthor: sheraff <fpellet@ensc.fr>\n\n    Keep making the web a little stranger'
+			return 'commit 7e1f0lio\nAuthor: sheraff <me@florianpellet.com>\n\n    Ship a tiny terminal easter egg\n\ncommit c0ffee42\nAuthor: sheraff <me@florianpellet.com>\n\n    Keep making the web a little stranger'
 		case 'config':
-			if (args[1] === 'user.email' || (args[1] === '--get' && args[2] === 'user.email')) return 'fpellet@ensc.fr'
+			if (args[1] === 'user.email' || (args[1] === '--get' && args[2] === 'user.email')) return 'me@florianpellet.com'
 			if (args[1] === 'user.name' || (args[1] === '--get' && args[2] === 'user.name')) return 'Florian Pellet'
 			return 'git config: only user.name and user.email are wired up here'
 		default:

@@ -1,3 +1,3 @@
-mail: fpellet@ensc.fr
+mail: me@florianpellet.com
 github: github.com/sheraff
 bluesky: sheraff.bsky.social

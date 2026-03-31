@@ -36,7 +36,7 @@ export function Identity() {
 	const [history, setHistory] = createSignal<HistoryEntry[]>([
 		{ command: 'whoami', result: 'sheraff' },
 		{ command: 'hostname -f', result: 'florianpellet.com' },
-		{ command: 'git config user.email', result: 'fpellet@ensc.fr' },
+		{ command: 'git config user.email', result: 'me@florianpellet.com' },
 		{ command: 'date +%H:%M', result: liveTime },
 	])
 

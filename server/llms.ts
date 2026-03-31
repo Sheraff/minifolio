@@ -95,7 +95,7 @@ function buildIntroSection() {
     `- Website: ${siteUrl}`,
     '- Name: Florian Pellet',
     '- Handle: @sheraff',
-    '- Email: fpellet@ensc.fr',
+    '- Email: me@florianpellet.com',
     `- GitHub: ${githubUrl}`,
     `- Bluesky: ${blueskyUrl}`,
     '',
