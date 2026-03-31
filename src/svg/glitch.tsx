@@ -1,31 +1,9 @@
 /**
  * from: https://metaory.github.io/glitcher-app/
  */
-type GlitchProps = {
-	glowIntensity?: number
-}
-
-export function Glitch({ glowIntensity = 1 }: GlitchProps) {
-	const intensity = Math.max(0, Number.isFinite(glowIntensity) ? glowIntensity : 1)
-	const blurDeviation = (0.6 + intensity * 0.8).toFixed(2)
-	const alphaSlope = (0.25 + intensity * 0.55).toFixed(2)
-	const greenTint = (0.02 * intensity).toFixed(3)
-	const blueTint = (0.05 * intensity).toFixed(3)
-	const glowMatrix = `1 0 0 0 0 0 1 0 0 ${greenTint} 0 0 1 0 ${blueTint} 0 0 0 1 0`
-
+export function Glitch() {
 	return <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
 		<defs>
-			<filter id="glow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
-				<feGaussianBlur in="SourceGraphic" stdDeviation={blurDeviation} result="glow-blur" />
-				<feComponentTransfer in="glow-blur" result="glow-level">
-					<feFuncA type="linear" slope={alphaSlope} />
-				</feComponentTransfer>
-				<feColorMatrix in="glow-level" result="glow-tint" type="matrix" values={glowMatrix} />
-				<feMerge>
-					<feMergeNode in="glow-tint" />
-					<feMergeNode in="SourceGraphic" />
-				</feMerge>
-			</filter>
 			<filter id="glitch" primitiveUnits="objectBoundingBox" x="-10%" y="0%" width="120%" height="100%">
 				<feColorMatrix in="SourceGraphic" result="red" type="matrix" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" />
 				<feColorMatrix in="SourceGraphic" result="green" type="matrix" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0" />

@@ -43,6 +43,7 @@
 		left: 10px;
 		margin: 0;
 		font-size: 1rem;
+		text-shadow: var(--heading-glow);
 	}
 
 	h1 a {

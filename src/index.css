@@ -16,6 +16,11 @@
 	--bg: oklch(from var(--theme) 12% c h);
 	--bg-accent: oklch(from var(--theme) 23% 0.05 h);
 	--color: oklch(from var(--theme) 91% 0.03 h);
+	--glow-soft: oklch(from var(--theme) 78% 0.16 h / 0.28);
+	--glow-strong: oklch(from var(--theme) 88% 0.22 h / 0.16);
+	--text-glow: 0 0 0.12em color-mix(in oklab, currentColor 86%, transparent), 0 0 1.4em var(--glow-soft), 0 0 3em var(--glow-strong);
+	--heading-glow: 0 0 0.14em currentColor, 0 0 1.8em var(--glow-soft), 0 0 4.2em var(--glow-strong);
+	--status-glow: 0 0 0.12em color-mix(in oklab, currentColor 86%, transparent), 0 0 1.2em color-mix(in oklab, currentColor 70%, var(--glow-soft)), 0 0 2.8em color-mix(in oklab, currentColor 45%, var(--glow-strong));
 	--border: 1px solid var(--bg-accent);
 
 	background-color: var(--bg);
@@ -46,7 +51,6 @@ body {
 	margin: 0;
 	display: grid;
 	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(10px, 1fr);
-	filter: url(#glow);
 
 
 	&::before,
@@ -121,4 +125,5 @@ section {
 
 h2 {
 	text-align: center;
+	text-shadow: var(--heading-glow);
 }

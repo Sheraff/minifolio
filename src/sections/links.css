@@ -34,5 +34,6 @@
 	svg {
 		height: 1lh;
 		width: 1lh;
+		filter: drop-shadow(0 0 0.12em color-mix(in oklab, currentColor 86%, transparent)) drop-shadow(0 0 0.6em var(--glow-soft)) drop-shadow(0 0 1.4em var(--glow-strong));
 	}
 }

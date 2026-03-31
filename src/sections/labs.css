@@ -51,6 +51,7 @@
 			writing-mode: sideways-lr;
 			text-orientation: mixed;
 			color: var(--light);
+			text-shadow: var(--status-glow);
 			transition: color 50ms;
 		}
 

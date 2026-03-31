@@ -53,7 +53,7 @@ function App() {
 			<hr data-big />
 			<Footer />
 			<div class="rgb-mask" aria-hidden="true" />
-			<Glitch glowIntensity={1} />
+			<Glitch />
 		</>
 	)
 }
