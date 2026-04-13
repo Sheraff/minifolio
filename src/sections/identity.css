@@ -27,7 +27,8 @@
 		line-height: 1.2;
 		padding-block: 0.2lh;
 		display: flex;
-		text-shadow: var(--text-glow);
+		/* shadow on terminal is too expensive */
+		/* text-shadow: var(--text-glow); */
 	}
 
 	dt {
