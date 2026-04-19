@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Florian Pellet Resume</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111;
+      background: #fff;
+      line-height: 1.2;
+      font-size: 10pt;
+    }
+
+    main {
+      max-width: 8.5in;
+      margin: 0 auto;
+      min-height: 11.69in;
+      padding: 0.4in 0.52in 0.42in;
+      display: flex;
+      flex-direction: column;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20pt;
+      line-height: 1.1;
+    }
+
+    .headline {
+      margin-top: 2px;
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .contact {
+      margin-top: 4px;
+      font-size: 9.5pt;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    section {
+      margin-top: 9px;
+    }
+
+    h2 {
+      margin: 0 0 4px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      border-bottom: 1px solid #222;
+      padding-bottom: 2px;
+      letter-spacing: 0.06em;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .entry {
+      margin-top: 6px;
+    }
+
+    .entry:first-of-type {
+      margin-top: 0;
+    }
+
+    .entry-header {
+      font-weight: 700;
+    }
+
+    .entry-body {
+      margin-top: 2px;
+    }
+
+    .muted {
+      color: #444;
+    }
+
+    ul {
+      margin: 3px 0 0 15px;
+      padding: 0;
+    }
+
+    li {
+      margin: 2px 0;
+    }
+
+    .links li,
+    .education li,
+    .skills li {
+      margin: 2px 0;
+    }
+
+    .compact-list {
+      list-style: none;
+      margin-left: 0;
+    }
+
+    .compact-list li {
+      margin: 2px 0;
+    }
+
+    .label {
+      font-weight: 700;
+    }
+
+    .writing-entry {
+      margin-top: 4px;
+    }
+
+    .writing-entry:first-of-type {
+      margin-top: 0;
+    }
+
+    .writing-title {
+      font-weight: 700;
+    }
+
+    .writing-link {
+      margin-top: 1px;
+      font-size: 9.2pt;
+      color: #333;
+    }
+
+    .education-degree {
+      font-weight: 700;
+    }
+
+    .education-school {
+      margin-top: 1px;
+      color: #333;
+    }
+
+    .url {
+      color: #111;
+      word-break: break-word;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Florian Pellet</h1>
+      <div class="headline">Staff / Senior Frontend Engineer</div>
+      <div class="contact">Paris, France | +33 7 82 77 82 82 | me@florianpellet.com | florianpellet.com | github.com/sheraff</div>
+    </header>
+
+    <div class="content">
+      <section>
+        <h2>Summary</h2>
+        <p>Frontend engineer with 7 years of experience in web development and 14 years of programming experience overall, including prior academic research experience. Specialized in frontend architecture, developer experience, and performance, with hands-on experience scaling React and TypeScript codebases through monorepos, typed APIs, design systems, and quality tooling. Maintainer of TanStack Router and contributor to other TypeScript ecosystem projects.</p>
+      </section>
+
+      <section>
+        <h2>Experience</h2>
+
+        <div class="entry">
+          <div class="entry-header">Matera (startup) | Staff Frontend Engineer | 2022 - Present</div>
+          <ul>
+            <li>Reshaped a 1M LoC startup codebase into a scalable monorepo for a scale-up with mostly backend contributors.</li>
+            <li>Migrated multiple repositories into a single monorepo while preserving git history.</li>
+            <li>Migrated from Create React App to Vite, improving HMR, build time, and control over the toolchain.</li>
+            <li>Introduced TypeScript progressively with as few code changes as possible, reaching about 50% adoption in 6 months.</li>
+            <li>Built a typed API query layer from Rails-generated OpenAPI specs.</li>
+            <li>Built a design system that let engineers ship designed features without custom CSS.</li>
+            <li>Drove changes through custom ESLint rules that auto-fix issues and teach best practices.</li>
+            <li>Added Playwright end-to-end tests by spinning up the full stack in near-production conditions.</li>
+            <li>Brought Sentry events down to a manageable level and created a team-wide habit of quality.</li>
+            <li>Taught frontend and web knowledge through presentations, pair programming, and reviews.</li>
+          </ul>
+        </div>
+
+        <div class="entry">
+          <div class="entry-header">Mazarine (agency) | Frontend Developer | 2019 - 2022</div>
+          <ul>
+            <li>Built and shipped dozens of websites across different stacks and delivery constraints.</li>
+            <li>Main frontend developer for the new www.louvre.fr website.</li>
+            <li>Stepped into at-risk projects to stabilize delivery when deadlines or budgets were slipping.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2>Open Source</h2>
+        <div class="entry">
+          <div class="entry-header">TanStack Router | Maintainer</div>
+          <ul class="compact-list entry-body">
+            <li>Performance and benchmarking work across server and client.</li>
+            <li>Route matching algorithm development.</li>
+            <li>Signal-based reactivity architecture.</li>
+          </ul>
+        </div>
+        <div class="entry">
+          <div class="entry-header">tRPC | Contributor</div>
+          <ul class="compact-list entry-body">
+            <li>Out-of-order streaming for batched requests.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section>
+        <h2>Writing</h2>
+        <div class="entry writing-entry">
+          <div class="writing-title">TanStack Router's New Reactive Core: A Signal Graph</div>
+          <div class="writing-link url">https://tanstack.com/blog/tanstack-router-signal-graph</div>
+        </div>
+        <div class="entry writing-entry">
+          <div class="writing-title">5x SSR Throughput: Profiling SSR Hot Paths in TanStack Start</div>
+          <div class="writing-link url">https://tanstack.com/blog/tanstack-start-5x-ssr-throughput</div>
+        </div>
+        <div class="entry writing-entry">
+          <div class="writing-title">How we accidentally made route matching more performant by aiming for correctness</div>
+          <div class="writing-link url">https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Academia / Education</h2>
+        <div class="entry">
+          <div class="education-degree">PhD in Epistemology</div>
+          <div class="education-school">CNRS / ENS Ulm</div>
+        </div>
+        <div class="entry">
+          <div class="education-degree">Research Scholar in Robotics</div>
+          <div class="education-school">MIT Media Lab</div>
+        </div>
+        <div class="entry">
+          <div class="education-degree">Research Scholar in Robotics</div>
+          <div class="education-school">Carnegie Mellon University</div>
+        </div>
+        <div class="entry">
+          <div class="education-degree">Masters of Engineering</div>
+          <div class="education-school">Ecole Nationale Superieure de Cognitique</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Skills</h2>
+        <ul class="skills compact-list">
+          <li>TypeScript, React, CSS, performance, developer experience, design systems, monorepos</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
