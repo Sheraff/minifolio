@@ -24,12 +24,16 @@ const parsed = parseArgs({
     },
     port: {
       type: 'string',
+    },
+    finger: {
+      type: 'string',
     }
   }
 })
 
 const isDev = parsed.values.dev
 const port = Number(parsed.values.port ?? process.env.PORT ?? 5743)
+const fingerPort = !!parsed.values.finger && Number(parsed.values.finger)
 
 const serverDir = fileURLToPath(new URL('.', import.meta.url))
 const clientDistDir = isDev
@@ -126,6 +130,10 @@ if (isDev) {
 
 const server = createAdaptorServer({ fetch: app.fetch })
 
+server.listen(port, () => {
+  console.log(`http://localhost:${port}`)
+})
+
 if (isDev) {
   const { createServer } = await import('vite')
 
@@ -137,6 +145,12 @@ if (isDev) {
   })
 }
 
-server.listen(port, () => {
-  console.log(`http://localhost:${port}`)
-})
+if (fingerPort) {
+  const { createFingerServer } = await import('./finger.ts')
+  const fingerServer = createFingerServer()
+  fingerServer.listen(fingerPort, () => {
+    console.log(`Finger server listening on port ${fingerPort}`)
+  })
+}
+
+
