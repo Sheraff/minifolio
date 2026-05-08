@@ -10,15 +10,6 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.{ts,tsx}'],
   },
-  optimizeDeps: {
-    rolldownOptions: {
-      transform: {
-        jsx: {
-          importSource: 'solid-js',
-        },
-      },
-    },
-  },
   environments: {
     client: {
       consumer: 'client',
@@ -26,6 +17,15 @@ export default defineConfig({
         outDir: 'dist/client',
         emptyOutDir: true,
       },
+      optimizeDeps: {
+        rolldownOptions: {
+          transform: {
+            jsx: {
+              importSource: 'solid-js',
+            },
+          },
+        }
+      }
     },
     server: {
       consumer: 'server',
