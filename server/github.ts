@@ -75,6 +75,7 @@ let contributionsCache:
 	| undefined
 
 let contributionsPromise: Promise<ContributionsResponse> | undefined
+let refreshTimeout: NodeJS.Timeout | undefined
 
 async function loadGitHubContributions(): Promise<ContributionsResponse> {
 	if (contributionsCache && contributionsCache.expiresAt > Date.now()) {
@@ -93,6 +94,8 @@ async function loadGitHubContributions(): Promise<ContributionsResponse> {
 			data,
 			expiresAt: Date.now() + ONE_DAY_MS,
 		}
+		if (refreshTimeout) clearTimeout(refreshTimeout)
+		refreshTimeout = setTimeout(loadGitHubContributions, ONE_DAY_MS + 1)
 		return data
 	} finally {
 		contributionsPromise = undefined

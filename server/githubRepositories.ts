@@ -127,12 +127,12 @@ type ContributedRepository = {
 	contributionCount: number
 	lastContributedAt: string
 	lastPullRequest:
-		| {
-			title: string
-			url: string
-			occurredAt: string
-		}
-		| null
+	| {
+		title: string
+		url: string
+		occurredAt: string
+	}
+	| null
 }
 
 type ContributedRepositoriesResponse = {
@@ -236,6 +236,7 @@ let contributedRepositoriesCache:
 	| undefined
 
 let contributedRepositoriesPromise: Promise<ContributedRepositoriesResponse> | undefined
+let refreshTimeout: NodeJS.Timeout | undefined
 
 async function loadContributedRepositories(): Promise<ContributedRepositoriesResponse> {
 	if (contributedRepositoriesCache && contributedRepositoriesCache.expiresAt > Date.now()) {
@@ -254,6 +255,8 @@ async function loadContributedRepositories(): Promise<ContributedRepositoriesRes
 			data,
 			expiresAt: Date.now() + ONE_DAY_MS,
 		}
+		if (refreshTimeout) clearTimeout(refreshTimeout)
+		refreshTimeout = setTimeout(loadContributedRepositories, ONE_DAY_MS + 1)
 		return data
 	} finally {
 		contributedRepositoriesPromise = undefined

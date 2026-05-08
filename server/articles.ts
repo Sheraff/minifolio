@@ -70,6 +70,8 @@ let tanstackArticlesCache:
 	| undefined
 
 let tanstackArticlesPromise: Promise<TanstackArticlesResponse> | undefined
+let refreshTimeout: NodeJS.Timeout | undefined
+
 
 async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 	if (tanstackArticlesCache && tanstackArticlesCache.expiresAt > Date.now()) {
@@ -88,6 +90,8 @@ async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 			data,
 			expiresAt: Date.now() + ONE_HOUR_MS,
 		}
+		if (refreshTimeout) clearTimeout(refreshTimeout)
+		refreshTimeout = setTimeout(loadTanstackArticles, ONE_HOUR_MS + 1)
 		return data
 	} finally {
 		tanstackArticlesPromise = undefined
