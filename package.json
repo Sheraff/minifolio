@@ -14,18 +14,18 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@hono/node-server": "1.19.11",
-    "fast-xml-parser": "^5.5.9",
-    "hono": "4.12.9",
-    "just-bash": "^2.14.5",
+    "@hono/node-server": "2.0.2",
+    "fast-xml-parser": "5.7.3",
+    "hono": "4.12.18",
+    "just-bash": "2.14.5",
     "solid-js": "1.9.12",
-    "valibot": "1.3.1"
+    "valibot": "1.4.0"
   },
   "devDependencies": {
-    "@types/node": "25.5.0",
-    "typescript": "6.0.2",
-    "vite": "8.0.3",
-    "vite-plugin-solid": "2.11.11",
+    "@types/node": "25.6.2",
+    "typescript": "6.0.3",
+    "vite": "8.0.11",
+    "vite-plugin-solid": "2.11.12",
     "vitest": "4.1.5"
   }
 }
