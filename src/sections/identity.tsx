@@ -1,5 +1,5 @@
 import { Time, TimeDifference } from "#/time"
-import { createSignal, For, lazy, onCleanup, onMount, Show, Suspense, type Accessor, type Setter } from "solid-js"
+import { createMemo, createSignal, For, lazy, onCleanup, onMount, Show, Suspense, type Accessor, type Setter } from "solid-js"
 import './identity.css'
 import type { HistoryEntry } from "#/sections/identity/terminal"
 
@@ -33,11 +33,14 @@ export function Identity() {
 	}, { signal: controller.signal }))
 	onCleanup(() => controller.abort())
 
-	const [history, setHistory] = createSignal<HistoryEntry[]>([
+	const [history, setHistory] = createSignal<HistoryEntry[]>([])
+
+	const prefixedHistory = createMemo(() => [
 		{ command: 'whoami', result: 'sheraff' },
 		{ command: 'hostname -f', result: 'florianpellet.com' },
 		{ command: 'git config user.email', result: 'me@florianpellet.com' },
 		{ command: 'date +%H:%M', result: liveTime },
+		...history(),
 	])
 
 	return (
@@ -47,7 +50,7 @@ export function Identity() {
 			if (area) area.focus()
 		}}>
 			<dl>
-				<For each={history()}>
+				<For each={prefixedHistory()}>
 					{entry => <>
 						<dt>{entry.command}</dt>
 						<dd>{toOutput(entry.result)}</dd>
@@ -56,7 +59,7 @@ export function Identity() {
 				<Show when={active()} fallback={<div />}>
 					<Terminal
 						initial={typeof active() === 'string' ? active() as string : ''}
-						history={history}
+						history={prefixedHistory}
 						setHistory={setHistory}
 					/>
 				</Show>
@@ -67,15 +70,17 @@ export function Identity() {
 
 function Terminal(props: { initial: string, history: Accessor<HistoryEntry[]>, setHistory: Setter<HistoryEntry[]> }) {
 	const [input, setInput] = createSignal(props.initial)
+	const [autocomplete, setAutocomplete] = createSignal('')
 
 	return (
-		<div>
+		<div data-autocomplete={autocomplete()}>
 			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" spellcheck={false} autocorrect="off" autocapitalize="off" />}>
 				<InteractiveTerminal
 					history={props.history}
 					setHistory={props.setHistory}
 					input={input}
 					setInput={setInput}
+					setAutocomplete={setAutocomplete}
 				/>
 			</Suspense>
 		</div>

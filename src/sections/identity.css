@@ -57,17 +57,34 @@
 	}
 
 	div {
+		position: relative;
+		z-index: 0;
 		color: oklch(from var(--theme) 70% 0.2 h);
-		display: flex;
+		display: grid;
+		grid-template-columns: max-content 1fr;
 		text-shadow: var(--text-glow);
 
 		&::before {
 			content: '> ';
 			flex-shrink: 0;
+			grid-area: 1 / 1;
+		}
+
+		&:focus-within::after {
+			content: attr(data-autocomplete);
+			grid-area: 1 / 2;
+			opacity: 0.5;
+			color: oklch(from var(--theme) 50% 0.1 h);
+			position: relative;
+			z-index: 1;
+			pointer-events: none;
 		}
 	}
 
 	textarea {
+		grid-area: 1 / 2;
+		position: relative;
+		z-index: 2;
 		background-color: transparent;
 		outline: none;
 		border: none;

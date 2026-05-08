@@ -13,10 +13,12 @@ export function InteractiveTerminal(props: {
 	setHistory: Setter<HistoryEntry[]>
 	input: Accessor<string>
 	setInput: Setter<string>
+	setAutocomplete: Setter<string>
 }) {
 	const state = createTerminalSession()
 	let pending = Promise.resolve()
 	let historyCursor = 0
+	let autocompleteGeneration = 0
 
 	createEffect(() => {
 		historyCursor = props.history().length
@@ -25,6 +27,7 @@ export function InteractiveTerminal(props: {
 	let textarea: HTMLTextAreaElement | undefined
 	onMount(() => {
 		textarea?.focus()
+		queueAutocomplete(props.input())
 		void flushBufferedInput()
 	})
 
@@ -41,6 +44,7 @@ export function InteractiveTerminal(props: {
 	function setInputValue(value: string) {
 		props.setInput(value)
 		if (textarea) textarea.value = value
+		queueAutocomplete(value)
 	}
 
 	function submitLine(value: string) {
@@ -65,17 +69,36 @@ export function InteractiveTerminal(props: {
 			const didClear = state.signals.clearGeneration !== clearGeneration
 			if (didClear) {
 				props.setHistory([])
-				textarea?.scrollIntoView({ behavior: 'smooth' })
+				requestAnimationFrame(() => {
+					textarea?.closest('section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+				})
 			}
 			if (!didClear || formatted) props.setHistory(previous => [...previous, { command: input, result: formatted }])
 		}
 		catch (error) {
 			props.setHistory(previous => [...previous, { command: input, result: error instanceof Error ? error.message : String(error) }])
 		}
+		finally {
+			queueAutocomplete(props.input())
+		}
+	}
+
+	function queueAutocomplete(value: string) {
+		const generation = ++autocompleteGeneration
+		if (!value.trim()) {
+			props.setAutocomplete('')
+			return
+		}
+
+		void autocomplete(value, state).then(suggestion => {
+			if (generation === autocompleteGeneration && props.input() === value) props.setAutocomplete(suggestion)
+		})
 	}
 
 	async function completeInput(value: string) {
 		const suggestion = await autocomplete(value, state)
+		if (props.input() !== value) return
+		if (!suggestion) props.setAutocomplete('')
 		if (suggestion) setInputValue(suggestion)
 	}
 
@@ -88,7 +111,10 @@ export function InteractiveTerminal(props: {
 			autocorrect="off"
 			autocapitalize="off"
 			value={props.input()}
-			on:input={e => props.setInput(e.target.value)}
+			on:input={e => {
+				props.setInput(e.target.value)
+				queueAutocomplete(e.target.value)
+			}}
 			on:keydown={e => {
 				if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
 					e.preventDefault()
@@ -136,6 +162,11 @@ type TerminalSession = {
 	env: Record<string, string>
 	history: string[]
 	signals: TerminalSignals
+}
+
+export type TerminalAutocompleteState = {
+	bash: Pick<Bash, 'fs'>
+	cwd: string
 }
 
 type TerminalSignals = {
@@ -343,7 +374,13 @@ function formatExecResult(result: BashExecResult) {
 	return output.replace(/\n$/, '')
 }
 
-async function autocomplete(command: string, state: TerminalSession): Promise<string> {
+export async function autocomplete(command: string, state: TerminalAutocompleteState): Promise<string> {
+	const segment = getCompletionSegment(command)
+	const completion = await autocompleteSegment(segment.command, state)
+	return completion ? `${segment.prefix}${completion}` : ''
+}
+
+async function autocompleteSegment(command: string, state: TerminalAutocompleteState): Promise<string> {
 	const rawTokens = command.match(/\S+/g) ?? []
 	if (rawTokens.length === 0) return ''
 
@@ -351,25 +388,25 @@ async function autocomplete(command: string, state: TerminalSession): Promise<st
 	const effectiveCommand = rawTokens[0] ?? ''
 
 	if (rawTokens.length === 1 && !endsWithSpace) {
-		const match = findFirstMatch(COMPLETE_COMMANDS, rawTokens[0])
-		if (!match || match === rawTokens[0]) return ''
-		return `${match} `
+		const completion = completeCandidate(COMPLETE_COMMANDS, rawTokens[0])
+		if (!completion || completion.value === rawTokens[0]) return ''
+		return `${completion.value}${completion.isSingleMatch ? ' ' : ''}`
 	}
 
 	if (COMMAND_COMPLETION_COMMANDS.has(effectiveCommand) && rawTokens.length <= 2) {
 		const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
-		const match = findFirstMatch(COMPLETE_COMMANDS, target)
-		if (!match || match === target) return ''
-		return replaceLastToken(command, `${match} `, endsWithSpace)
+		const completion = completeCandidate(COMPLETE_COMMANDS, target)
+		if (!completion || completion.value === target) return ''
+		return replaceLastToken(command, `${completion.value}${completion.isSingleMatch ? ' ' : ''}`, endsWithSpace)
 	}
 
 	if (effectiveCommand === 'git') {
 		const target = endsWithSpace ? '' : rawTokens[rawTokens.length - 1]
 		const shouldCompleteSubcommand = (rawTokens.length === 1 && endsWithSpace) || (rawTokens.length === 2 && !rawTokens[1].startsWith('-'))
 		if (shouldCompleteSubcommand) {
-			const match = findFirstMatch(GIT_SUBCOMMANDS, target)
-			if (!match || match === target) return ''
-			return replaceLastToken(command, `${match} `, endsWithSpace)
+			const completion = completeCandidate(GIT_SUBCOMMANDS, target)
+			if (!completion || completion.value === target) return ''
+			return replaceLastToken(command, `${completion.value}${completion.isSingleMatch ? ' ' : ''}`, endsWithSpace)
 		}
 	}
 
@@ -384,9 +421,80 @@ async function autocomplete(command: string, state: TerminalSession): Promise<st
 	return replaceLastToken(command, completion, endsWithSpace)
 }
 
-function findFirstMatch(candidates: readonly string[], fragment: string) {
-	const sorted = [...candidates].sort((left, right) => left.localeCompare(right))
-	return sorted.find(candidate => candidate.startsWith(fragment))
+function getCompletionSegment(command: string) {
+	let start = 0
+	let quote: '"' | "'" | undefined
+	let escaped = false
+
+	for (let index = 0; index < command.length; index++) {
+		const char = command[index]
+
+		if (escaped) {
+			escaped = false
+			continue
+		}
+
+		if (char === '\\' && quote !== "'") {
+			escaped = true
+			continue
+		}
+
+		if (quote) {
+			if (char === quote) quote = undefined
+			continue
+		}
+
+		if (char === '"' || char === "'") {
+			quote = char
+			continue
+		}
+
+		if (char === ';' || char === '|') {
+			start = index + (char === '|' && command[index + 1] === '|' ? 2 : 1)
+			if (char === '|' && command[index + 1] === '|') index++
+			continue
+		}
+
+		if (char === '&' && command[index + 1] === '&') {
+			start = index + 2
+			index++
+		}
+	}
+
+	while (start < command.length && /\s/.test(command[start])) start++
+	return { prefix: command.slice(0, start), command: command.slice(start) }
+}
+
+function completeCandidate(candidates: readonly string[], fragment: string) {
+	if (!fragment) return
+
+	const normalizedFragment = fragment.toLowerCase()
+	const matches = [...candidates]
+		.filter(candidate => candidate.toLowerCase().startsWith(normalizedFragment))
+		.sort((left, right) => left.localeCompare(right))
+
+	if (matches.length === 0) return
+	if (matches.length === 1) return { value: matches[0], isSingleMatch: true }
+
+	const commonPrefix = findCommonPrefix(matches)
+	if (commonPrefix.length <= fragment.length) return
+	return { value: commonPrefix, isSingleMatch: false }
+}
+
+function findCommonPrefix(matches: readonly string[]) {
+	let prefix = matches[0] ?? ''
+	for (const match of matches.slice(1)) {
+		let index = 0
+		while (
+			index < prefix.length &&
+			index < match.length &&
+			prefix[index].toLowerCase() === match[index].toLowerCase()
+		) {
+			index++
+		}
+		prefix = prefix.slice(0, index)
+	}
+	return prefix
 }
 
 function replaceLastToken(command: string, replacement: string, endsWithSpace: boolean) {
@@ -400,7 +508,7 @@ function replaceLastToken(command: string, replacement: string, endsWithSpace: b
 	return `${prefix} ${replacement}`
 }
 
-async function completePath(fragment: string, cwd: string, state: TerminalSession, options: { directoriesOnly: boolean, allowHidden: boolean }) {
+async function completePath(fragment: string, cwd: string, state: TerminalAutocompleteState, options: { directoriesOnly: boolean, allowHidden: boolean }) {
 	const slashIndex = fragment.lastIndexOf('/')
 	const parentInput = slashIndex === -1 ? '' : fragment.slice(0, slashIndex) || '/'
 	const partialName = slashIndex === -1 ? fragment : fragment.slice(slashIndex + 1)
@@ -423,17 +531,17 @@ async function completePath(fragment: string, cwd: string, state: TerminalSessio
 		}
 	}))
 
-	const match = entries
+	const candidates = entries
 		.filter(entry => entry && (options.allowHidden || !entry.name.startsWith('.')))
 		.filter(entry => entry && (!options.directoriesOnly || entry.stat.isDirectory))
-		.sort((left, right) => left!.name.localeCompare(right!.name))
-		.find(entry => entry!.name.startsWith(partialName))
 
-	if (!match) return ''
+	const completion = completeCandidate(candidates.map(entry => entry!.name), partialName)
+	if (!completion) return ''
 
-	const suffix = match.stat.isDirectory ? '/' : ' '
-	const base = parentInput ? `${parentInput === '/' ? '' : parentInput}/` : ''
-	return `${base}${match.name}${suffix}`
+	const match = completion.isSingleMatch ? candidates.find(entry => entry?.name === completion.value) : undefined
+	const suffix = match ? match.stat.isDirectory ? '/' : ' ' : ''
+	const base = parentInput ? parentInput === '/' ? '/' : `${parentInput}/` : ''
+	return `${base}${completion.value}${suffix}`
 }
 
 function resolvePath(cwd: string, input?: string) {
