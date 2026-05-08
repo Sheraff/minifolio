@@ -4,6 +4,15 @@ import solid from 'vite-plugin-solid'
 export default defineConfig({
   plugins: [solid()],
   clearScreen: false,
+  optimizeDeps: {
+    rolldownOptions: {
+      transform: {
+        jsx: {
+          importSource: 'solid-js',
+        },
+      },
+    },
+  },
   environments: {
     client: {
       consumer: 'client',
