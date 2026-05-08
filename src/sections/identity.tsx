@@ -46,6 +46,7 @@ export function Identity() {
 	return (
 		<section class="identity" on:click={(e) => {
 			setActive(true)
+			if (getSelection()?.toString().length) return
 			const area = e.currentTarget.querySelector<HTMLTextAreaElement>('textarea')
 			if (area) area.focus()
 		}}>
@@ -74,7 +75,7 @@ function Terminal(props: { initial: string, history: Accessor<HistoryEntry[]>, s
 
 	return (
 		<div data-autocomplete={autocomplete()}>
-			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} autofocus name="tty" spellcheck={false} autocorrect="off" autocapitalize="off" />}>
+			<Suspense fallback={<textarea value={input()} on:input={e => setInput(e.target.value)} name="tty" spellcheck={false} autocorrect="off" autocapitalize="off" />}>
 				<InteractiveTerminal
 					history={props.history}
 					setHistory={props.setHistory}

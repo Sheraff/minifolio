@@ -26,7 +26,7 @@ export function InteractiveTerminal(props: {
 
 	let textarea: HTMLTextAreaElement | undefined
 	onMount(() => {
-		textarea?.focus()
+		if (!getSelection()?.toString().length) textarea?.focus()
 		queueAutocomplete(props.input())
 		void flushBufferedInput()
 	})
@@ -105,7 +105,6 @@ export function InteractiveTerminal(props: {
 	return (
 		<textarea
 			ref={textarea}
-			autofocus
 			name="tty"
 			spellcheck={false}
 			autocorrect="off"
