@@ -52,7 +52,8 @@
 		}
 	}
 
-	img {
+	img,
+	svg {
 		box-shadow: 0 0 0 1px var(--bg-accent);
 		display: block;
 		width: 100%;

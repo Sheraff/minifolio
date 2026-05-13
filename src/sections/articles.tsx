@@ -17,7 +17,7 @@ const fetchData = async () => {
 			pubDate: v.string(),
 			author: v.string(),
 			description: v.string(),
-			imageUrl: v.string(),
+			imageUrl: v.nullable(v.string()),
 		}))
 	})
 
@@ -75,7 +75,16 @@ function Card(props: { item: Item }) {
 		>
 			<a href={props.item.link}>
 				<figure>
-					<img src={props.item.imageUrl} />
+					<Show
+						when={props.item.imageUrl}
+						fallback={
+							<svg viewBox="0 0 100 100" preserveAspectRatio="none" >
+								<rect x="0" y="0" width="100" height="100" />
+							</svg>
+						}
+					>
+						{(src) => <img src={src()} />}
+					</Show>
 					<figcaption>
 						{props.item.title}
 					</figcaption>
