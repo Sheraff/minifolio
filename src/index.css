@@ -36,6 +36,12 @@
 	text-shadow: none;
 }
 
+::search-text {
+	background: oklch(from var(--theme) 82% 0.12 h);
+	color: oklch(from var(--theme) 24% 0.12 h);
+	text-shadow: none;
+}
+
 p,
 figure {
 	margin: 0;
