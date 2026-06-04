@@ -10,7 +10,7 @@ export function Links() {
 				<Github />
 				<p>github</p>
 			</a>
-			<a href="https://bsky.app/profile/sheraff.bsky.social" aria-label="bluesky profile">
+			<a href="https://bsky.app/profile/sheraff.dev" aria-label="bluesky profile">
 				<Bluesky />
 				<p>bluesky</p>
 			</a>
