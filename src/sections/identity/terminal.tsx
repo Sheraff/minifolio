@@ -270,7 +270,7 @@ function createCustomCommands(history: string[], signals: TerminalSignals) {
 		defineCommand('ll', async (args, ctx) => execFromContext(ctx, ['ls', '-la', ...args].map(quoteArg).join(' '))),
 		defineCommand('clear', async () => {
 			signals.clearGeneration++
-			return { stdout: '', stderr: '', exitCode: 0 }
+			return { stdout: '', stderr: '', exitCode: 0, stdoutKind: 'text' }
 		}),
 		defineCommand('minifolio-help', async (_args, ctx) => stdoutLine(formatHelp(ctx))),
 		defineCommand('whoami', async () => stdoutLine('sheraff')),
@@ -293,15 +293,15 @@ function createCustomCommands(history: string[], signals: TerminalSignals) {
 
 async function readVirtualFile(ctx: CommandContext, path: string): Promise<ExecResult> {
 	try {
-		return { stdout: await ctx.fs.readFile(path), stderr: '', exitCode: 0 }
+		return { stdout: await ctx.fs.readFile(path), stderr: '', exitCode: 0, stdoutKind: 'text' }
 	}
 	catch {
-		return { stdout: '', stderr: `cat: ${path}: No such file or directory\n`, exitCode: 1 }
+		return { stdout: '', stderr: `cat: ${path}: No such file or directory\n`, exitCode: 1, stdoutKind: 'text' }
 	}
 }
 
 async function execFromContext(ctx: CommandContext, command: string): Promise<ExecResult> {
-	if (!ctx.exec) return { stdout: '', stderr: 'shell execution is unavailable\n', exitCode: 1 }
+	if (!ctx.exec) return { stdout: '', stderr: 'shell execution is unavailable\n', exitCode: 1, stdoutKind: 'text' }
 	return ctx.exec(command, { cwd: ctx.cwd, env: Object.fromEntries(ctx.env) })
 }
 
@@ -351,7 +351,7 @@ function resolveGit(args: string[]) {
 }
 
 function stdoutLine(stdout: string): ExecResult {
-	return { stdout: stdout ? `${stdout}\n` : '', stderr: '', exitCode: 0 }
+	return { stdout: stdout ? `${stdout}\n` : '', stderr: '', exitCode: 0, stdoutKind: 'text' }
 }
 
 function quoteArg(arg: string) {

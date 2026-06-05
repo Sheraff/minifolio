@@ -18,8 +18,8 @@ importers:
         specifier: 4.12.23
         version: 4.12.23
       just-bash:
-        specifier: 2.14.5
-        version: 2.14.5
+        specifier: 3.0.1
+        version: 3.0.1
       solid-js:
         specifier: 1.9.13
         version: 1.9.13
@@ -706,8 +706,8 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  just-bash@2.14.5:
-    resolution: {integrity: sha512-MCBGnRlDeZ/MM7mcw+ZuSGFMBsggajrmKz6e/hrOAN7syvVZkjiY+Vh2wyCwN/CdcnAX5SxbiQB51n5nrQuX+g==}
+  just-bash@3.0.1:
+    resolution: {integrity: sha512-YVyzCN08fKarUnwqy7rKOAcX+2MLYLnYInuowmUXn3mqhrtd4ieZNBuzdQG+qYV9DqnIWuv9Whiph0WRIWsBtw==}
     hasBin: true
 
   lightningcss-android-arm64@1.32.0:
@@ -1783,7 +1783,7 @@ snapshots:
 
   json5@2.2.3: {}
 
-  just-bash@2.14.5:
+  just-bash@3.0.1:
     dependencies:
       diff: 8.0.4
       fast-xml-parser: 5.8.0
