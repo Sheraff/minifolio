@@ -3,62 +3,17 @@ import { Hono } from 'hono'
 import { fetchTanstackArticles } from './articles.ts'
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
+import { fetchLabProjects, type LabProject } from './projects.ts'
 
 const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
+const labsUrl = 'https://sheraff.github.io'
 const githubUrl = 'https://github.com/sheraff'
 const blueskyUrl = 'https://bsky.app/profile/sheraff.bsky.social'
-const projectsUrl = 'https://sheraff.github.io/vite-labs/projects.json'
 
 type GitHubContributions = Awaited<ReturnType<typeof fetchGitHubContributions>>
 type ContributedRepositories = Awaited<ReturnType<typeof fetchContributedRepositories>>
 type TanstackArticles = Awaited<ReturnType<typeof fetchTanstackArticles>>
-type LabProject = {
-  title: string
-  url: string
-  description: string | null
-  tags: string[]
-}
-
-export async function fetchProjects() {
-  const response = await fetch(projectsUrl)
-
-  if (!response.ok) {
-    throw new Error(`Projects request failed with ${response.status}`)
-  }
-
-  return response.json()
-}
-
-function readLabProjects(value: unknown): LabProject[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.flatMap((project) => {
-    if (!project || typeof project !== 'object') {
-      return []
-    }
-
-    const entry = project as Record<string, unknown>
-    if (
-      typeof entry.title !== 'string'
-      || typeof entry.url !== 'string'
-      || typeof entry.image !== 'string'
-    ) {
-      return []
-    }
-
-    return [{
-      title: entry.title,
-      url: new URL(entry.url, 'https://sheraff.github.io').toString(),
-      description: typeof entry.description === 'string' ? entry.description : null,
-      tags: Array.isArray(entry.tags)
-        ? entry.tags.filter((tag): tag is string => typeof tag === 'string')
-        : [],
-    }]
-  })
-}
 
 function normalizeText(value: string) {
   return value.replace(/\s+/g, ' ').trim()
@@ -141,11 +96,13 @@ function buildArticlesSection(articles: TanstackArticles['articles']) {
 
 function buildProjectsSection(projects: LabProject[]) {
   const items = projects
+    .filter((project) => project.image)
     .slice(0, 12)
     .map((project) => {
       const description = formatDescription(project.description)
       const tags = project.tags.length > 0 ? ` [tags: ${project.tags.join(', ')}]` : ''
-      return `- ${project.title}${description}${tags}. ${project.url}`
+      const url = new URL(project.url, labsUrl).toString()
+      return `- ${project.title}${description}${tags}. ${url}`
     })
 
   const lines: string[] = []
@@ -183,7 +140,7 @@ async function streamLlmsTxt() {
         ['contributions', createSectionPromise('contributions', fetchGitHubContributions(), buildContributionsSection)],
         ['repositories', createSectionPromise('repositories', fetchContributedRepositories(), ({ repositories }) => buildRepositoriesSection(repositories))],
         ['articles', createSectionPromise('articles', fetchTanstackArticles(), ({ articles }) => buildArticlesSection(articles))],
-        ['projects', createSectionPromise('projects', fetchProjects().then(readLabProjects), buildProjectsSection)],
+        ['projects', createSectionPromise('projects', fetchLabProjects(), buildProjectsSection)],
       ])
 
       while (pending.size > 0) {
