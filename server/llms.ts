@@ -9,7 +9,7 @@ const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
 const labsUrl = 'https://sheraff.github.io'
 const githubUrl = 'https://github.com/sheraff'
-const blueskyUrl = 'https://bsky.app/profile/sheraff.bsky.social'
+const blueskyUrl = 'https://bsky.app/profile/sheraff.dev'
 
 type GitHubContributions = Awaited<ReturnType<typeof fetchGitHubContributions>>
 type ContributedRepositories = Awaited<ReturnType<typeof fetchContributedRepositories>>
