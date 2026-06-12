@@ -13,7 +13,8 @@ import type { ViteDevServer } from 'vite'
 import { fetchTanstackArticles } from './articles.ts'
 import { fetchGitHubContributions } from './github.ts'
 import { fetchContributedRepositories } from './githubRepositories.ts'
-import { fetchProjects, registerLlmsRoute } from './llms.ts'
+import { registerLlmsRoute } from './llms.ts'
+import { fetchLabProjects } from './projects.ts'
 import { parseArgs } from "node:util"
 
 const parsed = parseArgs({
@@ -48,10 +49,12 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 
 app.get('/api/projects', async (c) => {
   try {
-    c.header('Cache-Control', 'public, max-age=3600')
-    return c.json(await fetchProjects())
+    const projects = await fetchLabProjects()
+    c.header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400, stale-if-error=86400')
+    return c.json(projects)
   } catch (error) {
     console.error(error)
+    c.header('Cache-Control', 'no-store')
     return c.json({ error: 'Unable to load projects' }, 502)
   }
 })
@@ -152,5 +155,3 @@ if (fingerPort) {
     console.log(`Finger server listening on port ${fingerPort}`)
   })
 }
-
-
