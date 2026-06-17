@@ -1,2 +1,7 @@
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+   # vite
+   esbuild: true
+
+   # just-bash
+   "@mongodb-js/zstd": false
+   node-liblzma: false
