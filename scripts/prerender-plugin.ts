@@ -147,6 +147,21 @@ async function prerender(options: {
 
 	await fs.writeFile(
 		indexPath,
-		html.replace(options.placeholder, before + '<body>' + shell + '</body>'),
+		html.replace(options.placeholder, before + "<body>" + shell + "</body>"),
+	);
+
+	await fs.writeFile(
+		path.join(path.dirname(options.source), "prerender-manifest.json"),
+		JSON.stringify(
+			{
+				before,
+				source: options.source,
+				destination: options.destination,
+				exportName: options.exportName,
+				placeholder: options.placeholder,
+			},
+			null,
+			2,
+		),
 	);
 }
