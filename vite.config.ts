@@ -3,11 +3,13 @@
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 import { prerenderPlugin } from './scripts/prerender-plugin'
+import { inlineCss } from './scripts/inline-css'
 
 export default defineConfig({
   plugins: [
     solid({ ssr: true }),
     prerenderPlugin(),
+    inlineCss(),
   ],
   clearScreen: false,
   test: {
@@ -47,21 +49,5 @@ export default defineConfig({
         },
       }
     },
-    // prerender: {
-    //   consumer: 'server',
-    //   build: {
-    //     ssr: 'src/prerender.tsx',
-    //     outDir: 'dist/prerender',
-    //     copyPublicDir: false,
-    //     emptyOutDir: true,
-    //     emitAssets: false,
-    //     target: 'node24',
-    //     rolldownOptions: {
-    //       output: {
-    //         entryFileNames: 'prerender.js',
-    //       },
-    //     },
-    //   }
-    // }
   }
 })

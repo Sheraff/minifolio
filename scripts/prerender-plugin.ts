@@ -112,6 +112,15 @@ function getInitialState() {
 	};
 }
 
+// type RenderStream = {
+// 	pipe: (writable: { write: (v: string) => void }) => void;
+// 	pipeTo: (writable: WritableStream<any>) => void;
+// };
+
+// type RenderStringAsync = Promise<string>
+
+// type RenderString = string
+
 async function prerender(options: {
 	source: string;
 	destination: string;
@@ -120,7 +129,7 @@ async function prerender(options: {
 	inject?: () => string;
 }) {
 	const { [options.exportName]: render } = await import(options.source);
-	const shell = render();
+	const shell = await render();
 
 	const indexPath = path.resolve(options.destination);
 	const html = await fs.readFile(indexPath, "utf8");
