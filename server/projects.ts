@@ -1,4 +1,5 @@
 const projectsUrl = 'https://sheraff.github.io/vite-labs/projects.json'
+const ONE_HOUR_MS = 60 * 60 * 1000
 
 export type LabProject = {
   route: string
@@ -13,7 +14,43 @@ export type LabProject = {
   }
 }
 
-export async function fetchLabProjects(): Promise<LabProject[]> {
+let projectsCache:
+  | {
+    data: LabProject[]
+    expiresAt: number
+  }
+  | undefined
+
+let projectsPromise: Promise<LabProject[]> | undefined
+let refreshTimeout: NodeJS.Timeout | undefined
+
+async function loadLabProjects(): Promise<LabProject[]> {
+  if (projectsCache && projectsCache.expiresAt > Date.now()) {
+    return projectsCache.data
+  }
+
+  if (projectsPromise) {
+    return projectsPromise
+  }
+
+  projectsPromise = fetchLabProjectsFromApi()
+
+  try {
+    const data = await projectsPromise
+    projectsCache = {
+      data,
+      expiresAt: Date.now() + ONE_HOUR_MS,
+    }
+    if (refreshTimeout) clearTimeout(refreshTimeout)
+    refreshTimeout = setTimeout(loadLabProjects, ONE_HOUR_MS + 1)
+    refreshTimeout.unref()
+    return data
+  } finally {
+    projectsPromise = undefined
+  }
+}
+
+async function fetchLabProjectsFromApi(): Promise<LabProject[]> {
   const response = await fetch(projectsUrl)
 
   if (!response.ok) {
@@ -21,6 +58,10 @@ export async function fetchLabProjects(): Promise<LabProject[]> {
   }
 
   return readLabProjects(await response.json())
+}
+
+export async function fetchLabProjects(): Promise<LabProject[]> {
+  return loadLabProjects()
 }
 
 function readLabProjects(value: unknown): LabProject[] {

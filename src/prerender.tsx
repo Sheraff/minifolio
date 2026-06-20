@@ -1,6 +1,6 @@
-import { renderToString } from 'solid-js/web'
+import { renderToStringAsync } from 'solid-js/web'
 import App from './App.tsx'
 
 export function renderShell() {
-	return renderToString(() => <App />)
+	return renderToStringAsync(() => <App />)
 }

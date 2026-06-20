@@ -1,16 +1,12 @@
-import { createResource, createSignal, For, Match, Show, Switch } from "solid-js"
-import { isServer } from "solid-js/web"
+import { createSignal, For, Show, Suspense } from "solid-js"
 import * as v from 'valibot'
 import './articles.css'
+import { createServerResource, type ServerResourceType } from "#/createServerResource"
 
-const fetchData = async () => {
-	const response = await fetch('/api/articles/tanstack')
-	if (!response.ok) {
-		throw new Error('Unable to load articles')
-	}
-	const json = await response.json()
-
-	const schema = v.object({
+const createArticlesResource = createServerResource(
+	"/api/articles/tanstack",
+	import.meta.env.SSR && import("#server/articles.ts").then((m) => m.fetchTanstackArticles),
+	v.pipe(v.object({
 		articles: v.array(v.object({
 			title: v.string(),
 			link: v.string(),
@@ -20,29 +16,26 @@ const fetchData = async () => {
 			description: v.string(),
 			imageUrl: v.nullable(v.string()),
 		}))
-	})
+	}), v.transform(r => r.articles))
+)
 
-	return v.parse(schema, json).articles
-}
-
-type Item = Awaited<ReturnType<typeof fetchData>>[number]
+type Item = ServerResourceType<typeof createArticlesResource>[number]
 
 export function Articles() {
-	const [data] = createResource(() => !isServer, fetchData)
+	const data = createArticlesResource()
 	return (
 		<section class="article">
-			<Switch>
-				<Match when={isServer || data.loading}>
-					<ul />
-				</Match>
-				<Match when={data()}>
-					<ul role="list">
-						<For each={data()}>
-							{(item) => <Card item={item} />}
-						</For>
-					</ul>
-				</Match>
-			</Switch>
+			<Suspense fallback={<ul />}>
+				<Show when={data()}>
+					{(list) => (
+						<ul role="list">
+							<For each={list()}>
+								{(item) => <Card item={item} />}
+							</For>
+						</ul>
+					)}
+				</Show>
+			</Suspense>
 		</section>
 	)
 }

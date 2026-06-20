@@ -4,7 +4,8 @@
 	"version": "0.0.0",
 	"type": "module",
 	"imports": {
-		"#/*": "./src/*"
+		"#/*": "./src/*",
+		"#server/*": "./server/*"
 	},
 	"scripts": {
 		"dev": "node --watch --watch-path=server --watch-path=vite.config.ts --watch-path=index.html --watch-preserve-output server/index.ts --dev",

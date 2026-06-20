@@ -1,16 +1,12 @@
-import { createMemo, createResource, For, Match, Switch } from "solid-js"
-import { isServer } from "solid-js/web"
+import { For, Show, Suspense } from "solid-js"
 import * as v from 'valibot'
 import './repositories.css'
+import { createServerResource, type ServerResourceType } from "#/createServerResource"
 
-const fetchData = async () => {
-	const response = await fetch('/api/github/repositories')
-	if (!response.ok) {
-		throw new Error('Unable to load GitHub repositories')
-	}
-	const json = await response.json()
-
-	const schema = v.object({
+const createGithubRepositoriesResource = createServerResource(
+	"/api/github/repositories",
+	import.meta.env.SSR && import("#server/githubRepositories.ts").then((m) => m.fetchContributedRepositories),
+	v.pipe(v.object({
 		repositories: v.array(v.object({
 			name: v.string(),
 			nameWithOwner: v.string(),
@@ -30,12 +26,10 @@ const fetchData = async () => {
 				avatarUrl: v.string(),
 			}),
 		}))
-	})
+	}), v.transform(r => r.repositories.filter(r => r.lastPullRequest)))
+)
 
-	return v.parse(schema, json).repositories.filter(r => r.lastPullRequest)
-}
-
-type Item = Awaited<ReturnType<typeof fetchData>>[number]
+type Item = ServerResourceType<typeof createGithubRepositoriesResource>[number]
 
 // TODO: maybe format as "3 weeks ago" instead of exact date
 function formatContributionDate(value: string) {
@@ -89,34 +83,35 @@ function RepositoryRow(props: {
 
 const ROWS = 7
 
+function createRows(repositories: Array<Item>) {
+	const rowCount = Math.min(repositories.length, ROWS)
+	const rows: Item[][] = []
+	for (let i = 0; i < rowCount; i++) {
+		rows.push(repositories.filter((_, index) => index % rowCount === i))
+	}
+	return rows
+}
+
 export function Repositories() {
-	const [data] = createResource(() => !isServer, fetchData)
-	const rows = createMemo(() => {
-		const repositories = data() ?? []
-		const rowCount = Math.min(repositories.length, ROWS)
-		const rows: Item[][] = []
-		for (let i = 0; i < rowCount; i++) {
-			rows.push(repositories.filter((_, index) => index % rowCount === i))
-		}
-		return rows
-	})
+	const data = createGithubRepositoriesResource()
 
 	return (
 		<section class="repositories">
-			<Switch>
-				<Match when={isServer || data.loading}>
-					<For each={Array.from({ length: ROWS }, (_, i) => i)}>
-						{() => <div class="row" />}
-					</For>
-				</Match>
-				<Match when={data()}>
-					<For each={rows()}>
-						{(row, i) => (
-							<RepositoryRow repositories={row} direction={i() % 2 === 0 ? "ltr" : "rtl"} />
-						)}
-					</For>
-				</Match>
-			</Switch>
+			<Suspense fallback={
+				<For each={Array.from({ length: ROWS }, (_, i) => i)}>
+					{() => <div class="row" />}
+				</For>
+			}>
+				<Show when={data()}>
+					{(repositories) => (
+						<For each={createRows(repositories())}>
+							{(row, i) => (
+								<RepositoryRow repositories={row} direction={i() % 2 === 0 ? "ltr" : "rtl"} />
+							)}
+						</For>
+					)}
+				</Show>
+			</Suspense>
 		</section>
 	)
 }
