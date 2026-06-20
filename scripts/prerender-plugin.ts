@@ -147,6 +147,6 @@ async function prerender(options: {
 
 	await fs.writeFile(
 		indexPath,
-		html.replace(options.placeholder, before + shell),
+		html.replace(options.placeholder, before + '<body>' + shell + '</body>'),
 	);
 }

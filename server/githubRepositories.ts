@@ -257,6 +257,7 @@ async function loadContributedRepositories(): Promise<ContributedRepositoriesRes
 		}
 		if (refreshTimeout) clearTimeout(refreshTimeout)
 		refreshTimeout = setTimeout(loadContributedRepositories, ONE_DAY_MS + 1)
+		refreshTimeout.unref()
 		return data
 	} finally {
 		contributedRepositoriesPromise = undefined
