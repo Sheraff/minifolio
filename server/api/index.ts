@@ -1,55 +1,54 @@
-import { Hono } from "hono"
-import { fetchTanstackArticles } from './articles.ts'
-import { fetchGitHubContributions } from './github.ts'
-import { fetchContributedRepositories } from './githubRepositories.ts'
-import { fetchLabProjects } from './projects.ts'
+import { Context, Hono } from "hono";
+import { fetchTanstackArticles } from "./articles.ts";
+import { fetchGitHubContributions } from "./github.ts";
+import { fetchContributedRepositories } from "./githubRepositories.ts";
+import { fetchLabProjects } from "./projects.ts";
+
+async function respond(
+	c: Context,
+	fetcher: () => Promise<unknown>,
+	errorMessage: string,
+) {
+	if (c.req.method === "HEAD") {
+		c.header("Cache-Control", "public, max-age=3600");
+		return new Response(null, c.res);
+	}
+	try {
+		const data = await fetcher();
+		c.header("Cache-Control", "public, max-age=3600");
+		return c.json(data);
+	} catch (error) {
+		console.error(error);
+		c.header("Cache-Control", "no-store");
+		return c.json({ error: errorMessage }, 502);
+	}
+}
 
 export function api() {
-	const app = new Hono()
+	const app = new Hono();
 
-	app.get('/health', (c) => c.json({ ok: true }))
-	
-	app.get('/projects', async (c) => {
-	  try {
-	    const projects = await fetchLabProjects()
-	    c.header('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400, stale-if-error=86400')
-	    return c.json(projects)
-	  } catch (error) {
-	    console.error(error)
-	    c.header('Cache-Control', 'no-store')
-	    return c.json({ error: 'Unable to load projects' }, 502)
-	  }
-	})
-	
-	app.get('/github/contributions', async (c) => {
-	  try {
-	    c.header('Cache-Control', 'public, max-age=3600')
-	    return c.json(await fetchGitHubContributions())
-	  } catch (error) {
-	    console.error(error)
-	    return c.json({ error: 'Unable to load GitHub contributions' }, 502)
-	  }
-	})
-	
-	app.get('/github/repositories', async (c) => {
-	  try {
-	    c.header('Cache-Control', 'public, max-age=3600')
-	    return c.json(await fetchContributedRepositories())
-	  } catch (error) {
-	    console.error(error)
-	    return c.json({ error: 'Unable to load contributed GitHub repositories' }, 502)
-	  }
-	})
-	
-	app.get('/articles/tanstack', async (c) => {
-	  try {
-	    c.header('Cache-Control', 'public, max-age=3600')
-	    return c.json(await fetchTanstackArticles())
-	  } catch (error) {
-	    console.error(error)
-	    return c.json({ error: 'Unable to load TanStack articles' }, 502)
-	  }
-	})
+	app.get("/health", (c) => c.json({ ok: true }));
 
-	return app
+	app.get("/projects", async (c) =>
+		respond(c, fetchLabProjects, "Unable to load projects"),
+	);
+	app.get("/github/contributions", async (c) =>
+		respond(
+			c,
+			fetchGitHubContributions,
+			"Unable to load GitHub contributions",
+		),
+	);
+	app.get("/github/repositories", async (c) =>
+		respond(
+			c,
+			fetchContributedRepositories,
+			"Unable to load contributed GitHub repositories",
+		),
+	);
+	app.get("/articles/tanstack", async (c) =>
+		respond(c, fetchTanstackArticles, "Unable to load TanStack articles"),
+	);
+
+	return app;
 }
