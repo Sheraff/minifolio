@@ -1,9 +1,8 @@
-import type { HttpBindings } from '@hono/node-server'
 import { Hono } from 'hono'
-import { fetchTanstackArticles } from './articles.ts'
-import { fetchGitHubContributions } from './github.ts'
-import { fetchContributedRepositories } from './githubRepositories.ts'
-import { fetchLabProjects, type LabProject } from './projects.ts'
+import { fetchTanstackArticles } from './api/articles.ts'
+import { fetchGitHubContributions } from './api/github.ts'
+import { fetchContributedRepositories } from './api/githubRepositories.ts'
+import { fetchLabProjects, type LabProject } from './api/projects.ts'
 
 const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
@@ -162,7 +161,8 @@ async function streamLlmsTxt() {
   return stream
 }
 
-export function registerLlmsRoute(app: Hono<{ Bindings: HttpBindings }>) {
+export function llms() {
+  const app = new Hono()
   app.get('/llms.txt', async (c) => {
     c.header('Cache-Control', 'public, max-age=3600')
     c.header('Content-Type', 'text/plain; charset=UTF-8')
@@ -172,4 +172,5 @@ export function registerLlmsRoute(app: Hono<{ Bindings: HttpBindings }>) {
       status: 200,
     })
   })
+  return app
 }

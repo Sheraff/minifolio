@@ -5,7 +5,7 @@ import { createServerResource, type ServerResourceType } from "#/createServerRes
 
 const createProjectsResource = createServerResource(
 	"/api/projects",
-	import.meta.env.SSR && import("#server/projects.ts").then((m) => m.fetchLabProjects),
+	import.meta.env.SSR && import("#server/api/projects.ts").then((m) => m.fetchLabProjects),
 	v.pipe(v.array(v.object({
 		route: v.string(),
 		url: v.string(),

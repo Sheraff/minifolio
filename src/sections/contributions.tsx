@@ -5,7 +5,7 @@ import { createServerResource } from "#/createServerResource";
 
 const createGithubContributionResource = createServerResource(
 	"/api/github/contributions",
-	import.meta.env.SSR && import("#server/github.ts").then((m) => m.fetchGitHubContributions),
+	import.meta.env.SSR && import("#server/api/github.ts").then((m) => m.fetchGitHubContributions),
 	v.object({
 		total: v.object({
 			lastYear: v.number(),
