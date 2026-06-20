@@ -1,4 +1,5 @@
 import { createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { isServer } from "solid-js/web"
 import * as v from 'valibot'
 import './labs.css'
 
@@ -26,11 +27,11 @@ const fetchData = async () => {
 }
 
 export function Labs() {
-	const [data] = createResource(fetchData)
+	const [data] = createResource(() => !isServer, fetchData)
 	return (
 		<section class="labs">
 			<Switch>
-				<Match when={data.loading}>
+				<Match when={isServer || data.loading}>
 					<ul />
 				</Match>
 				<Match when={data()}>

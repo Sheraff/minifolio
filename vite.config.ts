@@ -2,9 +2,13 @@
 
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
+import { prerenderPlugin } from './scripts/prerender-plugin'
 
 export default defineConfig({
-  plugins: [solid()],
+  plugins: [
+    solid({ ssr: true }),
+    prerenderPlugin(),
+  ],
   clearScreen: false,
   test: {
     environment: 'node',
@@ -34,6 +38,7 @@ export default defineConfig({
         ssr: 'server/index.ts',
         outDir: 'dist/server',
         emptyOutDir: true,
+        copyPublicDir: false,
         target: 'node24',
         rolldownOptions: {
           output: {
@@ -41,6 +46,22 @@ export default defineConfig({
           },
         },
       }
-    }
+    },
+    // prerender: {
+    //   consumer: 'server',
+    //   build: {
+    //     ssr: 'src/prerender.tsx',
+    //     outDir: 'dist/prerender',
+    //     copyPublicDir: false,
+    //     emptyOutDir: true,
+    //     emitAssets: false,
+    //     target: 'node24',
+    //     rolldownOptions: {
+    //       output: {
+    //         entryFileNames: 'prerender.js',
+    //       },
+    //     },
+    //   }
+    // }
   }
 })

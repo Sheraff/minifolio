@@ -1,4 +1,5 @@
 import { createMemo, createResource, For, Match, Switch } from "solid-js"
+import { isServer } from "solid-js/web"
 import * as v from 'valibot'
 import './repositories.css'
 
@@ -89,7 +90,7 @@ function RepositoryRow(props: {
 const ROWS = 7
 
 export function Repositories() {
-	const [data] = createResource(fetchData)
+	const [data] = createResource(() => !isServer, fetchData)
 	const rows = createMemo(() => {
 		const repositories = data() ?? []
 		const rowCount = Math.min(repositories.length, ROWS)
@@ -103,7 +104,7 @@ export function Repositories() {
 	return (
 		<section class="repositories">
 			<Switch>
-				<Match when={data.loading}>
+				<Match when={isServer || data.loading}>
 					<For each={Array.from({ length: ROWS }, (_, i) => i)}>
 						{() => <div class="row" />}
 					</For>

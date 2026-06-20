@@ -1,4 +1,5 @@
 import { createResource, For, Match, Switch } from "solid-js"
+import { isServer } from "solid-js/web"
 import * as v from 'valibot'
 import './contributions.css'
 
@@ -23,14 +24,14 @@ const fetchData = async () => {
 }
 
 export function Contributions() {
-	const [data] = createResource(fetchData)
+	const [data] = createResource(() => !isServer, fetchData)
 
 	return (
 		<Switch>
 			<Match when={data.error}>
 				<section />
 			</Match>
-			<Match when={data.loading}>
+			<Match when={isServer || data.loading}>
 				<section class="contributions">
 					<div class="graph" />
 				</section>
