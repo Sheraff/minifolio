@@ -92,6 +92,7 @@ async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 		}
 		if (refreshTimeout) clearTimeout(refreshTimeout)
 		refreshTimeout = setTimeout(loadTanstackArticles, ONE_HOUR_MS + 1)
+		refreshTimeout.unref()
 		return data
 	} finally {
 		tanstackArticlesPromise = undefined

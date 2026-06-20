@@ -1,19 +1,27 @@
-import { createSignal, onCleanup, Show } from "solid-js"
+import { createSignal, onCleanup, onMount, Show } from "solid-js"
 
 function getTime() {
 	return new Intl.DateTimeFormat(new Intl.Locale(navigator.language, { numberingSystem: "latn" }), { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' }).format()
 }
 
 export function Time() {
-	const [time, setTime] = createSignal(getTime())
+	const [time, setTime] = createSignal('--:--')
+	let interval: ReturnType<typeof setInterval> | undefined
 
-	const i = setInterval(() => setTime(getTime()), 500)
-	onCleanup(() => clearInterval(i))
+	onMount(() => {
+		setTime(getTime())
+		interval = setInterval(() => setTime(getTime()), 500)
+	})
+	onCleanup(() => {
+		if (interval) clearInterval(interval)
+	})
 
 	return <time>{time()}</time>
 }
 
 function getParisDifferenceLabel() {
+	if (typeof Temporal === 'undefined') return null
+
 	const now = Temporal.Now.instant()
 
 	const user = now.toZonedDateTimeISO(Temporal.Now.timeZoneId())
@@ -33,10 +41,12 @@ function getParisDifferenceLabel() {
 }
 
 export function TimeDifference() {
-	const diff = getParisDifferenceLabel()
+	const [diff, setDiff] = createSignal<string | null>(null)
+	onMount(() => setDiff(getParisDifferenceLabel()))
+
 	return (
-		<Show when={diff}>
-			<span> # {diff}</span>
+		<Show when={diff()}>
+			{(value) => <span> # {value()}</span>}
 		</Show>
 	)
 }

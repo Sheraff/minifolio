@@ -2,9 +2,15 @@
 
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
+import { prerenderPlugin } from './scripts/prerender-plugin'
+import { inlineCss } from './scripts/inline-css'
 
 export default defineConfig({
-  plugins: [solid()],
+  plugins: [
+    solid({ ssr: true }),
+    prerenderPlugin(),
+    inlineCss(),
+  ],
   clearScreen: false,
   test: {
     environment: 'node',
@@ -34,6 +40,7 @@ export default defineConfig({
         ssr: 'server/index.ts',
         outDir: 'dist/server',
         emptyOutDir: true,
+        copyPublicDir: false,
         target: 'node24',
         rolldownOptions: {
           output: {
@@ -41,6 +48,6 @@ export default defineConfig({
           },
         },
       }
-    }
+    },
   }
 })

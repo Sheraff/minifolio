@@ -96,6 +96,7 @@ async function loadGitHubContributions(): Promise<ContributionsResponse> {
 		}
 		if (refreshTimeout) clearTimeout(refreshTimeout)
 		refreshTimeout = setTimeout(loadGitHubContributions, ONE_DAY_MS + 1)
+		refreshTimeout.unref()
 		return data
 	} finally {
 		contributionsPromise = undefined

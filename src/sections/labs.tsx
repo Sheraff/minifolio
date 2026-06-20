@@ -1,15 +1,12 @@
-import { createResource, createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createSignal, For, onCleanup, Show, Suspense } from "solid-js"
 import * as v from 'valibot'
 import './labs.css'
+import { createServerResource, type ServerResourceType } from "#/createServerResource"
 
-const fetchData = async () => {
-	const response = await fetch('/api/projects')
-	if (!response.ok) {
-		throw new Error('Unable to load projects')
-	}
-	const json = await response.json()
-
-	const schema = v.array(v.object({
+const createProjectsResource = createServerResource(
+	"/api/projects",
+	import.meta.env.SSR && import("#server/projects.ts").then((m) => m.fetchLabProjects),
+	v.pipe(v.array(v.object({
 		route: v.string(),
 		url: v.string(),
 		title: v.string(),
@@ -20,30 +17,25 @@ const fetchData = async () => {
 			lastModified: v.number(),
 			firstAdded: v.number()
 		})
-	}))
-
-	return v.parse(schema, json).filter(i => i.image)
-}
+	})), v.transform(r => r.filter(i => i.image)))
+)
 
 export function Labs() {
-	const [data] = createResource(fetchData)
+	const data = createProjectsResource()
 	return (
 		<section class="labs">
-			<Switch>
-				<Match when={data.loading}>
-					<ul />
-				</Match>
-				<Match when={data()}>
+			<Suspense fallback={<ul/>}>
+				<Show when={data()}>
 					{(list) => <List list={list()} />}
-				</Match>
-			</Switch>
+				</Show>
+			</Suspense>
 		</section>
 	)
 }
 
 const COUNT = 8
 
-function List(props: { list: Awaited<ReturnType<typeof fetchData>> }) {
+function List(props: { list: ServerResourceType<typeof createProjectsResource> }) {
 	const [current, setCurrent] = createSignal(Array.from({ length: Math.min(COUNT, props.list.length - 1) }, (_, i) => i))
 	const [swap, setSwap] = createSignal<null | { from: number, to: number }>(null)
 	const [hold, setHold] = createSignal(-1)
@@ -127,7 +119,7 @@ function List(props: { list: Awaited<ReturnType<typeof fetchData>> }) {
 	</ul>
 }
 
-function Card(props: { item: Awaited<ReturnType<typeof fetchData>>[number] }) {
+function Card(props: { item: ServerResourceType<typeof createProjectsResource>[number] }) {
 	return (
 		<a href={`https://sheraff.github.io${props.item.url}`}>
 			<img src={`https://sheraff.github.io${props.item.image!}`} />

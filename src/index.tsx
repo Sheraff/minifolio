@@ -1,6 +1,10 @@
 /* @refresh reload */
-import { render } from 'solid-js/web'
+import { hydrate, isDev, render } from 'solid-js/web'
 import './index.css'
 import App from './App.tsx'
 
-render(() => <App />, document.body!)
+if (isDev) {
+	render(() => <App />, document.body!)
+} else {
+	hydrate(() => <App />, document.body!)
+}
