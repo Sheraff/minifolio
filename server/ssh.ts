@@ -12,6 +12,7 @@ const AUTH_TIMEOUT_MS = 10_000;
 const SESSION_TIMEOUT_MS = 3_000;
 const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
+const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
 const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
 
 export function createSshServer(isDev: boolean) {
@@ -77,7 +78,7 @@ export function createSshServer(isDev: boolean) {
 
 					session.on("shell", (accept) => {
 						const stream = accept();
-						interactiveStream(username, info, stream, terminalFiles);
+						interactiveStream(username, info, stream, terminalFiles, isDev);
 					});
 				});
 			});
@@ -164,11 +165,15 @@ function interactiveStream(
 	info: ssh.ClientInfo,
 	stream: ssh.ServerChannel,
 	terminalFiles: Record<string, string>,
+	isDev: boolean,
 ) {
 	handleStreamError(stream);
+	const terminalUser = username || "user";
 	const terminal = createTerminalSession({
 		files: { ...terminalFiles },
+		user: terminalUser,
 		allowedUrlPrefixes: SSH_ALLOWED_URL_PREFIXES,
+		...(isDev ? {} : { loadGitLog: readSshGitLog }),
 		exitCommand: {
 			message: "bye",
 			requestExit: true,
@@ -178,7 +183,7 @@ function interactiveStream(
 	let pending = Promise.resolve();
 
 	function prompt() {
-		stream.write(`${username}@minifolio:~$ `);
+		stream.write(`${terminalUser}@minifolio:~$ `);
 	}
 
 	function queueInput(chunk: Uint8Array) {
@@ -248,6 +253,10 @@ function interactiveStream(
 function writeTerminalOutput(stream: ssh.ServerChannel, output: string) {
 	if (!output) return;
 	stream.write(`${output.replace(/\n/g, "\r\n")}\r\n`);
+}
+
+async function readSshGitLog() {
+	return readFileSync(CLIENT_GIT_LOG_PATH, "utf8");
 }
 
 function readTerminalFiles(root: string) {

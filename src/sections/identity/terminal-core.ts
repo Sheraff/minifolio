@@ -16,6 +16,7 @@ export type TerminalAutocompleteState = {
 
 export type TerminalSessionOptions = {
 	files: Record<string, string>
+	user?: string
 	allowedUrlPrefixes?: string[]
 	loadGitLog?: () => Promise<string>
 	exitCommand?: TerminalExitCommandOptions
@@ -93,10 +94,11 @@ const DIRECTORY_COMPLETION_COMMANDS = new Set(['cd', 'pushd'])
 export function createTerminalSession(options: TerminalSessionOptions): TerminalSession {
 	const history: string[] = []
 	const signals: TerminalSignals = { clearGeneration: 0, exitGeneration: 0 }
+	const user = options.user ?? 'sheraff'
 	const env = {
 		HOME,
-		USER: 'sheraff',
-		LOGNAME: 'sheraff',
+		USER: user,
+		LOGNAME: user,
 		HOSTNAME: 'minifolio',
 		PWD: HOME,
 		OLDPWD: HOME,
@@ -178,7 +180,7 @@ function createCustomCommands(history: string[], signals: TerminalSignals, optio
 			return { stdout: '', stderr: '', exitCode: 0, stdoutKind: 'text' }
 		}),
 		command('minifolio-help', async (_args, ctx) => stdoutLine(formatHelp(ctx))),
-		command('whoami', async () => stdoutLine('sheraff')),
+		command('whoami', async (_args, ctx) => stdoutLine(getUser(ctx))),
 		command('hostname', async args => {
 			if (args.length === 0) return stdoutLine('minifolio')
 			if (args.length === 1 && args[0] === '-f') return stdoutLine('florianpellet.com')
@@ -186,7 +188,10 @@ function createCustomCommands(history: string[], signals: TerminalSignals, optio
 		}),
 		command('git', async args => resolveGit(args, loadGitLog)),
 		command('uname', async args => stdoutLine(args.includes('-a') ? 'Portfolio minifolio 1.0.0 solidjs x86_64 delightful' : 'Portfolio')),
-		command('id', async () => stdoutLine('uid=1000(sheraff) gid=1000(sheraff) groups=1000(sheraff),2024(frontend)')),
+		command('id', async (_args, ctx) => {
+			const user = getUser(ctx)
+			return stdoutLine(`uid=1000(${user}) gid=1000(${user}) groups=1000(${user}),2024(frontend)`)
+		}),
 		command('history', async () => stdoutLine(history.map((entry, index) => `${index + 1}  ${entry}`).join('\n'))),
 		command('man', async args => stdoutLine(args[0] ? `No manual entry for ${args[0]}` : 'What manual page do you want?')),
 		command('sudo', async () => stdoutLine('Nice try.')),
@@ -197,6 +202,10 @@ function createCustomCommands(history: string[], signals: TerminalSignals, optio
 			return stdoutLine(options.exitCommand?.message ?? 'This terminal lives here now.')
 		}),
 	]
+}
+
+function getUser(ctx: CommandContext) {
+	return ctx.env.get('USER') || ctx.env.get('LOGNAME') || 'sheraff'
 }
 
 async function readVirtualFile(ctx: CommandContext, path: string): Promise<ExecResult> {

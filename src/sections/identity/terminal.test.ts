@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { autocomplete, resolveGit, type TerminalAutocompleteState } from './terminal-core'
+import { autocomplete, createTerminalSession, executeTerminalCommand, resolveGit, type TerminalAutocompleteState } from './terminal-core'
 
 type EntryType = 'directory' | 'file'
 type FileTree = Record<string, Record<string, EntryType>>
@@ -63,6 +63,18 @@ describe('autocomplete', () => {
 	it('prints the build-time git log asset', async () => {
 		const log = 'commit abc123\nAuthor: Sheraff <me@florianpellet.com>\n\n    Build the log\n'
 		expect((await resolveGit(['log'], async () => log)).stdout).toBe(log)
+	})
+
+	it('uses sheraff as the default terminal user', async () => {
+		const session = createTerminalSession({ files: {} })
+		expect((await executeTerminalCommand(session, 'whoami'))?.output).toBe('sheraff')
+	})
+
+	it('uses the configured terminal user for identity commands', async () => {
+		const session = createTerminalSession({ files: {}, user: 'visitor' })
+		expect((await executeTerminalCommand(session, 'whoami'))?.output).toBe('visitor')
+		expect((await executeTerminalCommand(session, 'echo $USER $LOGNAME'))?.output).toBe('visitor visitor')
+		expect((await executeTerminalCommand(session, 'id'))?.output).toContain('uid=1000(visitor)')
 	})
 
 	it('does not complete empty argument slots', async () => {
