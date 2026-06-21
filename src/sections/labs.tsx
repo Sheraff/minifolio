@@ -122,7 +122,7 @@ function List(props: { list: ServerResourceType<typeof createProjectsResource> }
 function Card(props: { item: ServerResourceType<typeof createProjectsResource>[number] }) {
 	return (
 		<a href={`https://sheraff.github.io${props.item.url}`}>
-			<img src={`https://sheraff.github.io${props.item.image!}`} />
+			<img src={`https://sheraff.github.io${props.item.image!}`} alt="" />
 			<div>
 				<p>{props.item.title}</p>
 			</div>

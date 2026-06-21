@@ -57,7 +57,7 @@ function RepositoryRow(props: {
 						<For each={props.repositories}>
 							{(item) =>
 								<li role="listitem">
-									<a href={`${item.url}/issues?q=author%3Asheraff`}>
+									<a href={`${item.url}/issues?q=author%3Asheraff`} tabIndex={index() === 1 ? -1 : undefined}>
 										<img src={item.owner.avatarUrl} alt="" width="40" height="40" loading="lazy" />
 										<p>{item.nameWithOwner}</p>
 										<dl>

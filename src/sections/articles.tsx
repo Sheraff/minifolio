@@ -77,7 +77,7 @@ function Card(props: { item: Item }) {
 							</svg>
 						}
 					>
-						{(src) => <img src={src()} />}
+						{(src) => <img src={src()} alt=""/>}
 					</Show>
 					<figcaption>
 						{props.item.title}

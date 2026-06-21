@@ -78,6 +78,10 @@ body {
 
 }
 
+main {
+	display: contents;
+}
+
 hr {
 	all: initial;
 	grid-column: 1 / 4;

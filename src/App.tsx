@@ -29,27 +29,29 @@ function App() {
 			<hr />
 			<Head />
 			<hr data-big />
-			<Identity />
-			<hr data-big />
-			<section>
-				<h2>Contributions</h2>
-			</section>
-			<hr />
-			<Contributions />
-			<hr />
-			<Repositories />
-			<hr data-big />
-			<section>
-				<h2>Articles</h2>
-			</section>
-			<hr />
-			<Articles />
-			<hr data-big />
-			<section>
-				<h2>Experiments</h2>
-			</section>
-			<hr />
-			<Labs />
+			<main>
+				<Identity />
+				<hr data-big />
+				<section>
+					<h2>Contributions</h2>
+				</section>
+				<hr />
+				<Contributions />
+				<hr />
+				<Repositories />
+				<hr data-big />
+				<section>
+					<h2>Articles</h2>
+				</section>
+				<hr />
+				<Articles />
+				<hr data-big />
+				<section>
+					<h2>Experiments</h2>
+				</section>
+				<hr />
+				<Labs />
+			</main>
 			<hr data-big />
 			<Footer />
 			<div class="rgb-mask" aria-hidden="true" />
