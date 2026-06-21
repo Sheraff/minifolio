@@ -3,7 +3,6 @@ import { fetchTanstackArticles } from "./articles.ts";
 import { fetchGitHubContributions } from "./github.ts";
 import { fetchContributedRepositories } from "./githubRepositories.ts";
 import { fetchLabProjects } from "./projects.ts";
-import { teapot } from "../teapot.ts";
 
 async function respond(
 	c: Context,
@@ -50,8 +49,6 @@ export function api() {
 	app.get("/articles/tanstack", async (c) =>
 		respond(c, fetchTanstackArticles, "Unable to load TanStack articles"),
 	);
-
-	app.route("/brew", teapot());
 
 	app.get("*", (c) => c.notFound());
 
