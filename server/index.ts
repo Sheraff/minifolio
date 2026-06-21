@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { parseArgs } from "node:util";
+import { fileURLToPath } from "node:url";
 
 const parsed = parseArgs({
 	options: {
@@ -27,7 +28,8 @@ const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
 if (webPort.success) {
 	const port = webPort.output;
 	const { createWebServer } = await import("./web.ts");
-	const server = await createWebServer(isDev);
+	const serverDir = fileURLToPath(new URL(".", import.meta.url));
+	const server = await createWebServer(isDev, serverDir);
 	server.listen(port, () => {
 		console.log(`http://localhost:${port}`);
 	});

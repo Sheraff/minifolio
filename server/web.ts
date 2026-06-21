@@ -1,11 +1,10 @@
-import { fileURLToPath } from "node:url";
 import { createAdaptorServer, type HttpBindings } from "@hono/node-server";
 import { Hono } from "hono";
 import { llms } from "./llms.ts";
 import { client, devClient } from "./client.ts";
 import { api } from "./api/index.ts";
 
-export async function createWebServer(isDev: boolean) {
+export async function createWebServer(isDev: boolean, serverDir: string) {
 	const app = new Hono<{ Bindings: HttpBindings }>();
 	const server = createAdaptorServer({ fetch: app.fetch });
 
@@ -15,7 +14,6 @@ export async function createWebServer(isDev: boolean) {
 	if (isDev) {
 		app.use("*", await devClient(server));
 	} else {
-		const serverDir = fileURLToPath(new URL(".", import.meta.url));
 		app.route("/", client(serverDir));
 	}
 
