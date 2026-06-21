@@ -213,7 +213,7 @@ const BROWSER_EXCLUDED_COMMANDS = new Set(['gzip', 'gunzip', 'zcat', 'sqlite3'])
 const BROWSER_COMMANDS = getCommandNames().filter((name): name is CommandName => !BROWSER_EXCLUDED_COMMANDS.has(name))
 const NETWORK_COMMANDS = getNetworkCommandNames()
 const COMPLETE_COMMANDS = [...new Set([...BROWSER_COMMANDS, ...NETWORK_COMMANDS, ...CUSTOM_COMMAND_NAMES])]
-const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'status'] as const
+const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'remote', 'status'] as const
 const COMMAND_COMPLETION_COMMANDS = new Set(['which', 'man'])
 const DIRECTORY_COMPLETION_COMMANDS = new Set(['cd', 'pushd'])
 
@@ -329,9 +329,9 @@ function formatColumns(items: string[]) {
 	}).join('\n')
 }
 
-function resolveGit(args: string[]) {
+export function resolveGit(args: string[]) {
 	if (args.length === 0) {
-		return stdoutLine('usage: git [status|log|branch|config]')
+		return stdoutLine('usage: git [status|log|branch|config|remote]')
 	}
 
 	switch (args[0]) {
@@ -345,6 +345,9 @@ function resolveGit(args: string[]) {
 			if (args[1] === 'user.email' || (args[1] === '--get' && args[2] === 'user.email')) return stdoutLine('me@florianpellet.com')
 			if (args[1] === 'user.name' || (args[1] === '--get' && args[2] === 'user.name')) return stdoutLine('Florian Pellet')
 			return stdoutLine('git config: only user.name and user.email are wired up here')
+		case 'remote':
+			if (args[1] === '-v' || args[1] === '--verbose') return stdoutLine('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)')
+			return stdoutLine('origin')
 		default:
 			return stdoutLine(`git: '${args[0]}' is not a git command in this tiny demo`)
 	}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { autocomplete, type TerminalAutocompleteState } from './terminal'
+import { autocomplete, resolveGit, type TerminalAutocompleteState } from './terminal'
 
 type EntryType = 'directory' | 'file'
 type FileTree = Record<string, Record<string, EntryType>>
@@ -51,7 +51,12 @@ describe('autocomplete', () => {
 	})
 
 	it('completes git subcommands after a prefix', async () => {
+		expect(await autocomplete('git re', state)).toBe('git remote ')
 		expect(await autocomplete('git st', state)).toBe('git status ')
+	})
+
+	it('prints the configured git remote', () => {
+		expect(resolveGit(['remote', '-v']).stdout).toBe('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)\n')
 	})
 
 	it('does not complete empty argument slots', async () => {
