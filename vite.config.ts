@@ -4,12 +4,14 @@ import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
 import { prerenderPlugin } from './scripts/prerender-plugin'
 import { inlineCss } from './scripts/inline-css'
+import { gitLogAsset } from './scripts/git-log-asset'
 
 export default defineConfig({
   plugins: [
     solid({ ssr: true }),
     prerenderPlugin(),
     inlineCss(),
+    gitLogAsset(),
   ],
   clearScreen: false,
   test: {

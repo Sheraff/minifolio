@@ -215,8 +215,12 @@ const NETWORK_COMMANDS = getNetworkCommandNames()
 const COMPLETE_COMMANDS = [...new Set([...BROWSER_COMMANDS, ...NETWORK_COMMANDS, ...CUSTOM_COMMAND_NAMES])]
 const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'remote', 'status'] as const
 const GIT_REMOTE_URL = 'https://github.com/Sheraff/minifolio.git'
+const GIT_LOG_URL = `${import.meta.env.BASE_URL}git-log.txt`
+const DEV_GIT_LOG = 'git log is generated at build time and is available in production builds.\n'
 const COMMAND_COMPLETION_COMMANDS = new Set(['which', 'man'])
 const DIRECTORY_COMPLETION_COMMANDS = new Set(['cd', 'pushd'])
+
+let gitLogPromise: Promise<string> | undefined
 
 function createTerminalSession(): TerminalSession {
 	const history: string[] = []
@@ -330,7 +334,7 @@ function formatColumns(items: string[]) {
 	}).join('\n')
 }
 
-export function resolveGit(args: string[]) {
+export async function resolveGit(args: string[], loadGitLog = fetchGitLog) {
 	if (args.length === 0) {
 		return stdoutLine('usage: git [status|log|branch|config|remote]')
 	}
@@ -341,7 +345,7 @@ export function resolveGit(args: string[]) {
 		case 'branch':
 			return stdoutLine('* main')
 		case 'log':
-			return stdoutLine('commit 7e1f0lio\nAuthor: sheraff <me@florianpellet.com>\n\n    Ship a tiny terminal easter egg\n\ncommit c0ffee42\nAuthor: sheraff <me@florianpellet.com>\n\n    Keep making the web a little stranger')
+			return stdoutText(await loadGitLog())
 		case 'config':
 			if (args[1] === 'user.email' || (args[1] === '--get' && args[2] === 'user.email')) return stdoutLine('me@florianpellet.com')
 			if (args[1] === 'user.name' || (args[1] === '--get' && args[2] === 'user.name')) return stdoutLine('Florian Pellet')
@@ -355,8 +359,22 @@ export function resolveGit(args: string[]) {
 	}
 }
 
+async function fetchGitLog() {
+	if (import.meta.env.DEV) return DEV_GIT_LOG
+
+	gitLogPromise ??= fetch(GIT_LOG_URL).then(async response => {
+		if (!response.ok) throw new Error(`git log asset unavailable: ${response.status}`)
+		return response.text()
+	})
+	return gitLogPromise
+}
+
 function stdoutLine(stdout: string): ExecResult {
 	return { stdout: stdout ? `${stdout}\n` : '', stderr: '', exitCode: 0, stdoutKind: 'text' }
+}
+
+function stdoutText(stdout: string): ExecResult {
+	return { stdout, stderr: '', exitCode: 0, stdoutKind: 'text' }
 }
 
 function quoteArg(arg: string) {

@@ -55,9 +55,14 @@ describe('autocomplete', () => {
 		expect(await autocomplete('git st', state)).toBe('git status ')
 	})
 
-	it('prints the configured git remote', () => {
-		expect(resolveGit(['remote', '-v']).stdout).toBe('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)\n')
-		expect(resolveGit(['remote', 'get-url', 'origin']).stdout).toBe('https://github.com/Sheraff/minifolio.git\n')
+	it('prints the configured git remote', async () => {
+		expect((await resolveGit(['remote', '-v'])).stdout).toBe('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)\n')
+		expect((await resolveGit(['remote', 'get-url', 'origin'])).stdout).toBe('https://github.com/Sheraff/minifolio.git\n')
+	})
+
+	it('prints the build-time git log asset', async () => {
+		const log = 'commit abc123\nAuthor: Sheraff <me@florianpellet.com>\n\n    Build the log\n'
+		expect((await resolveGit(['log'], async () => log)).stdout).toBe(log)
 	})
 
 	it('does not complete empty argument slots', async () => {
