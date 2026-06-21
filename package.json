@@ -10,6 +10,7 @@
 	"scripts": {
 		"dev": "node --watch --watch-path=server --watch-path=vite.config.ts --watch-path=index.html --watch-preserve-output server/index.ts --dev",
 		"build": "vite build --app",
+		"resume:md": "node scripts/resume-markdown.ts --input public/resume.html --output public/resume.md",
 		"resume:pdf": "google-chrome --headless=new --disable-gpu --no-sandbox --print-to-pdf=\"$PWD/public/resume.pdf\" \"file://$PWD/public/resume.html\"",
 		"start": "node dist/server/server.js",
 		"check": "tsc -b --noEmit",
@@ -25,6 +26,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "25.9.3",
+		"parse5": "8.0.1",
 		"typescript": "6.0.3",
 		"vite": "8.0.16",
 		"vite-plugin-solid": "2.11.12",
