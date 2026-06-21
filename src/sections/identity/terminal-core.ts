@@ -17,6 +17,7 @@ export type TerminalAutocompleteState = {
 export type TerminalSessionOptions = {
 	files: Record<string, string>
 	user?: string
+	timezone?: string
 	allowedUrlPrefixes?: string[]
 	loadGitLog?: () => Promise<string>
 	exitCommand?: TerminalExitCommandOptions
@@ -95,7 +96,7 @@ export function createTerminalSession(options: TerminalSessionOptions): Terminal
 	const history: string[] = []
 	const signals: TerminalSignals = { clearGeneration: 0, exitGeneration: 0 }
 	const user = options.user ?? 'sheraff'
-	const env = {
+	const env: Record<string, string> = {
 		HOME,
 		USER: user,
 		LOGNAME: user,
@@ -105,6 +106,8 @@ export function createTerminalSession(options: TerminalSessionOptions): Terminal
 		BASH_ALIAS_help: 'minifolio-help',
 		BASH_ALIAS_exit: 'minifolio-exit',
 	}
+
+	if (options.timezone) env.TZ = options.timezone
 
 	const bash = new Bash({
 		files: options.files,

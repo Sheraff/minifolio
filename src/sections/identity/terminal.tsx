@@ -162,6 +162,7 @@ function createWebTerminalSession() {
 
 	return createTerminalSession({
 		files: normalizeTerminalFiles(RAW_FILES),
+		timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		allowedUrlPrefixes: prefixes,
 		loadGitLog: fetchGitLog,
 	})
