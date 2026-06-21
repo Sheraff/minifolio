@@ -63,7 +63,6 @@
 		overflow: hidden;
 		color: transparent;
 		opacity: 0;
-		transition: opacity 250ms ease;
 		max-height: 100%;
 	}
 }

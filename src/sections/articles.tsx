@@ -43,10 +43,10 @@ export function Articles() {
 }
 
 function Card(props: { item: Item }) {
-	const [desc, setDesc] = createSignal<string | null>(null)
+	const [trigger, setTrigger] = createSignal<number | null>(null)
 	return (
 		<li role="listitem"
-			on:mouseenter={() => setDesc(props.item.description)}
+			on:mouseenter={() => setTrigger(t => t === null ? 1 : t + 1)}
 		>
 			<a href={props.item.link}>
 				<figure>
@@ -67,8 +67,8 @@ function Card(props: { item: Item }) {
 				<div>
 					<p>
 						<Suspense fallback={props.item.description}>
-							<Show when={desc()} fallback={props.item.description}>
-								{value => <ArticleDescription description={value()} />}
+							<Show when={trigger()} fallback={props.item.description}>
+								{value => <ArticleDescription description={props.item.description} trigger={value()} />}
 							</Show>
 						</Suspense>
 					</p>

@@ -16,8 +16,10 @@ function randomString() {
 
 export default function ArticleDescription(props: {
 	description: string
+	trigger: number
 }) {
 	const chars = createMemo(() => {
+		props.trigger
 		const segmenter = new Intl.Segmenter('en-US', { granularity: 'grapheme' })
 		const desc: Char[] = []
 		for (const { segment } of segmenter.segment(props.description)) {
