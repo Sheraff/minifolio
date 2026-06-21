@@ -1,0 +1,75 @@
+.article {
+	a {
+		&::after {
+			content: '';
+			display: block;
+			position: absolute;
+			inset: 0;
+			background: var(--bg);
+			opacity: 0;
+			z-index: 1;
+			pointer-events: none;
+			transition: opacity 250ms ease;
+
+			@starting-style {
+				opacity: 0;
+			}
+		}
+
+		&:hover::after {
+			opacity: 0.9;
+		}
+	}
+
+	p {
+		a:hover & {
+			opacity: 1;
+			pointer-events: all;
+		}
+
+		@starting-style {
+			opacity: 0;
+		}
+		
+		span {
+			position: relative;
+			overflow: hidden;
+			white-space: pre-wrap;
+			clip-path: inset(-1em 0 -1em);
+			color: transparent;
+
+			&::after {
+				content: attr(data-chars);
+				color: var(--color);
+				inset: auto 0 0;
+				width: 1ch;
+				position: absolute;
+				word-break: break-all;
+				line-height: 3em;
+				animation:
+					hide-scrambled 0ms linear calc(var(--delay) * 10ms) backwards,
+					unscramble 400ms steps(var(--count), jump-end) calc(var(--delay) * 10ms) both;
+			}
+		}
+	}
+}
+
+@keyframes hide-scrambled {
+	from {
+		color: transparent;
+	}
+
+	to {
+		color: var(--color);
+	}
+}
+
+@keyframes unscramble {
+	from {
+		transform: translateY(calc(100% - 2em));
+	}
+
+	to {
+		transform: translateY(1em);
+	}
+}

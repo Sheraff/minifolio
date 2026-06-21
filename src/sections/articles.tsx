@@ -1,7 +1,9 @@
-import { createSignal, For, Show, Suspense } from "solid-js"
+import { createSignal, For, lazy, Show, Suspense } from "solid-js"
 import * as v from 'valibot'
 import './articles.css'
 import { createServerResource, type ServerResourceType } from "#/createServerResource"
+
+const ArticleDescription = lazy(() => import('./articles-lazy'))
 
 const createArticlesResource = createServerResource(
 	"/api/articles/tanstack",
@@ -40,32 +42,11 @@ export function Articles() {
 	)
 }
 
-type Char = { real: string, list: string }
-const scramble = '&@#=*$%01+{}µ~<>[]'.split('')
-const COUNT = 6
-function randomString() {
-	const arr = new Array(COUNT)
-	for (let i = 0; i < COUNT; i++) {
-		arr[i] = scramble[Math.floor(Math.random() * scramble.length)]
-	}
-	return arr.join('\n')
-}
-
 function Card(props: { item: Item }) {
-	const [desc, setDesc] = createSignal<Char[] | null>(null)
+	const [desc, setDesc] = createSignal<string | null>(null)
 	return (
 		<li role="listitem"
-			on:mouseenter={() => {
-				const segmenter = new Intl.Segmenter('en-US', { granularity: 'grapheme' })
-				const desc: Char[] = []
-				for (const { segment } of segmenter.segment(props.item.description)) {
-					desc.push({
-						real: segment,
-						list: segment === ' ' ? segment : randomString() + '\n' + segment,
-					})
-				}
-				setDesc(desc)
-			}}
+			on:mouseenter={() => setDesc(props.item.description)}
 		>
 			<a href={props.item.link}>
 				<figure>
@@ -85,19 +66,11 @@ function Card(props: { item: Item }) {
 				</figure>
 				<div>
 					<p>
-						<Show when={desc()} fallback={props.item.description}>
-							<For each={desc()}>
-								{(char, i) => <span
-									data-chars={char.list}
-									style={{
-										'--delay': i(),
-										'--count': ((char.list.length - 1) / 2)
-									}}
-								>
-									{char.real}
-								</span>}
-							</For>
-						</Show>
+						<Suspense fallback={props.item.description}>
+							<Show when={desc()} fallback={props.item.description}>
+								{value => <ArticleDescription description={value()} />}
+							</Show>
+						</Suspense>
 					</p>
 				</div>
 			</a>
