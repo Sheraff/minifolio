@@ -5,6 +5,7 @@
 	"type": "module",
 	"imports": {
 		"#/*": "./src/*",
+		"#client/*": "./src/*",
 		"#server/*": "./server/*"
 	},
 	"scripts": {

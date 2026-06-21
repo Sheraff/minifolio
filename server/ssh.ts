@@ -1,14 +1,22 @@
 // server/toy-ssh.ts
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import ssh from "ssh2";
+import {
+	createTerminalSession,
+	executeTerminalCommand,
+} from "#client/sections/identity/terminal-core.ts";
 
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
 const SESSION_TIMEOUT_MS = 3_000;
 const HOST_KEY_PATH = ".ssh_host_ed25519_key";
+const TERMINAL_FILES_ROOT = "fs";
+const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
 
 export function createSshServer(isDev: boolean) {
 	const hostKey = readHostKey(isDev);
+	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
 
 	const server = new ssh.Server(
 		{
@@ -69,7 +77,7 @@ export function createSshServer(isDev: boolean) {
 
 					session.on("shell", (accept) => {
 						const stream = accept();
-						interactiveStream(username, info, stream);
+						interactiveStream(username, info, stream, terminalFiles);
 					});
 				});
 			});
@@ -155,8 +163,17 @@ function interactiveStream(
 	username: string,
 	info: ssh.ClientInfo,
 	stream: ssh.ServerChannel,
+	terminalFiles: Record<string, string>,
 ) {
 	handleStreamError(stream);
+	const terminal = createTerminalSession({
+		files: { ...terminalFiles },
+		allowedUrlPrefixes: SSH_ALLOWED_URL_PREFIXES,
+		exitCommand: {
+			message: "bye",
+			requestExit: true,
+		},
+	});
 	let input = "";
 	let pending = Promise.resolve();
 
@@ -175,25 +192,12 @@ function interactiveStream(
 	}
 
 	async function runCommand(command: string) {
-		const trimmed = command.trim();
+		const result = await executeTerminalCommand(terminal, command);
+		if (!result) return;
 
-		if (!trimmed) return;
-		if (trimmed === "help") {
-			stream.write("help  portfolio  whoami  hostname  exit\r\n");
-		} else if (trimmed === "whoami") {
-			stream.write(`${username}\r\n`);
-		} else if (trimmed === "hostname") {
-			stream.write("minifolio\r\n");
-		} else if (trimmed === "portfolio") {
-			stream.write(
-				"Hi, I'm Florian. This is the SSH version of my portfolio terminal.\r\n",
-			);
-		} else if (trimmed === "exit" || trimmed === "logout") {
-			stream.write("bye\r\n");
-			stream.end();
-		} else {
-			stream.write(`${trimmed}: command not found\r\n`);
-		}
+		if (result.didClear) stream.write("\x1b[2J\x1b[H");
+		writeTerminalOutput(stream, result.output);
+		if (result.exitRequested) stream.end();
 	}
 
 	stream.write("\r\n");
@@ -237,6 +241,29 @@ function interactiveStream(
 				input += char;
 				stream.write(char);
 			}
+		}
+	}
+}
+
+function writeTerminalOutput(stream: ssh.ServerChannel, output: string) {
+	if (!output) return;
+	stream.write(`${output.replace(/\n/g, "\r\n")}\r\n`);
+}
+
+function readTerminalFiles(root: string) {
+	const files: Record<string, string> = {};
+	walkTerminalFiles(root, root, files);
+	return files;
+}
+
+function walkTerminalFiles(root: string, directory: string, files: Record<string, string>) {
+	for (const entry of readdirSync(directory, { withFileTypes: true })) {
+		const path = join(directory, entry.name);
+		if (entry.isDirectory()) {
+			walkTerminalFiles(root, path, files);
+		} else if (entry.isFile()) {
+			const virtualPath = `/${relative(root, path).split(sep).join("/")}`;
+			files[virtualPath] = readFileSync(path, "utf8");
 		}
 	}
 }

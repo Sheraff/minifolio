@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { autocomplete, resolveGit, type TerminalAutocompleteState } from './terminal'
+import { autocomplete, resolveGit, type TerminalAutocompleteState } from './terminal-core'
 
 type EntryType = 'directory' | 'file'
 type FileTree = Record<string, Record<string, EntryType>>
