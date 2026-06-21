@@ -50,5 +50,7 @@ export function api() {
 		respond(c, fetchTanstackArticles, "Unable to load TanStack articles"),
 	);
 
+	app.get("*", (c) => c.notFound());
+
 	return app;
 }
