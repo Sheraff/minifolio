@@ -6,7 +6,7 @@ export function Head() {
 		<section class="head">
 			<figure>
 				<Mask />
-				<img src="/unnamed.jpg" alt="Sheraff's github profile picture" loading="lazy" />
+				<img src="/unnamed.jpg" alt="Sheraff's github profile picture" loading="lazy" decoding="async"/>
 			</figure>
 			<h1><a href="https://github.com/sheraff">@sheraff</a></h1>
 		</section>
