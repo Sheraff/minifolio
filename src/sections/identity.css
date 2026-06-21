@@ -32,7 +32,7 @@
 	}
 
 	dt {
-		color: oklch(from var(--theme) 50% 0.1 h);
+		color: oklch(from var(--theme) 55% 0.1 h);
 
 	}
 
