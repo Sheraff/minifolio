@@ -1,4 +1,4 @@
-import { createSignal, For, lazy, Show, Suspense } from "solid-js";
+import { createSignal, For, lazy, Show, Suspense, type JSX } from "solid-js";
 import * as v from "valibot";
 import "./labs.css";
 import {
@@ -81,7 +81,7 @@ function List(props: {
 								on:mouseleave={() => setHold(-1)}
 							>
 								<div class="frame">
-									<Card item={item} />
+									<Card item={item} loading="lazy" />
 									<Show when={insert()}>
 										<Card item={props.list[swap()!.to]} />
 									</Show>
@@ -119,10 +119,16 @@ function List(props: {
 
 function Card(props: {
 	item: ServerResourceType<typeof createProjectsResource>[number];
+	loading?: JSX.ImgHTMLAttributes<HTMLImageElement>["loading"];
 }) {
 	return (
 		<a href={`https://sheraff.github.io${props.item.url}`}>
-			<img src={`https://sheraff.github.io${props.item.image!}`} alt="" />
+			<img
+				src={`https://sheraff.github.io${props.item.image!}`}
+				alt=""
+				loading={props.loading}
+				decoding="async"
+			/>
 			<div>
 				<p>{props.item.title}</p>
 			</div>
