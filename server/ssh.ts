@@ -9,7 +9,7 @@ export function createSshServer() {
 	try {
 		hostKey = readFileSync(".ssh_host_ed25519_key");
 	} catch {
-		console.warn("No ssh host key found.");
+		console.warn("[ssh] No ssh host key found.");
 		hostKey = ssh.utils.generateKeyPairSync("ed25519").private;
 	}
 
@@ -24,12 +24,17 @@ export function createSshServer() {
 		},
 		(client, info) => {
 			concurrent++;
-			console.log("concurrent connections:", concurrent);
 			let username = "";
 
+			client.on("error", (error) => {
+				console.warn("[ssh]", formatSshError(error));
+			});
+
+			let closed = false;
 			client.on("close", () => {
+				if (closed) return;
+				closed = true;
 				concurrent--;
-				console.log("close for ", username, "remaining", concurrent);
 			});
 
 			client.on("authentication", (ctx) => {
@@ -71,7 +76,33 @@ export function createSshServer() {
 		},
 	);
 
+	server.on("error", (error: unknown) => {
+		console.warn("[ssh]", formatSshError(error));
+	});
+
 	return server;
+}
+
+function formatSshError(error: unknown) {
+	if (!(error instanceof Error)) return String(error);
+	const metadata = error as Error & {
+		level?: unknown;
+		fatal?: unknown;
+		code?: unknown;
+	};
+	const details = [
+		typeof metadata.level === "string"
+			? `level=${metadata.level}`
+			: undefined,
+		typeof metadata.fatal === "boolean"
+			? `fatal=${metadata.fatal}`
+			: undefined,
+		metadata.code ? `code=${metadata.code}` : undefined,
+	]
+		.filter(Boolean)
+		.join(" ");
+
+	return details ? `${error.message} (${details})` : error.message;
 }
 
 function simpleReject(
