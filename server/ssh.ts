@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import ssh from "ssh2";
 import {
+	autocomplete,
 	createTerminalSession,
 	executeTerminalCommand,
 } from "#client/sections/identity/terminal-core.ts";
@@ -180,10 +181,35 @@ function interactiveStream(
 		},
 	});
 	let input = "";
+	let escapeBuffer: number[] = [];
+	let historyCursor = terminal.history.length;
+	let historyDraft = "";
 	let pending = Promise.resolve();
 
+	function promptText() {
+		return `${terminalUser}@minifolio:~$ `;
+	}
+
 	function prompt() {
-		stream.write(`${terminalUser}@minifolio:~$ `);
+		stream.write(promptText());
+	}
+
+	function redrawInput(value: string) {
+		input = value;
+		stream.write(`\r\x1b[2K${promptText()}${input}`);
+	}
+
+	function resetHistoryCursor() {
+		historyCursor = terminal.history.length;
+		historyDraft = "";
+	}
+
+	function resetHistoryAfterEdit() {
+		if (historyCursor !== terminal.history.length) resetHistoryCursor();
+	}
+
+	function ringBell() {
+		stream.write("\x07");
 	}
 
 	function queueInput(chunk: Uint8Array) {
@@ -205,6 +231,43 @@ function interactiveStream(
 		if (result.exitRequested) stream.end();
 	}
 
+	async function completeInput() {
+		const suggestion = await autocomplete(input, terminal);
+		if (!suggestion || suggestion === input) {
+			ringBell();
+			return;
+		}
+
+		resetHistoryAfterEdit();
+		redrawInput(suggestion);
+	}
+
+	function showPreviousHistory() {
+		if (terminal.history.length === 0) {
+			ringBell();
+			return;
+		}
+
+		if (historyCursor === terminal.history.length) historyDraft = input;
+		if (historyCursor > 0) {
+			historyCursor--;
+			redrawInput(terminal.history[historyCursor]);
+		} else {
+			ringBell();
+		}
+	}
+
+	function showNextHistory() {
+		if (historyCursor >= terminal.history.length) {
+			ringBell();
+			return;
+		}
+
+		historyCursor++;
+		redrawInput(historyCursor === terminal.history.length ? historyDraft : terminal.history[historyCursor]);
+		if (historyCursor === terminal.history.length) historyDraft = "";
+	}
+
 	stream.write("\r\n");
 	stream.write(`IP: ${info.ip}\r\n`);
 	stream.write(`Port: ${info.port}\r\n`);
@@ -219,34 +282,65 @@ function interactiveStream(
 
 	async function processInput(chunk: Uint8Array) {
 		for (const byte of chunk) {
-			if (byte === 3) {
+			if (await processEscapeByte(byte)) {
+				continue;
+			} else if (byte === 3) {
 				input = "";
+				resetHistoryCursor();
 				stream.write("^C\r\n");
 				prompt();
 			} else if (byte === 4) {
 				stream.end();
+			} else if (byte === 9) {
+				await completeInput();
 			} else if (byte === 13 || byte === 10) {
 				const command = input;
 				input = "";
+				escapeBuffer = [];
 				stream.write("\r\n");
 				try {
 					await runCommand(command);
 				} catch (error) {
 					stream.write(`${formatSshError(error)}\r\n`);
 				} finally {
+					resetHistoryCursor();
 					if (!stream.writableEnded) prompt();
 				}
 			} else if (byte === 127 || byte === 8) {
 				if (input.length > 0) {
+					resetHistoryAfterEdit();
 					input = input.slice(0, -1);
 					stream.write("\b \b");
 				}
 			} else if (byte >= 32) {
+				resetHistoryAfterEdit();
 				const char = String.fromCharCode(byte);
 				input += char;
 				stream.write(char);
 			}
 		}
+	}
+
+	async function processEscapeByte(byte: number) {
+		if (escapeBuffer.length === 0 && byte !== 27) return false;
+
+		escapeBuffer.push(byte);
+		if (escapeBuffer.length === 1) return true;
+		if (escapeBuffer.length === 2 && (byte === 0x5b || byte === 0x4f)) return true;
+
+		const finalByte = byte >= 0x40 && byte <= 0x7e;
+		if (!finalByte) return true;
+
+		const sequence = String.fromCharCode(...escapeBuffer);
+		escapeBuffer = [];
+
+		if (sequence === "\x1bOA" || (sequence.startsWith("\x1b[") && sequence.endsWith("A"))) {
+			showPreviousHistory();
+		} else if (sequence === "\x1bOB" || (sequence.startsWith("\x1b[") && sequence.endsWith("B"))) {
+			showNextHistory();
+		}
+
+		return true;
 	}
 }
 
