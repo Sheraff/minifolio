@@ -57,6 +57,7 @@ describe('autocomplete', () => {
 
 	it('prints the configured git remote', () => {
 		expect(resolveGit(['remote', '-v']).stdout).toBe('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)\n')
+		expect(resolveGit(['remote', 'get-url', 'origin']).stdout).toBe('https://github.com/Sheraff/minifolio.git\n')
 	})
 
 	it('does not complete empty argument slots', async () => {

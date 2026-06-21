@@ -214,6 +214,7 @@ const BROWSER_COMMANDS = getCommandNames().filter((name): name is CommandName =>
 const NETWORK_COMMANDS = getNetworkCommandNames()
 const COMPLETE_COMMANDS = [...new Set([...BROWSER_COMMANDS, ...NETWORK_COMMANDS, ...CUSTOM_COMMAND_NAMES])]
 const GIT_SUBCOMMANDS = ['branch', 'config', 'log', 'remote', 'status'] as const
+const GIT_REMOTE_URL = 'https://github.com/Sheraff/minifolio.git'
 const COMMAND_COMPLETION_COMMANDS = new Set(['which', 'man'])
 const DIRECTORY_COMPLETION_COMMANDS = new Set(['cd', 'pushd'])
 
@@ -346,7 +347,8 @@ export function resolveGit(args: string[]) {
 			if (args[1] === 'user.name' || (args[1] === '--get' && args[2] === 'user.name')) return stdoutLine('Florian Pellet')
 			return stdoutLine('git config: only user.name and user.email are wired up here')
 		case 'remote':
-			if (args[1] === '-v' || args[1] === '--verbose') return stdoutLine('origin\thttps://github.com/Sheraff/minifolio.git (fetch)\norigin\thttps://github.com/Sheraff/minifolio.git (push)')
+			if (args[1] === '-v' || args[1] === '--verbose') return stdoutLine(`origin\t${GIT_REMOTE_URL} (fetch)\norigin\t${GIT_REMOTE_URL} (push)`)
+			if (args[1] === 'get-url' && args[2] === 'origin') return stdoutLine(GIT_REMOTE_URL)
 			return stdoutLine('origin')
 		default:
 			return stdoutLine(`git: '${args[0]}' is not a git command in this tiny demo`)
