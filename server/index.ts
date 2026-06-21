@@ -19,12 +19,13 @@ const parsed = parseArgs({
 	},
 });
 
+const isDev = parsed.values.dev === true;
+
 const portSchema = v.pipe(v.string(), v.toNumber(), v.number(), v.integer());
 
 const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
 if (webPort.success) {
 	const port = webPort.output;
-	const isDev = parsed.values.dev;
 	const { createWebServer } = await import("./web.ts");
 	const server = await createWebServer(isDev);
 	server.listen(port, () => {
@@ -46,7 +47,7 @@ const sshPort = v.safeParse(portSchema, parsed.values.ssh);
 if (sshPort.success) {
 	const port = sshPort.output;
 	const { createSshServer } = await import("./ssh.ts");
-	const server = createSshServer();
+	const server = createSshServer(isDev);
 	if (server) {
 		server.listen(port, () => {
 			console.log(`SSH server listening on :${port}`);
