@@ -27,7 +27,7 @@ importers:
         specifier: 1.9.13
         version: 1.9.13
       ssh2:
-        specifier: ^1.17.0
+        specifier: 1.17.0
         version: 1.17.0
       valibot:
         specifier: 1.4.1
@@ -37,7 +37,7 @@ importers:
         specifier: 25.9.3
         version: 25.9.3
       '@types/ssh2':
-        specifier: ^1.15.5
+        specifier: 1.15.5
         version: 1.15.5
       parse5:
         specifier: 8.0.1
