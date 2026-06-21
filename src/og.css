@@ -65,15 +65,16 @@ main {
 
 		h1 {
 			margin: 16px 0 20px;
-			font-size: 80px;
-			font-weight: 600;
-			line-height: 0.94;
+			font-size: 50px;
+			font-weight: 900;
+			line-height: 1.2;
 			text-shadow: var(--heading-glow);
 		}
 
 		p {
 			margin: 0;
-			font-size: 42px;
+			font-size: 50px;
+			font-weight: 100;
 			line-height: 1.2;
 			text-shadow: var(--text-glow);
 		}
