@@ -5,3 +5,14 @@ allowBuilds:
    # just-bash
    "@mongodb-js/zstd": false
    node-liblzma: false
+
+   # ssh
+   ssh2: true
+
+ignoredOptionalDependencies:
+	# ssh
+   - cpu-features
+
+   # just-bash
+   - "@mongodb-js/zstd"
+   - "node-liblzma"

@@ -1,53 +1,55 @@
-import { fileURLToPath } from 'node:url'
-import {
-  createAdaptorServer,
-  type HttpBindings,
-} from '@hono/node-server'
-import { Hono } from 'hono'
-import { llms } from './llms.ts'
-import { parseArgs } from "node:util"
-import { client, devClient } from './client.ts'
-import { api } from './api/index.ts'
+import * as v from "valibot";
+import { parseArgs } from "node:util";
 
 const parsed = parseArgs({
-  options: {
-    dev: {
-      type: 'boolean',
-      default: false,
-    },
-    port: {
-      type: 'string',
-    },
-    finger: {
-      type: 'string',
-    }
-  }
-})
+	options: {
+		dev: {
+			type: "boolean",
+			default: false,
+		},
+		port: {
+			type: "string",
+		},
+		finger: {
+			type: "string",
+		},
+		ssh: {
+			type: "string",
+		},
+	},
+});
 
-const app = new Hono<{ Bindings: HttpBindings }>()
-const server = createAdaptorServer({ fetch: app.fetch })
+const portSchema = v.pipe(v.string(), v.toNumber(), v.number(), v.integer());
 
-app.route('/', llms())
-app.route("/api", api())
-
-const isDev = parsed.values.dev
-if (isDev) {
-  app.use('*', await devClient(server))
-} else {
-	const serverDir = fileURLToPath(new URL('.', import.meta.url))
-	app.route('/', client(serverDir))
+const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
+if (webPort.success) {
+	const port = webPort.output;
+	const isDev = parsed.values.dev;
+	const { createWebServer } = await import("./web.ts");
+	const server = await createWebServer(isDev);
+	server.listen(port, () => {
+		console.log(`http://localhost:${port}`);
+	});
 }
 
-const port = Number(parsed.values.port ?? process.env.PORT ?? 5743)
-server.listen(port, () => {
-  console.log(`http://localhost:${port}`)
-})
+const fingerPort = v.safeParse(portSchema, parsed.values.finger);
+if (fingerPort.success) {
+	const port = fingerPort.output;
+	const { createFingerServer } = await import("./finger.ts");
+	const server = createFingerServer();
+	server.listen(port, () => {
+		console.log(`Finger server listening on :${port}`);
+	});
+}
 
-const fingerPort = !!parsed.values.finger && Number(parsed.values.finger)
-if (fingerPort) {
-  const { createFingerServer } = await import('./finger.ts')
-  const fingerServer = createFingerServer()
-  fingerServer.listen(fingerPort, () => {
-    console.log(`Finger server listening on port ${fingerPort}`)
-  })
+const sshPort = v.safeParse(portSchema, parsed.values.ssh);
+if (sshPort.success) {
+	const port = sshPort.output;
+	const { createSshServer } = await import("./ssh.ts");
+	const server = createSshServer();
+	if (server) {
+		server.listen(port, () => {
+			console.log(`SSH server listening on :${port}`);
+		});
+	}
 }
