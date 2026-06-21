@@ -1,0 +1,9 @@
+/* TEAM */
+Owner: Florian Pellet
+Contact: me@florianpellet.com
+GitHub: https://github.com/sheraff
+Bluesky: https://bsky.app/profile/sheraff.dev
+
+/* SITE */
+URL: https://florianpellet.com/
+Built with: Solid, Vite, Hono, TypeScript

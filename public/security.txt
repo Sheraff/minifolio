@@ -1,0 +1,4 @@
+Contact: mailto:me@florianpellet.com
+Expires: 2078-06-20T00:00:00Z
+Preferred-Languages: en, fr
+Canonical: https://florianpellet.com/security.txt
