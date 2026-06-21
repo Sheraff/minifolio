@@ -9,7 +9,7 @@
 		"#server/*": "./server/*"
 	},
 	"scripts": {
-		"dev": "node --watch --watch-path=server --watch-path=vite.config.ts --watch-path=index.html --watch-preserve-output server/index.ts --dev --ssh=9999",
+		"dev": "node --watch --watch-path=server --watch-path=vite.config.ts --watch-path=index.html --watch-preserve-output server/index.ts --dev",
 		"build": "vite build --app",
 		"og:image": "node scripts/og-image.ts",
 		"og:image:all": "pnpm og:image && pnpm og:image --handle=\"sheraff.dev\" --output=\"og-bsky.png\" && pnpm og:image --handle=\"chaponflo\" --output=\"og-twitter.png\"",
