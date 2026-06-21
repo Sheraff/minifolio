@@ -1,7 +1,19 @@
+import { attachRandomGlitch } from "#/glitchText"
+import { onCleanup, onMount } from "solid-js"
+
 /**
  * from: https://metaory.github.io/glitcher-app/
  */
-export function Glitch() {
+export default function Glitch() {
+	onMount(() => {
+		const cleanups = attachRandomGlitch('h1, h2')
+		onCleanup(() => {
+			for (const cleanup of cleanups) {
+				cleanup()
+			}
+		})
+	})
+
 	const slices = [
 		{ y: '0', height: '0.08', keyTimes: '0;0.0835;0.3037;0.3157;0.5784;0.7885;0.9516;1', values: '0.0389;0.0202;0.0240;0.0078;0.0273;0.0465;0.0055;0.0254', dur: '226.1941s' },
 		{ y: '0.08', height: '0.19', keyTimes: '0;0.0823;0.0873;0.1863;0.2311;0.2943;0.7001;1', values: '0.0381;0.0310;0.0350;0.0405;0.0395;0.0181;0.0447;0.0244', dur: '215.0984s' },

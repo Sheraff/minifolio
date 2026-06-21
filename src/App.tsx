@@ -1,6 +1,4 @@
-import { onCleanup, onMount } from "solid-js"
-import { attachRandomGlitch } from "#/glitchText"
-import { Glitch } from "#/svg/glitch"
+
 import { Contributions } from "#/sections/contributions"
 import { Repositories } from "#/sections/repositories"
 import { Articles } from "#/sections/articles"
@@ -9,20 +7,14 @@ import { Identity } from "#/sections/identity"
 import { Head } from "#/sections/head"
 import { Links } from "#/sections/links"
 import { Footer } from "#/sections/footer"
+import { createSignal, lazy, Show, Suspense } from "solid-js"
+
+const Glitch = lazy(() => import('#/svg/glitch'))
 
 
 function App() {
-
-	onMount(() => {
-		const cleanups = attachRandomGlitch('h1, h2')
-		onCleanup(() => {
-			for (const cleanup of cleanups) {
-				cleanup()
-			}
-		})
-	})
-
-
+	const [show, setShow] = createSignal(false)
+	setTimeout(() => setShow(true), 5000)
 	return (
 		<>
 			<Links />
@@ -55,7 +47,11 @@ function App() {
 			<hr data-big />
 			<Footer />
 			<div class="rgb-mask" aria-hidden="true" />
-			<Glitch />
+			<Suspense>
+				<Show when={show()}>
+					<Glitch />
+				</Show>
+			</Suspense>
 		</>
 	)
 }
