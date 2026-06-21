@@ -9,6 +9,21 @@ import type { ServerType } from "@hono/node-server";
 
 const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 
+export function ogImage(imageDir: string) {
+	return serveStatic({
+		root: imageDir,
+		rewriteRequestPath: (requestPath, c) => {
+			if (requestPath !== "/og.png") return requestPath
+
+			c.header("Vary", "User-Agent")
+			const ua = c.req.header("User-Agent") ?? "";
+			if (/cardyb|bluesky|bsky/i.test(ua)) return "/og-bsky.png";
+			if (/\btwitterbot\b/i.test(ua)) return "/og-twitter.png";
+			return requestPath
+		},
+	})
+}
+
 export function client(serverDir: string) {
 	const clientDistDir = path.resolve(serverDir, "../client");
 
@@ -30,6 +45,8 @@ export function client(serverDir: string) {
 	const app = new Hono();
 
 	app.get("/", (c) => c.html(getHtml()))
+
+	app.get("/og.png", ogImage(clientDistDir))
 
 	app.use("*", serveStatic({ root: clientDistDir }));
 

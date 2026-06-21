@@ -11,7 +11,7 @@ function OgCard() {
 					<div style="display:contents" innerHTML={maskSvg} />
 				</figure>
 				<section>
-					<h1>@sheraff</h1>
+					<h1>@{import.meta.env.handle ?? "sheraff"}</h1>
 					<p>I'm a web worker</p>
 				</section>
 			</main>

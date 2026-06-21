@@ -1,12 +1,26 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { parseArgs } from "node:util";
 import { createServer } from "vite";
+
+const { values } = parseArgs({
+	options: {
+		handle: {
+			type: "string",
+			default: "sheraff",
+		},
+		output: {
+			type: "string",
+			default: "og.png",
+		},
+	},
+});
 
 const host = "127.0.0.1";
 const port = 5174;
 const root = process.cwd();
-const output = path.join(root, "public", "og.png");
+const output = path.join(root, "public", values.output);
 const chrome = process.env.CHROME_BIN ?? "google-chrome";
 
 await fs.mkdir(path.dirname(output), { recursive: true });
@@ -18,6 +32,9 @@ const server = await createServer({
 		strictPort: true,
 	},
 	logLevel: "warn",
+	define: {
+		"import.meta.env.handle": JSON.stringify(values.handle),
+	},
 });
 
 try {
