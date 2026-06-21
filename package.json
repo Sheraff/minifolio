@@ -21,16 +21,17 @@
 	},
 	"dependencies": {
 		"@hono/node-server": "2.0.5",
+		"@hono/standard-validator": "^0.2.2",
 		"fast-xml-parser": "5.9.0",
-		"hono": "4.12.25",
+		"hono": "4.12.26",
 		"just-bash": "3.0.1",
 		"solid-js": "1.9.13",
-		"ssh2": "^1.17.0",
+		"ssh2": "1.17.0",
 		"valibot": "1.4.1"
 	},
 	"devDependencies": {
 		"@types/node": "25.9.3",
-		"@types/ssh2": "^1.15.5",
+		"@types/ssh2": "1.15.5",
 		"parse5": "8.0.1",
 		"typescript": "6.0.3",
 		"vite": "8.0.16",

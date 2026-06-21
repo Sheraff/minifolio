@@ -10,13 +10,16 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: 2.0.5
-        version: 2.0.5(hono@4.12.25)
+        version: 2.0.5(hono@4.12.26)
+      '@hono/standard-validator':
+        specifier: ^0.2.2
+        version: 0.2.2(@standard-schema/spec@1.1.0)(hono@4.12.26)
       fast-xml-parser:
         specifier: 5.9.0
         version: 5.9.0
       hono:
-        specifier: 4.12.25
-        version: 4.12.25
+        specifier: 4.12.26
+        version: 4.12.26
       just-bash:
         specifier: 3.0.1
         version: 3.0.1
@@ -308,6 +311,12 @@ packages:
     engines: {node: '>=20'}
     peerDependencies:
       hono: ^4
+
+  '@hono/standard-validator@0.2.2':
+    resolution: {integrity: sha512-mJ7W84Bt/rSvoIl63Ynew+UZOHAzzRAoAXb3JaWuxAkM/Lzg+ZHTCUiz77KOtn2e623WNN8LkD57Dk0szqUrIw==}
+    peerDependencies:
+      '@standard-schema/spec': ^1.0.0
+      hono: '>=3.9.0'
 
   '@jitl/quickjs-ffi-types@0.32.0':
     resolution: {integrity: sha512-v9T+GQpmk43VDJ7d72sf0Nexhk+ArvtUihW27dy7lqAl0zBObFKtSBBIm5RBjwIhE8VwsPPm9PNuvPvNqLWUEg==}
@@ -666,8 +675,8 @@ packages:
   get-tsconfig@4.14.0:
     resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
 
-  hono@4.12.25:
-    resolution: {integrity: sha512-2NFaIyNVgJmBs/ecmtGzlmluTFs5cHEWGTdu0t1HBwYzoGXOL5nUQBRMXsXWla5i4KkG//QMzVP88m1+I3fdAQ==}
+  hono@4.12.26:
+    resolution: {integrity: sha512-uyZtpnYxM9CmQ7QsQknM4zN8EftNqhON1qYeIKM0Se67CCEe2c44xyGURwB0axX2fBDu1dqHrHAc1hmNT8ITkw==}
     engines: {node: '>=16.9.0'}
 
   html-entities@2.3.3:
@@ -1319,9 +1328,14 @@ snapshots:
   '@esbuild/win32-x64@0.27.4':
     optional: true
 
-  '@hono/node-server@2.0.5(hono@4.12.25)':
+  '@hono/node-server@2.0.5(hono@4.12.26)':
     dependencies:
-      hono: 4.12.25
+      hono: 4.12.26
+
+  '@hono/standard-validator@0.2.2(@standard-schema/spec@1.1.0)(hono@4.12.26)':
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      hono: 4.12.26
 
   '@jitl/quickjs-ffi-types@0.32.0': {}
 
@@ -1668,7 +1682,7 @@ snapshots:
       resolve-pkg-maps: 1.0.0
     optional: true
 
-  hono@4.12.25: {}
+  hono@4.12.26: {}
 
   html-entities@2.3.3: {}
 
