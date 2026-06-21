@@ -23,7 +23,7 @@
       font-size: 10pt;
     }
 
-    main {
+    .resume-page {
       max-width: 8.5in;
       margin: 0 auto;
       min-height: 11.69in;
@@ -49,6 +49,7 @@
     .contact {
       margin-top: 4px;
       font-size: 9.5pt;
+      font-style: normal;
     }
 
     .content {
@@ -86,7 +87,10 @@
     }
 
     .entry-header {
+      margin: 0;
+      font-size: inherit;
       font-weight: 700;
+      line-height: inherit;
     }
 
     .entry-body {
@@ -134,7 +138,10 @@
     }
 
     .writing-title {
+      margin: 0;
+      font-size: inherit;
       font-weight: 700;
+      line-height: inherit;
     }
 
     .writing-link {
@@ -143,8 +150,16 @@
       color: #333;
     }
 
+    .writing-link a {
+      color: inherit;
+      text-decoration: none;
+    }
+
     .education-degree {
+      margin: 0;
+      font-size: inherit;
       font-weight: 700;
+      line-height: inherit;
     }
 
     .education-school {
@@ -175,15 +190,15 @@
 </head>
 
 <body>
-  <main>
+  <div class="resume-page">
     <header>
       <h1>Florian Pellet</h1>
-      <div class="headline">Staff / Senior Frontend Engineer</div>
-      <div class="contact">Paris, France | +33 7 82 77 82 82 | me@florianpellet.com | florianpellet.com |
-        github.com/sheraff</div>
+      <p class="headline">Staff / Senior Frontend Engineer</p>
+      <address class="contact">Paris, France | +33 7 82 77 82 82 | me@florianpellet.com | florianpellet.com |
+        github.com/sheraff</address>
     </header>
 
-    <div class="content">
+    <main class="content">
       <section>
         <h2>Summary</h2>
         <p>Software engineer with 14 years of programming experience across web, robotics, and research with the last 7
@@ -194,8 +209,8 @@
       <section>
         <h2>Experience</h2>
 
-        <div class="entry">
-          <div class="entry-header">Matera (startup) | Staff Frontend Engineer | 2022 - Present</div>
+        <article class="entry">
+          <h3 class="entry-header">Matera (startup) | Staff Frontend Engineer | 2022 - Present</h3>
           <ul>
             <li>Led Matera's frontend platform reset across a 1M+ LoC monorepo: introduced TypeScript into a JavaScript
               codebase, migrated Webpack to Vite, and redesigned imports and bundling to cut initial JS from 9MB to 2MB.
@@ -208,23 +223,23 @@
             <li>Built the tooling behind Matera's frontend transformation: rewrote CI for parallel execution, authored
               20+ custom ESLint rules and migration scripts, and added code-health dashboards and CLI tools.</li>
           </ul>
-        </div>
+        </article>
 
-        <div class="entry">
-          <div class="entry-header">Mazarine (agency) | Frontend Developer | 2019 - 2022</div>
+        <article class="entry">
+          <h3 class="entry-header">Mazarine (agency) | Frontend Developer | 2019 - 2022</h3>
           <ul>
             <li>Built and launched dozens of client websites under agency constraints: changing stacks, fixed budgets,
               and hard deadlines.</li>
             <li>Led frontend development for the new <span class="url">www.louvre.fr</span> and was regularly brought
               into projects that needed technical stabilization late in delivery.</li>
           </ul>
-        </div>
+        </article>
       </section>
 
       <section>
         <h2>Open Source</h2>
-        <div class="entry">
-          <div class="entry-header">TanStack Router | Maintainer</div>
+        <article class="entry">
+          <h3 class="entry-header">TanStack Router | Maintainer</h3>
           <ul class="entry-body">
             <li>Re-architected TanStack Router's reactive core into a granular signal graph across React, Solid, and
               Vue, cutting client-navigation benchmark times to 4.5ms in React, 8ms in Solid, and 6ms in Vue.</li>
@@ -236,52 +251,52 @@
             <li>Built cross-framework performance tooling for bundle size, client navigation, SSR throughput, and
               flamegraph profiling, catching regressions in CI.</li>
           </ul>
-        </div>
-        <div class="entry">
-          <div class="entry-header">tRPC | Contributor</div>
+        </article>
+        <article class="entry">
+          <h3 class="entry-header">tRPC | Contributor</h3>
           <ul class="entry-body">
             <li>Designed and shipped out-of-order streaming for batched tRPC requests across client and server,
               including Node, Fastify, and Fetch adapters, so slow procedures no longer blocked faster responses.</li>
           </ul>
-        </div>
+        </article>
       </section>
 
       <section>
         <h2>Writing</h2>
-        <div class="entry writing-entry">
-          <div class="writing-title">TanStack Router's New Reactive Core: A Signal Graph</div>
-          <div class="writing-link url">https://tanstack.com/blog/tanstack-router-signal-graph</div>
-        </div>
-        <div class="entry writing-entry">
-          <div class="writing-title">5x SSR Throughput: Profiling SSR Hot Paths in TanStack Start</div>
-          <div class="writing-link url">https://tanstack.com/blog/tanstack-start-5x-ssr-throughput</div>
-        </div>
-        <div class="entry writing-entry">
-          <div class="writing-title">How we accidentally made route matching more performant by aiming for correctness
-          </div>
-          <div class="writing-link url">https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite</div>
-        </div>
+        <article class="entry writing-entry">
+          <h3 class="writing-title">TanStack Router's New Reactive Core: A Signal Graph</h3>
+          <p class="writing-link url"><a href="https://tanstack.com/blog/tanstack-router-signal-graph">https://tanstack.com/blog/tanstack-router-signal-graph</a></p>
+        </article>
+        <article class="entry writing-entry">
+          <h3 class="writing-title">5x SSR Throughput: Profiling SSR Hot Paths in TanStack Start</h3>
+          <p class="writing-link url"><a href="https://tanstack.com/blog/tanstack-start-5x-ssr-throughput">https://tanstack.com/blog/tanstack-start-5x-ssr-throughput</a></p>
+        </article>
+        <article class="entry writing-entry">
+          <h3 class="writing-title">How we accidentally made route matching more performant by aiming for correctness
+          </h3>
+          <p class="writing-link url"><a href="https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite">https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite</a></p>
+        </article>
       </section>
 
       <div class="bottom-grid">
         <section>
           <h2>Academia / Education</h2>
-          <div class="entry">
-            <div class="education-degree">PhD in Epistemology</div>
-            <div class="education-school">CNRS / ENS Ulm</div>
-          </div>
-          <div class="entry">
-            <div class="education-degree">Research Scholar in Robotics</div>
-            <div class="education-school">MIT Media Lab</div>
-          </div>
-          <div class="entry">
-            <div class="education-degree">Research Scholar in Robotics</div>
-            <div class="education-school">Carnegie Mellon University</div>
-          </div>
-          <div class="entry">
-            <div class="education-degree">Masters of Engineering</div>
-            <div class="education-school">Ecole Nationale Superieure de Cognitique</div>
-          </div>
+          <article class="entry">
+            <h3 class="education-degree">PhD in Epistemology</h3>
+            <p class="education-school">CNRS / ENS Ulm</p>
+          </article>
+          <article class="entry">
+            <h3 class="education-degree">Research Scholar in Robotics</h3>
+            <p class="education-school">MIT Media Lab</p>
+          </article>
+          <article class="entry">
+            <h3 class="education-degree">Research Scholar in Robotics</h3>
+            <p class="education-school">Carnegie Mellon University</p>
+          </article>
+          <article class="entry">
+            <h3 class="education-degree">Masters of Engineering</h3>
+            <p class="education-school">Ecole Nationale Superieure de Cognitique</p>
+          </article>
         </section>
 
         <section>
@@ -296,8 +311,8 @@
           </ul>
         </section>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
 </body>
 
 </html>
