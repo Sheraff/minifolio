@@ -23,6 +23,14 @@ export function createSshServer(isDev: boolean) {
 	const server = new ssh.Server(
 		{
 			hostKeys: [hostKey],
+			algorithms: {
+				kex: {
+					remove: [
+						"diffie-hellman-group-exchange-sha256",
+						"diffie-hellman-group-exchange-sha1",
+					],
+				} as ssh.AlgorithmList<ssh.KexAlgorithm>,
+			},
 			// TODO: make a cool multiline banner with some ascii art
 			banner: "Hello from minifolio",
 			keepaliveCountMax: 10,
