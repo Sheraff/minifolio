@@ -34,8 +34,6 @@ export function createSshServer(isDev: boolean) {
 					],
 				} as ssh.AlgorithmList<ssh.KexAlgorithm>,
 			},
-			// TODO: make a cool multiline banner with some ascii art
-			banner: "Hello from minifolio",
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
@@ -311,12 +309,8 @@ function interactiveStream(
 		if (historyCursor === terminal.history.length) historyDraft = "";
 	}
 
+	stream.write(helloMessage(username, info));
 	stream.write("\r\n");
-	stream.write(`IP: ${info.ip}\r\n`);
-	stream.write(`Port: ${info.port}\r\n`);
-	stream.write(`Ident: ${info.header.identRaw}\r\n`);
-	stream.write("\r\n");
-	stream.write("Type `help`.\r\n\r\n");
 	prompt();
 
 	stream.on("data", (chunk: Uint8Array) => {
@@ -446,4 +440,26 @@ edge removed:
 status: 200 goodbye
 Thanks for the packets.
 `;
+}
+
+function helloMessage(username: string, info: ssh.ClientInfo) {
+	return `
+scan minifolio
+
+PORT     STATE  SERVICE
+22/tcp   open   ssh
+79/tcp   open   finger
+443/tcp  open   web
+???      close  loose ideas
+
+[${username}] ──── tcp/22 ───> [minifolio]
+  |
+  +-- ip:    ${info.ip}
+  +-- port:  ${info.port}
+  +-- ident: ${info.header.identRaw}
+
+status: connected
+`
+		.split("\n")
+		.join("\r\n");
 }
