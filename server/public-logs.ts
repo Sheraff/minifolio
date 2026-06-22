@@ -37,7 +37,10 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 	const app = new Hono();
 	initialized = true;
 	const scope = parentScope.child("sse log streams", {
-		close: () => wakeStreams(),
+		close: (ctx) => {
+			wakeStreams()
+			void ctx.childrenClosed.then(() => scope.unregister())
+		},
 	});
 
 	// /**
@@ -108,12 +111,8 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 		return streamSSE(c, async (stream) => {
 			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
 			timeout.unref();
-			const closed = Promise.withResolvers<void>();
 			const streamScope = scope.child("sse stream", {
-				close: () => {
-					wakeStreams();
-					return closed.promise;
-				},
+				close: () => {},
 				force: () => stream.abort(),
 			});
 			const abortPromise = abortPromiseFromStream(stream);
@@ -142,7 +141,6 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 				activeStreams--;
 				clearTimeout(timeout);
 				streamScope.unregister();
-				closed.resolve();
 				if (!scope.closing) {
 					publicLog(`[http] closed ${ua} session`);
 				}

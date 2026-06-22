@@ -1,6 +1,6 @@
-import { createServer, type Server, type Socket } from 'node:net'
+import { createServer } from 'node:net'
 import { publicLog } from "./public-logs.ts";
-import { promiseClose, type ShutdownScope } from './utils/shutdown.ts';
+import type { ShutdownScope } from './utils/shutdown.ts';
 
 type Values = {
 	addr: string
@@ -34,15 +34,16 @@ you know my name.
 }
 
 export function createFingerServer(parentScope: ShutdownScope) {
-	let server: Server
 	const scope = parentScope.child('finger server', {
-		close: () => promiseClose(server),
+		close: () => void server.close(),
 	})
-	server = createServer((socket) => {
+	const server = createServer((socket) => {
 		socket.setEncoding('utf8')
 
 		const socketScope = scope.child('finger socket', {
-			close: () => closeSocket(socket),
+			close: () => {
+				if (!socket.destroyed) socket.end()
+			},
 			force: () => void socket.destroy(),
 		})
 
@@ -96,12 +97,4 @@ export function createFingerServer(parentScope: ShutdownScope) {
 		scope.unregister()
 	})
 	return server
-}
-
-function closeSocket(socket: Socket) {
-	if (socket.destroyed) return Promise.resolve()
-	return new Promise<void>((resolve) => {
-		socket.once('close', resolve)
-		socket.end()
-	})
 }

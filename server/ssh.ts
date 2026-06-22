@@ -8,7 +8,7 @@ import {
 	executeTerminalCommand,
 } from "#client/sections/identity/terminal-core.ts";
 import { publicLog } from "./public-logs.ts";
-import { promiseClose, type ShutdownScope } from "./utils/shutdown.ts";
+import type { ShutdownScope } from "./utils/shutdown.ts";
 
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
@@ -24,7 +24,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
 	const connectionsByIp = new Map<string, number>();
 	const serverScope = parentScope.child("ssh server", {
-		close: () => promiseClose(server),
+		close: () => void server.close(),
 	});
 
 	const server = new ssh.Server(
@@ -55,14 +55,12 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			connectionsByIp.set(info.ip, ipConnections + 1);
 
 			let closed = false;
-			const clientClosed = Promise.withResolvers<void>();
 			const clientScope = serverScope.child("ssh client", {
 				close: async ({ childrenClosed }) => {
 					if (closed) return;
 					client.noMoreSessions = true;
 					await childrenClosed;
 					if (!closed) client.end();
-					await clientClosed.promise;
 				},
 				force: () => void client.end(),
 			});
@@ -79,7 +77,6 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			client.on("close", () => {
 				if (closed) return;
 				closed = true;
-				clientClosed.resolve();
 				clientScope.unregister();
 				clearTimeout(authTimeout);
 				const ipConnections = connectionsByIp.get(info.ip);
@@ -171,11 +168,8 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 
 function closeSshShell(stream: ssh.ServerChannel) {
 	if (stream.closed || stream.destroyed) return;
-	return new Promise<void>((resolve) => {
-		stream.once("close", resolve);
-		stream.exit(0);
-		stream.destroy();
-	});
+	stream.exit(0);
+	stream.destroy();
 }
 
 function readHostKey(isDev: boolean) {

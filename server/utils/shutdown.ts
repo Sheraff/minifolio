@@ -2,7 +2,6 @@ import { publicLog } from "#server/public-logs.ts";
 
 let shuttingDown = false;
 export type ShutdownContext = {
-	signal: NodeJS.Signals;
 	deadline: AbortSignal;
 	childrenClosed: Promise<void>;
 };
@@ -14,7 +13,8 @@ export type ShutdownResource = {
 export class ShutdownScope {
 	#children = new Set<ShutdownScope>();
 	#closing = false;
-	#closed = false;
+	#isClosed = false;
+	#closed = Promise.withResolvers<void>();
 	#closeContext: ShutdownContext | undefined;
 	#closePromise: Promise<void> | undefined;
 	#parent: ShutdownScope | undefined;
@@ -43,12 +43,15 @@ export class ShutdownScope {
 	}
 
 	get closed() {
-		return this.#closed;
+		return this.#isClosed;
 	}
 
 	unregister() {
+		if (this.#isClosed) return;
+		this.#isClosed = true;
 		if (this.#parent) this.#parent.#children.delete(this);
 		this.#parent = undefined;
+		this.#closed.resolve();
 	}
 
 	close(ctx: ShutdownContext) {
@@ -84,6 +87,8 @@ export class ShutdownScope {
 		const childrenClose = this.#closeChildren(ctx, ownClose);
 
 		const [ownResult] = await Promise.allSettled([ownClose, childrenClose]);
+		if (!this.resource) this.unregister();
+		await this.#closed.promise;
 		if (
 			this.resource &&
 			ownResult.status === "fulfilled" &&
@@ -91,8 +96,6 @@ export class ShutdownScope {
 		) {
 			console.log(`${this.name} closed successfully`);
 		}
-		this.#closed = true;
-		this.unregister();
 	}
 
 	async #closeChildren(ctx: ShutdownContext, ownClose?: Promise<boolean>) {
@@ -148,7 +151,6 @@ export function registerShutdownManager() {
 
 		const deadline = new AbortController();
 		const context: ShutdownContext = {
-			signal,
 			deadline: deadline.signal,
 			childrenClosed: Promise.resolve(),
 		};
@@ -167,18 +169,4 @@ export function registerShutdownManager() {
 		clearTimeout(timeout);
 		process.exit(0);
 	}
-}
-
-export function promiseClose(server: {
-	close: (cb: (error?: Error) => void) => unknown;
-}) {
-	return new Promise<void>((resolve, reject) => {
-		server.close((error?: Error & { code?: string }) => {
-			if (error && error.code !== "ERR_SERVER_NOT_RUNNING") {
-				reject(error);
-			} else {
-				resolve();
-			}
-		});
-	});
 }

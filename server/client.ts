@@ -39,10 +39,11 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 	let lastGen = 0
 	let timeout: NodeJS.Timeout
 	let htmlPromise: Promise<string> | null
-	parentScope.child("client prerender", {
+	const prerenderScope = parentScope.child("client prerender", {
 		close: async () => {
 			if (timeout) clearTimeout(timeout)
 			await htmlPromise
+			prerenderScope.unregister()
 		},
 	})
 	const _getHtml = async () => {
@@ -101,8 +102,11 @@ export async function devClient(server: Server, parentScope: ShutdownScope) {
 	// This is very hacky, we should see if we can PR (or help move along a PR) on vite itself
 	removeNewShutdownSignalListeners(signalListeners);
 
-	parentScope.child("vite server", {
-		close: () => vite.close(),
+	const viteScope = parentScope.child("vite server", {
+		close: async () => {
+			await vite.close()
+			viteScope.unregister()
+		},
 	})
 
 	return createMiddleware(async (c, next) => {
