@@ -102,14 +102,6 @@ export class ShutdownScope {
 			(child) => !child.closed,
 		);
 		while (children.length > 0) {
-			if (children.length === 0) {
-				await new Promise((resolve) => setTimeout(resolve, 10));
-				children = Array.from(this.#children).filter(
-					(child) => !child.closed,
-				);
-				continue;
-			}
-
 			await Promise.allSettled(children.map((child) => child.close(ctx)));
 			children = Array.from(this.#children).filter((child) => !child.closed);
 		}
@@ -164,7 +156,6 @@ export function registerShutdownManager() {
 			console.error("timed out waiting for servers to close\n");
 			void root.force(context).finally(() => process.exit(1));
 		}, 3000);
-		timeout.unref();
 
 		console.log("closing servers");
 		await root.close(context);
