@@ -144,8 +144,8 @@ function watchAsyncError(result: unknown, message: string) {
 
 export function registerShutdownManager() {
 	const root = new ShutdownScope("root");
-	process.once("SIGTERM", shutdown);
-	process.once("SIGINT", shutdown);
+	process.on("SIGTERM", shutdown);
+	process.on("SIGINT", shutdown);
 	return root;
 
 	async function shutdown(signal: NodeJS.Signals) {
