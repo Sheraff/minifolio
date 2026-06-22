@@ -48,6 +48,7 @@ export function publicLogBroadcast() {
 	});
 
 	let visitorCount = 0;
+	const clientIds = new Map<string, number>()
 	let activeStreams = 0;
 	const MAX_STREAMS = 60;
 	const perClientStreams = new Map<string, number>();
@@ -79,8 +80,13 @@ export function publicLogBroadcast() {
 			activeStreams++;
 		}
 
-		const visitorNumber = ++visitorCount;
-		publicLog(`[http] visitor #${visitorNumber} connected`);
+		if (clientIds.has(clientKey)) {
+			publicLog(`[http] visitor #${clientIds.get(clientKey)} new session`);
+		} else {
+			const visitorNumber = ++visitorCount;
+			clientIds.set(clientKey, visitorNumber)
+			publicLog(`[http] visitor #${visitorNumber} connected`);
+		}
 
 		const { lastEventId } = c.req.valid("query");
 
@@ -106,13 +112,16 @@ export function publicLogBroadcast() {
 					await pending.promise;
 				}
 			} finally {
-				publicLog(`[http] visitor #${visitorNumber} left`);
+				
 				activeStreams--;
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
 					perClientStreams.delete(clientKey);
+					publicLog(`[http] visitor #${clientIds.get(clientKey)} left`);
+					clientIds.delete(clientKey)
 				} else {
 					perClientStreams.set(clientKey, clientCount - 1);
+					publicLog(`[http] visitor #${clientIds.get(clientKey)} closed session`);
 				}
 			}
 		});
