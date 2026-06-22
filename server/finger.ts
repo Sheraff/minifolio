@@ -1,5 +1,6 @@
 import { createServer } from 'node:net'
 import { publicLog } from "./public-logs.ts";
+import type { ShutdownScope } from './utils/shutdown.ts';
 
 type Values = {
 	addr: string
@@ -32,11 +33,23 @@ you know my name.
 `
 }
 
-export function createFingerServer() {
-	return createServer((socket) => {
+export function createFingerServer(parentScope: ShutdownScope) {
+	const scope = parentScope.child('finger server', {
+		close: () => void server.close(),
+	})
+	const server = createServer((socket) => {
 		socket.setEncoding('utf8')
 
+		const socketScope = scope.child('finger socket', {
+			close: () => {
+				if (!socket.destroyed) socket.end()
+			},
+			force: () => void socket.destroy(),
+		})
+
 		let query = ''
+
+		socket.on('close', () => socketScope.done())
 
 		socket.on('data', (chunk) => {
 			query += chunk
@@ -80,5 +93,8 @@ export function createFingerServer() {
 			console.error('Socket error:', e)
 		})
 	})
+	server.once('close', () => {
+		scope.done()
+	})
+	return server
 }
-

@@ -4,10 +4,9 @@ import path from "node:path";
 import { prerenderClientIndex } from "./prerender.ts";
 import { createMiddleware } from "hono/factory";
 import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
-import type { HttpServer } from "vite";
-import type { ServerType } from "@hono/node-server";
 import { publicLog } from "./public-logs.ts";
-import { registerClose } from "./utils/shutdown.ts";
+import type { ShutdownScope } from "./utils/shutdown.ts";
+import type { Server } from "node:http";
 
 const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 
@@ -33,13 +32,20 @@ export function ogImage(imageDir: string) {
 	})
 }
 
-export function client(serverDir: string) {
+export function client(serverDir: string, parentScope: ShutdownScope) {
 	const clientDistDir = path.resolve(serverDir, "../client");
 
 	let html = "";
 	let lastGen = 0
 	let timeout: NodeJS.Timeout
 	let htmlPromise: Promise<string> | null
+	const prerenderScope = parentScope.child("client prerender", {
+		close: async () => {
+			if (timeout) clearTimeout(timeout)
+			await htmlPromise
+			prerenderScope.done()
+		},
+	})
 	const _getHtml = async () => {
 		if (!html || Date.now() - lastGen > REGEN_DELAY) {
 			lastGen = Date.now()
@@ -80,17 +86,22 @@ export function client(serverDir: string) {
 	return app;
 }
 
-export async function devClient(server: ServerType) {
+export async function devClient(server: Server, parentScope: ShutdownScope) {
 	const { createServer } = await import("vite");
 
 	const vite = await createServer({
 		server: {
 			middlewareMode: true,
-			hmr: { server: server as HttpServer },
+			hmr: { server },
 		},
 	});
 
-	registerClose(vite, 'vite server')
+	const viteScope = parentScope.child("vite server", {
+		close: async () => {
+			await vite.close()
+			viteScope.done()
+		},
+	})
 
 	return createMiddleware(async (c, next) => {
 		if (c.req.path.startsWith("/api")) {

@@ -8,6 +8,7 @@ import {
 	executeTerminalCommand,
 } from "#client/sections/identity/terminal-core.ts";
 import { publicLog } from "./public-logs.ts";
+import type { ShutdownScope } from "./utils/shutdown.ts";
 
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
@@ -18,10 +19,13 @@ const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
 const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
 const MAX_PER_IP_CONNECTIONS = 2;
 
-export function createSshServer(isDev: boolean) {
+export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 	const hostKey = readHostKey(isDev);
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
 	const connectionsByIp = new Map<string, number>();
+	const serverScope = parentScope.child("ssh server", {
+		close: () => void server.close(),
+	});
 
 	const server = new ssh.Server(
 		{
@@ -37,6 +41,10 @@ export function createSshServer(isDev: boolean) {
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
+			if (serverScope.closing) {
+				client.end();
+				return;
+			}
 
 			const ipConnections = connectionsByIp.get(info.ip) ?? 0;
 			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
@@ -45,6 +53,17 @@ export function createSshServer(isDev: boolean) {
 				return;
 			}
 			connectionsByIp.set(info.ip, ipConnections + 1);
+
+			let closed = false;
+			const clientScope = serverScope.child("ssh client", {
+				close: async ({ childrenClosed }) => {
+					if (closed) return;
+					client.noMoreSessions = true;
+					await childrenClosed;
+					if (!closed) client.end();
+				},
+				force: () => void client.end(),
+			});
 
 			let username = "";
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
@@ -55,10 +74,10 @@ export function createSshServer(isDev: boolean) {
 				console.warn("[ssh]", formatSshError(error));
 			});
 
-			let closed = false;
 			client.on("close", () => {
 				if (closed) return;
 				closed = true;
+				clientScope.done();
 				clearTimeout(authTimeout);
 				const ipConnections = connectionsByIp.get(info.ip);
 				if (!ipConnections || ipConnections === 1) {
@@ -92,7 +111,11 @@ export function createSshServer(isDev: boolean) {
 					publicLog("[ssh] session terminated");
 					clearTimeout(sessionTimeout);
 				});
-				client.on("session", (accept, _reject) => {
+				client.on("session", (accept, reject) => {
+					if (clientScope.closing) {
+						reject();
+						return;
+					}
 					clearTimeout(sessionTimeout);
 
 					const session = accept();
@@ -107,9 +130,19 @@ export function createSshServer(isDev: boolean) {
 					session.on("sftp", simpleReject);
 					session.on("signal", simpleAccept);
 
-					session.on("shell", (accept) => {
+					session.on("shell", (accept, reject) => {
+						if (clientScope.closing) {
+							reject();
+							return;
+						}
+
 						publicLog("[ssh] shell access granted");
 						const stream = accept();
+						const streamScope = clientScope.child("ssh shell session", {
+							close: () => closeSshShell(stream),
+							force: () => void stream.destroy(),
+						});
+						stream.once("close", () => streamScope.done());
 						interactiveStream(
 							username,
 							info,
@@ -128,8 +161,15 @@ export function createSshServer(isDev: boolean) {
 		publicLog(`[WARN] ssh server error`);
 		console.warn("[ssh]", formatSshError(error));
 	});
+	server.once("close", () => serverScope.done());
 
 	return server;
+}
+
+function closeSshShell(stream: ssh.ServerChannel) {
+	if (stream.closed || stream.destroyed) return;
+	stream.exit(0);
+	stream.destroy();
 }
 
 function readHostKey(isDev: boolean) {
