@@ -54,6 +54,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 				return;
 			}
 			connectionsByIp.set(info.ip, ipConnections + 1);
+			console.log("client connected", info.ip, connectionsByIp.get(info.ip));
 
 			let closed = false;
 			const clientScope = serverScope.child("ssh client", {
@@ -87,6 +88,11 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 				} else {
 					connectionsByIp.set(info.ip, ipConnections - 1);
 				}
+				console.log(
+					"client disconnected",
+					info.ip,
+					connectionsByIp.get(info.ip),
+				);
 			});
 
 			client.on("authentication", (ctx) => {
