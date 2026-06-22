@@ -1,5 +1,6 @@
 import * as v from 'valibot'
 import { fetchGitHubGraphql, GITHUB_LOGIN, ONE_DAY_MS } from './githubApi.ts'
+import { publicLog } from '#server/public-logs.ts'
 
 const CONTRIBUTION_LEVELS = {
 	NONE: 0,
@@ -104,6 +105,7 @@ async function loadGitHubContributions(): Promise<ContributionsResponse> {
 }
 
 async function fetchGitHubContributionsFromApi(): Promise<ContributionsResponse> {
+	publicLog("[data] fetching github activity")
 	const json = v.parse(
 		githubContributionsResponseSchema,
 		await fetchGitHubGraphql(contributionsQuery, {

@@ -7,6 +7,7 @@ import {
 	createTerminalSession,
 	executeTerminalCommand,
 } from "#client/sections/identity/terminal-core.ts";
+import { publicLog } from "./public-logs.ts";
 
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
@@ -41,6 +42,7 @@ export function createSshServer(isDev: boolean) {
 			authTimeout.unref();
 
 			client.on("error", (error) => {
+				publicLog(`[WARN] ssh connection error`);
 				console.warn("[ssh]", formatSshError(error));
 			});
 
@@ -60,6 +62,7 @@ export function createSshServer(isDev: boolean) {
 				// Optional fallback if a client insists on prompting.
 				if (ctx.method === "password") return ctx.accept();
 
+				publicLog(`[ssh] rejected ${ctx.method} authentication`);
 				ctx.reject(["none", "password"]);
 			});
 
@@ -70,12 +73,16 @@ export function createSshServer(isDev: boolean) {
 					SESSION_TIMEOUT_MS,
 				);
 				sessionTimeout.unref();
-				client.once("close", () => clearTimeout(sessionTimeout));
+				client.once("close", () => {
+					publicLog("[ssh] session terminated");
+					clearTimeout(sessionTimeout);
+				});
 				client.on("session", (accept, _reject) => {
 					clearTimeout(sessionTimeout);
 
 					const session = accept();
 					session.on("error", (error: unknown) => {
+						publicLog(`[WARN] ssh session error`);
 						console.warn("[ssh session]", formatSshError(error));
 					});
 
@@ -86,8 +93,15 @@ export function createSshServer(isDev: boolean) {
 					session.on("signal", simpleAccept);
 
 					session.on("shell", (accept) => {
+						publicLog("[ssh] shell access granted");
 						const stream = accept();
-						interactiveStream(username, info, stream, terminalFiles, isDev);
+						interactiveStream(
+							username,
+							info,
+							stream,
+							terminalFiles,
+							isDev,
+						);
 					});
 				});
 			});
@@ -96,6 +110,7 @@ export function createSshServer(isDev: boolean) {
 	server.maxConnections = MAX_CONCURRENT;
 
 	server.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh server error`);
 		console.warn("[ssh]", formatSshError(error));
 	});
 
@@ -272,7 +287,11 @@ function interactiveStream(
 		}
 
 		historyCursor++;
-		redrawInput(historyCursor === terminal.history.length ? historyDraft : terminal.history[historyCursor]);
+		redrawInput(
+			historyCursor === terminal.history.length
+				? historyDraft
+				: terminal.history[historyCursor],
+		);
 		if (historyCursor === terminal.history.length) historyDraft = "";
 	}
 
@@ -334,7 +353,8 @@ function interactiveStream(
 
 		escapeBuffer.push(byte);
 		if (escapeBuffer.length === 1) return true;
-		if (escapeBuffer.length === 2 && (byte === 0x5b || byte === 0x4f)) return true;
+		if (escapeBuffer.length === 2 && (byte === 0x5b || byte === 0x4f))
+			return true;
 
 		const finalByte = byte >= 0x40 && byte <= 0x7e;
 		if (!finalByte) return true;
@@ -342,9 +362,15 @@ function interactiveStream(
 		const sequence = String.fromCharCode(...escapeBuffer);
 		escapeBuffer = [];
 
-		if (sequence === "\x1bOA" || (sequence.startsWith("\x1b[") && sequence.endsWith("A"))) {
+		if (
+			sequence === "\x1bOA" ||
+			(sequence.startsWith("\x1b[") && sequence.endsWith("A"))
+		) {
 			showPreviousHistory();
-		} else if (sequence === "\x1bOB" || (sequence.startsWith("\x1b[") && sequence.endsWith("B"))) {
+		} else if (
+			sequence === "\x1bOB" ||
+			(sequence.startsWith("\x1b[") && sequence.endsWith("B"))
+		) {
 			showNextHistory();
 		}
 
@@ -367,7 +393,11 @@ function readTerminalFiles(root: string) {
 	return files;
 }
 
-function walkTerminalFiles(root: string, directory: string, files: Record<string, string>) {
+function walkTerminalFiles(
+	root: string,
+	directory: string,
+	files: Record<string, string>,
+) {
 	for (const entry of readdirSync(directory, { withFileTypes: true })) {
 		const path = join(directory, entry.name);
 		if (entry.isDirectory()) {
@@ -381,9 +411,11 @@ function walkTerminalFiles(root: string, directory: string, files: Record<string
 
 function handleStreamError(stream: ssh.ServerChannel) {
 	stream.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stream]", formatSshError(error));
 	});
 	stream.stderr.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stderr]", formatSshError(error));
 	});
 }

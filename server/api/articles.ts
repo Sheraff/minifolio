@@ -1,3 +1,4 @@
+import { publicLog } from '#server/public-logs.ts'
 import { XMLParser } from 'fast-xml-parser'
 import * as v from 'valibot'
 
@@ -86,6 +87,10 @@ async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 
 	try {
 		const data = await tanstackArticlesPromise
+		const prevCount = tanstackArticlesCache?.data.articles.length
+		if (prevCount !== undefined && data.articles.length > prevCount) {
+			publicLog("[data] new article")
+		}
 		tanstackArticlesCache = {
 			data,
 			expiresAt: Date.now() + ONE_HOUR_MS,
@@ -100,6 +105,7 @@ async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 }
 
 async function fetchTanstackArticlesFromRss(): Promise<TanstackArticlesResponse> {
+	publicLog("[data] fetching article RSS")
 	const response = await fetch(TANSTACK_RSS_URL, {
 		headers: {
 			accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.1',

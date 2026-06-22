@@ -5,6 +5,7 @@ import {
 	GITHUB_LOGIN_NORMALIZED,
 	ONE_DAY_MS,
 } from './githubApi.ts'
+import { publicLog } from '#server/public-logs.ts'
 
 const contributionYearsQuery = `
 	query ContributionYears($login: String!) {
@@ -317,6 +318,7 @@ async function fetchContributedRepositoriesSliceFromApi(year: number) {
 }
 
 async function fetchContributedRepositoriesFromApi(): Promise<ContributedRepositoriesResponse> {
+	publicLog("[data] fetching github contributions")
 	const years = await fetchContributionYearsFromApi()
 	const contributionSlices = await Promise.all(
 		years.map((year) => fetchContributedRepositoriesSliceFromApi(year)),

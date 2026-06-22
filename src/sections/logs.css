@@ -1,0 +1,25 @@
+.logs {
+	grid-area: 1 / 1 / 2 / 2;
+	height: 0;
+	position: sticky;
+	top: 0;
+	width: 100%;
+	mix-blend-mode: color-dodge;
+
+	ul {
+		position: absolute;
+		inset-inline: 0;
+		top: 0;
+		height: auto;
+		pointer-events: none;
+		padding: 1em;
+		opacity: 0.5;
+		/*color: oklch(from var(--bg) 30% c h);*/
+		color: var(--color);
+		overflow: hidden;
+		white-space: pre;
+		display: flex;
+		flex-direction: column-reverse;
+		font-size: 0.8rem;
+	}
+}
