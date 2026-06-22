@@ -112,7 +112,6 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
 			timeout.unref();
 			const streamScope = scope.child("sse stream", {
-				close: () => {},
 				force: () => stream.abort(),
 			});
 			const abortPromise = abortPromiseFromStream(stream);

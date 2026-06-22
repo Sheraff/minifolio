@@ -6,8 +6,8 @@ export type ShutdownContext = {
 	childrenClosed: Promise<void>;
 };
 export type ShutdownResource = {
-	close: (ctx: ShutdownContext) => void | Promise<void>;
-	force?: (ctx: ShutdownContext) => void | Promise<void>;
+	close?: (ctx: ShutdownContext) => unknown;
+	force?: (ctx: ShutdownContext) => unknown;
 };
 
 export class ShutdownScope {
@@ -69,7 +69,10 @@ export class ShutdownScope {
 		if (!this.resource?.force) return;
 		console.log(`force closing ${this.name}`);
 		try {
-			await this.resource.force(ctx);
+			watchAsyncError(
+				this.resource.force(ctx),
+				`Error force closing ${this.name}`,
+			);
 		} catch (cause) {
 			console.error(
 				new Error(`Error force closing ${this.name}`, { cause }),
@@ -79,37 +82,26 @@ export class ShutdownScope {
 
 	async #close(ctx: ShutdownContext) {
 		const childrenClosed = Promise.withResolvers<void>();
-		const ownClose = this.#closeOwn({
+		const closeRequested = this.#requestClose({
 			...ctx,
 			childrenClosed: childrenClosed.promise,
 		});
-		void this.#closeChildren(ctx).then(childrenClosed.resolve);
-		const childrenClose = this.#closeChildren(ctx, ownClose);
+		const childrenClose = this.#closeChildren(ctx);
+		void childrenClose.then(childrenClosed.resolve, childrenClosed.reject);
 
-		const [ownResult] = await Promise.allSettled([ownClose, childrenClose]);
+		await childrenClose;
 		if (!this.resource) this.unregister();
 		await this.#closed.promise;
-		if (
-			this.resource &&
-			ownResult.status === "fulfilled" &&
-			ownResult.value
-		) {
+		if (this.resource && closeRequested) {
 			console.log(`${this.name} closed successfully`);
 		}
 	}
 
-	async #closeChildren(ctx: ShutdownContext, ownClose?: Promise<boolean>) {
-		let ownClosed = !ownClose;
-		if (ownClose) {
-			void ownClose.finally(() => {
-				ownClosed = true;
-			});
-		}
-
+	async #closeChildren(ctx: ShutdownContext) {
 		let children = Array.from(this.#children).filter(
 			(child) => !child.closed,
 		);
-		while (children.length > 0 || !ownClosed) {
+		while (children.length > 0) {
 			if (children.length === 0) {
 				await new Promise((resolve) => setTimeout(resolve, 10));
 				children = Array.from(this.#children).filter(
@@ -123,18 +115,31 @@ export class ShutdownScope {
 		}
 	}
 
-	async #closeOwn(ctx: ShutdownContext) {
+	#requestClose(ctx: ShutdownContext) {
 		if (!this.resource) return false;
 
 		console.log(`closing ${this.name}`);
 		try {
-			await this.resource.close(ctx);
+			watchAsyncError(
+				this.resource.close?.(ctx),
+				`Error closing ${this.name}`,
+			);
 			return true;
 		} catch (cause) {
 			console.error(new Error(`Error closing ${this.name}`, { cause }));
 			return false;
 		}
 	}
+}
+
+function watchAsyncError(result: unknown, message: string) {
+	if (!result || typeof (result as PromiseLike<unknown>).then !== "function") {
+		return;
+	}
+
+	void Promise.resolve(result).catch((cause) => {
+		console.error(new Error(message, { cause }));
+	});
 }
 
 export function registerShutdownManager() {
