@@ -4,6 +4,7 @@
 	position: sticky;
 	top: 0;
 	width: 100%;
+	mix-blend-mode: soft-light;
 
 	ul {
 		position: absolute;
@@ -13,10 +14,12 @@
 		pointer-events: none;
 		padding: 1em;
 		/*opacity: 0.9;*/
-		color: oklch(from var(--bg) 30% c h);
+		/*color: oklch(from var(--bg) 30% c h);*/
+		color: var(--color);
 		overflow: hidden;
 		white-space: pre;
 		display: flex;
 		flex-direction: column-reverse;
+		font-size: 0.9rem;
 	}
 }

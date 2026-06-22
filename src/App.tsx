@@ -22,7 +22,6 @@ function App() {
 				<hr data-big />
 			</NoHydration>
 			<main>
-				<Logs />
 				<Identity />
 				<NoHydration>
 					<hr data-big />
@@ -55,6 +54,9 @@ function App() {
 			<div style="display:none">
 				<DelayedGlitch />
 			</div>
+			<Suspense>
+				<Logs />
+			</Suspense>
 		</>
 	);
 }

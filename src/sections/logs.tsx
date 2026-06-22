@@ -60,7 +60,7 @@ export default function Logs() {
 	});
 
 	return (
-		<div class="logs">
+		<div class="logs" aria-hidden="true">
 			<ul>
 				<For each={logs()}>{(value) => <li>{value}</li>}</For>
 			</ul>
