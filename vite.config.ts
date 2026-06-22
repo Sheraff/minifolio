@@ -10,8 +10,8 @@ import { chunkImportMap } from './scripts/chunk-import-map'
 export default defineConfig({
   plugins: [
     solid({ ssr: true }),
-    prerenderPlugin(),
     chunkImportMap(),
+    prerenderPlugin(),
     inlineCss(),
     gitLogAsset(),
   ],
