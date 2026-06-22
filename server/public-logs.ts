@@ -2,6 +2,8 @@ import { streamSSE } from "hono/streaming";
 import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
 import * as v from "valibot";
+import { getConnInfo } from "@hono/node-server/conninfo";
+import { hash, randomBytes } from "node:crypto";
 
 let initialized = false;
 
@@ -10,18 +12,18 @@ let pending = Promise.withResolvers<void>();
 const history = createLinkedList<string>();
 history.push("--init--");
 
-let queued = false
+let queued = false;
 export function publicLog(message: string) {
 	if (!initialized) return;
 	history.push(message);
-	if (queued) return
-	queued = true
+	if (queued) return;
+	queued = true;
 	setImmediate(() => {
-		queued = false
+		queued = false;
 		const prev = pending;
 		pending = Promise.withResolvers();
 		prev.resolve();
-	}).unref()
+	}).unref();
 }
 
 export function publicLogBroadcast() {
@@ -46,11 +48,17 @@ export function publicLogBroadcast() {
 	});
 
 	let counter = 0;
+	const clientKeySalt = randomBytes(32).toString("hex");
 
 	/**
 	 * @see https://hono.dev/docs/helpers/streaming#streamsse
 	 */
 	app.get("/stream", sValidator("query", streamQuerySchema), async (c) => {
+		const remoteAddress = getConnInfo(c).remote.address ?? "unknown";
+		const clientKey = hash("sha256", clientKeySalt + remoteAddress, {
+			outputEncoding: "base64",
+		});
+
 		const visitorNumber = ++counter;
 		publicLog(`[http] visitor #${visitorNumber} connected`);
 		const { lastEventId } = c.req.valid("query");
