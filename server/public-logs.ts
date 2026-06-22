@@ -47,8 +47,7 @@ export function publicLogBroadcast() {
 		lastEventId: v.optional(v.pipe(v.string(), v.toNumber(), v.integer())),
 	});
 
-	let visitorCount = 0;
-	const clientIds = new Map<string, number>();
+	const clientIds = new Set<string>();
 	let activeStreams = 0;
 	const MAX_STREAMS = 80;
 	const perClientStreams = new Map<string, number>();
@@ -81,13 +80,11 @@ export function publicLogBroadcast() {
 			activeStreams++;
 		}
 
-		if (clientIds.has(clientKey)) {
-			publicLog(`[http] visitor #${clientIds.get(clientKey)} new session`);
-		} else {
-			const visitorNumber = ++visitorCount;
-			clientIds.set(clientKey, visitorNumber);
-			publicLog(`[http] visitor #${visitorNumber} connected`);
+		if (!clientIds.has(clientKey)) {
+			clientIds.add(clientKey);
+			publicLog(`[http] visitor connected`);
 		}
+		publicLog(`[http] new web session`);
 
 		const { lastEventId } = c.req.valid("query");
 
@@ -117,16 +114,14 @@ export function publicLogBroadcast() {
 			} finally {
 				activeStreams--;
 				clearTimeout(timeout);
+				publicLog(`[http] visitor closed session`);
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
 					perClientStreams.delete(clientKey);
-					publicLog(`[http] visitor #${clientIds.get(clientKey)} left`);
+					publicLog(`[http] visitor left`);
 					clientIds.delete(clientKey);
 				} else {
 					perClientStreams.set(clientKey, clientCount - 1);
-					publicLog(
-						`[http] visitor #${clientIds.get(clientKey)} closed session`,
-					);
 				}
 			}
 		});
