@@ -16,19 +16,36 @@ const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
 const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
 const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
+const MAX_PER_IP_CONNECTIONS = 2;
 
 export function createSshServer(isDev: boolean) {
 	const hostKey = readHostKey(isDev);
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
+	const connectionsByIp = new Map<string, number>();
 
 	const server = new ssh.Server(
 		{
 			hostKeys: [hostKey],
-			// TODO: make a cool multiline banner with some ascii art
-			banner: "Hello from minifolio",
+			algorithms: {
+				kex: {
+					remove: [
+						"diffie-hellman-group-exchange-sha256",
+						"diffie-hellman-group-exchange-sha1",
+					],
+				} as ssh.AlgorithmList<ssh.KexAlgorithm>,
+			},
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
+
+			const ipConnections = connectionsByIp.get(info.ip) ?? 0;
+			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
+				publicLog(`[WARN] too many ssh connections`);
+				client.end();
+				return;
+			}
+			connectionsByIp.set(info.ip, ipConnections + 1);
+
 			let username = "";
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
 			authTimeout.unref();
@@ -43,6 +60,12 @@ export function createSshServer(isDev: boolean) {
 				if (closed) return;
 				closed = true;
 				clearTimeout(authTimeout);
+				const ipConnections = connectionsByIp.get(info.ip);
+				if (!ipConnections || ipConnections === 1) {
+					connectionsByIp.delete(info.ip);
+				} else {
+					connectionsByIp.set(info.ip, ipConnections - 1);
+				}
 			});
 
 			client.on("authentication", (ctx) => {
@@ -191,7 +214,7 @@ function interactiveStream(
 		allowedUrlPrefixes: SSH_ALLOWED_URL_PREFIXES,
 		...(isDev ? {} : { loadGitLog: readSshGitLog }),
 		exitCommand: {
-			message: "bye",
+			message: exitMessage(username),
 			requestExit: true,
 		},
 	});
@@ -287,12 +310,8 @@ function interactiveStream(
 		if (historyCursor === terminal.history.length) historyDraft = "";
 	}
 
+	stream.write(helloMessage(username, info));
 	stream.write("\r\n");
-	stream.write(`IP: ${info.ip}\r\n`);
-	stream.write(`Port: ${info.port}\r\n`);
-	stream.write(`Ident: ${info.header.identRaw}\r\n`);
-	stream.write("\r\n");
-	stream.write("Type `help`.\r\n");
 	prompt();
 
 	stream.on("data", (chunk: Uint8Array) => {
@@ -410,4 +429,38 @@ function handleStreamError(stream: ssh.ServerChannel) {
 		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stderr]", formatSshError(error));
 	});
+}
+
+function exitMessage(username: string) {
+	return `
+teardown ssh://minifolio
+
+edge removed:
+[${username}] ──X── [minifolio]
+
+status: 200 goodbye
+Thanks for the packets.
+`;
+}
+
+function helloMessage(username: string, info: ssh.ClientInfo) {
+	return `
+scan minifolio
+
+PORT     STATE  SERVICE
+22/tcp   open   ssh
+79/tcp   open   finger
+443/tcp  open   web
+???      close  loose ideas
+
+[${username}] ──── tcp/22 ───> [minifolio]
+  |
+  +-- ip:    ${info.ip}
+  +-- port:  ${info.port}
+  +-- ident: ${info.header.identRaw}
+
+status: connected
+`
+		.split("\n")
+		.join("\r\n");
 }

@@ -1,11 +1,12 @@
 import { SSEStreamingApi, streamSSE } from "hono/streaming";
 import { sValidator } from "@hono/standard-validator";
-import { Hono } from "hono";
+import { Context, Hono } from "hono";
 import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
 import { simpleUserAgent } from "./utils/simple-ua.ts";
 import { isShuttingDown } from "./utils/shutdown.ts";
+import { isIP } from "node:net";
 
 let initialized = false;
 
@@ -80,8 +81,8 @@ export function publicLogBroadcast() {
 			return c.text("too many streams", 503);
 		}
 
-		const remoteAddress = getConnInfo(c).remote.address ?? "unknown";
-		const clientKey = hash("sha256", clientKeySalt + remoteAddress, {
+		const remoteAddress = getClientAddress(c) ?? "unknown";
+		const clientKey = hash("sha256", clientKeySalt + "\0" + remoteAddress, {
 			outputEncoding: "base64",
 		});
 
@@ -152,6 +153,17 @@ function abortPromiseFromStream(stream: SSEStreamingApi): Promise<void> {
 	return new Promise((resolve) => {
 		stream.onAbort(resolve);
 	});
+}
+
+function getClientAddress(c: Context) {
+	const forwardedFor = c.req.header("x-forwarded-for");
+	const forwardedAddress = forwardedFor?.split(",", 1)[0]?.trim();
+
+	if (forwardedAddress && isIP(forwardedAddress)) {
+		return forwardedAddress;
+	}
+
+	return getConnInfo(c).remote.address ?? "unknown";
 }
 
 // TODO: how can we send one last message to all streams just before we die?
