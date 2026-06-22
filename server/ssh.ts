@@ -49,7 +49,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			const ipConnections = connectionsByIp.get(info.ip) ?? 0;
 			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
 				publicLog(`[WARN] too many ssh connections`);
-				console.log(`[ssh] ip rejected, too many connections ${info.ip}`)
+				console.log(`[ssh] ip rejected, too many connections ${info.ip}`);
 				client.end();
 				return;
 			}
@@ -81,6 +81,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 				clientScope.done();
 				clearTimeout(authTimeout);
 				const ipConnections = connectionsByIp.get(info.ip);
+				console.log("close client", info.ip);
 				if (!ipConnections || ipConnections === 1) {
 					connectionsByIp.delete(info.ip);
 				} else {
@@ -143,7 +144,10 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 							close: () => closeSshShell(stream),
 							force: () => void stream.destroy(),
 						});
-						stream.once("close", () => streamScope.done());
+						stream.once("close", () => {
+							streamScope.done();
+							console.log("close shell stream", info.ip);
+						});
 						interactiveStream(
 							username,
 							info,
