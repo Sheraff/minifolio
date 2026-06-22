@@ -8,7 +8,7 @@ export default function Logs() {
 	let lastEventId: string;
 	let sse: EventSource;
 	let controller: AbortController;
-	let timeout: number;
+	let timeout: ReturnType<typeof setTimeout>;
 	let retryDelay = 10;
 
 	function startStream() {

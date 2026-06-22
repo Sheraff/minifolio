@@ -6,10 +6,11 @@
     "module": "ESNext",
     "lib": [
       "ESNext",
-      "DOM"
+      "DOM",
     ],
     "types": [
       "vite/client",
+      "node"
     ],
     "skipLibCheck": true,
     /* Bundler mode */
