@@ -1,14 +1,20 @@
 import { flushPublicLogs, publicLog } from "#server/public-logs.ts";
 
-const nameKey = Symbol();
+const names = new WeakMap<Closable, string>();
 let shuttingDown = false;
 type Closable = {
-	close: (cb: (error?: unknown) => void) => void | Promise<void> | object;
+	close: (cb?: (error?: unknown) => void) => void | Promise<unknown> | object;
 };
-const closables: (Closable & { [nameKey]: string })[] = [];
+const closables = new Set<Closable>();
 
 export function registerClose(closable: Closable, name: string) {
-	closables.push(Object.assign(closable, { [nameKey]: name }));
+	closables.add(closable);
+	names.set(closable, name);
+}
+
+export function unregisterClose(closable: Closable) {
+	closables.delete(closable);
+	names.delete(closable);
 }
 
 export function isShuttingDown() {
@@ -38,23 +44,24 @@ export function registerShutdownManager(isDev: boolean) {
 
 		console.log("closing servers");
 		await Promise.allSettled(
-			closables.map((c) => {
-				const name = c[nameKey];
+			Array.from(closables).map((c) => {
+				const name = names.get(c);
 				console.log(`closing ${name}`);
 				return new Promise<void>((resolve, reject) => {
+					const onError = (cause: unknown) => {
+						console.error(new Error(`Error closing ${name}`, { cause }));
+						reject(cause);
+					};
+					const onSuccess = () => {
+						console.log(`${name} closed successfully`);
+						resolve();
+					};
 					const result = c.close((error) => {
-						if (error) {
-							console.error(
-								new Error(`Error closing ${name}`, { cause: error }),
-							);
-							reject(error);
-						} else {
-							console.log(`${name} closed successfully`);
-							resolve();
-						}
+						if (error) onError(error);
+						else onSuccess();
 					});
 					if (result && result instanceof Promise)
-						result.then(resolve, reject);
+						result.then(onSuccess, onError);
 				});
 			}),
 		);

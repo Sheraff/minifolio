@@ -5,7 +5,11 @@ import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
 import { simpleUserAgent } from "./utils/simple-ua.ts";
-import { isShuttingDown } from "./utils/shutdown.ts";
+import {
+	isShuttingDown,
+	registerClose,
+	unregisterClose,
+} from "./utils/shutdown.ts";
 import { isIP } from "node:net";
 
 let initialized = false;
@@ -109,6 +113,7 @@ export function publicLogBroadcast() {
 		return streamSSE(c, async (stream) => {
 			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
 			timeout.unref();
+			registerClose(stream, "sse stream");
 			const abortPromise = abortPromiseFromStream(stream);
 			try {
 				let item = history.get(lastEventId);
@@ -119,7 +124,7 @@ export function publicLogBroadcast() {
 						id: String(item.id),
 					});
 				}
-				while (!stream.aborted) {
+				while (!stream.aborted && !isShuttingDown()) {
 					while (item.next) {
 						item = item.next;
 						await stream.writeSSE({
@@ -128,11 +133,14 @@ export function publicLogBroadcast() {
 							id: String(item.id),
 						});
 					}
-					await Promise.race([abortPromise, pending.promise]);
+					if (!isShuttingDown()) {
+						await Promise.race([abortPromise, pending.promise]);
+					}
 				}
 			} finally {
 				activeStreams--;
 				clearTimeout(timeout);
+				unregisterClose(stream);
 				publicLog(`[http] closed ${ua} session`);
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
