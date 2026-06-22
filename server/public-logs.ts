@@ -59,7 +59,10 @@ export function publicLogBroadcast() {
 	 * @see https://hono.dev/docs/helpers/streaming#streamsse
 	 */
 	app.get("/stream", sValidator("query", streamQuerySchema), async (c) => {
-		if (activeStreams >= MAX_STREAMS) return c.text("too many streams", 503);
+		if (activeStreams >= MAX_STREAMS) {
+			publicLog(`[WARN] too many streams`);
+			return c.text("too many streams", 503);
+		}
 
 		const remoteAddress = getConnInfo(c).remote.address ?? "unknown";
 		const clientKey = hash("sha256", clientKeySalt + remoteAddress, {
@@ -68,8 +71,10 @@ export function publicLogBroadcast() {
 
 		{
 			const clientCount = perClientStreams.get(clientKey) ?? 0;
-			if (clientCount >= MAX_PER_CLIENT)
+			if (clientCount >= MAX_PER_CLIENT) {
+				publicLog(`[WARN] too many streams`);
 				return c.text("too many streams", 429);
+			}
 			perClientStreams.set(clientKey, clientCount + 1);
 			activeStreams++;
 		}

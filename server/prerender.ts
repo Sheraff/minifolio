@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import * as v from "valibot";
+import { publicLog } from "./public-logs.ts";
 
 const nonEmptyString = v.pipe(v.string(), v.nonEmpty());
 
@@ -38,6 +39,7 @@ export async function prerenderClientIndex(serverDir: string) {
 		);
 	}
 
+	publicLog("[ssr] prerendering html");
 	const shell = await render();
 	const result = manifest.template.replace(
 		manifest.placeholder,

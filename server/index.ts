@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
+import { publicLog } from "./public-logs.ts";
 
 const parsed = parseArgs({
 	options: {
@@ -30,9 +31,12 @@ if (webPort.success) {
 	const { createWebServer } = await import("./web.ts");
 	const serverDir = fileURLToPath(new URL(".", import.meta.url));
 	const server = await createWebServer(isDev, serverDir);
-	server.listen(port, () => {
-		console.log(`http://localhost:${port}`);
-	});
+	if (server) {
+		server.listen(port, () => {
+			console.log(`http://localhost:${port}`);
+		});
+		publicLog("[root] http server started");
+	}
 }
 
 const fingerPort = v.safeParse(portSchema, parsed.values.finger);
@@ -40,9 +44,12 @@ if (fingerPort.success) {
 	const port = fingerPort.output;
 	const { createFingerServer } = await import("./finger.ts");
 	const server = createFingerServer();
-	server.listen(port, () => {
-		console.log(`Finger server listening on :${port}`);
-	});
+	if (server) {
+		server.listen(port, () => {
+			console.log(`Finger server listening on :${port}`);
+		});
+		publicLog("[root] finger server started");
+	}
 }
 
 const sshPort = v.safeParse(portSchema, parsed.values.ssh);
@@ -54,5 +61,6 @@ if (sshPort.success) {
 		server.listen(port, () => {
 			console.log(`SSH server listening on :${port}`);
 		});
+		publicLog("[root] ssh server started");
 	}
 }

@@ -3,6 +3,7 @@ import { fetchTanstackArticles } from "./articles.ts";
 import { fetchGitHubContributions } from "./github.ts";
 import { fetchContributedRepositories } from "./githubRepositories.ts";
 import { fetchLabProjects } from "./projects.ts";
+import { publicLog } from "#server/public-logs.ts";
 
 async function respond(
 	c: Context,
@@ -19,6 +20,7 @@ async function respond(
 		return c.json(data);
 	} catch (error) {
 		console.error(error);
+		publicLog("[api] unknown error")
 		c.header("Cache-Control", "no-store");
 		return c.json({ error: errorMessage }, 502);
 	}
@@ -50,7 +52,10 @@ export function api() {
 		respond(c, fetchTanstackArticles, "Unable to load TanStack articles"),
 	);
 
-	app.get("*", (c) => c.notFound());
+	app.get("*", (c) => {
+		publicLog("[api] 404")
+		return c.notFound()
+	});
 
 	return app;
 }

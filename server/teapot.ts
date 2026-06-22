@@ -25,6 +25,7 @@ export function teapot() {
 		}
 
 		if (drink === "tea") {
+			publicLog("[api] I'm a teapot");
 			return c.text("Steeping.\n", 200);
 		}
 

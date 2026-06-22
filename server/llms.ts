@@ -170,7 +170,7 @@ async function streamLlmsTxt() {
 export function llms() {
   const app = new Hono()
   app.get('/llms.txt', async (c) => {
-  	publicLog("[llm] crawling...")
+    publicLog("[llm] crawling...")
     c.header('Cache-Control', 'public, max-age=3600')
     c.header('Content-Type', 'text/plain; charset=UTF-8')
 

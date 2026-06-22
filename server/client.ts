@@ -16,11 +16,17 @@ export function ogImage(imageDir: string) {
 		rewriteRequestPath: (requestPath, c) => {
 			if (requestPath !== "/og.png") return requestPath
 
-			publicLog("[social] OpenGraph image request")
 			c.header("Vary", "User-Agent")
 			const ua = c.req.header("User-Agent") ?? "";
-			if (/cardyb|bluesky|bsky/i.test(ua)) return "/og-bsky.png";
-			if (/\btwitterbot\b/i.test(ua)) return "/og-twitter.png";
+			if (/cardyb|bluesky|bsky/i.test(ua)) {
+				publicLog("[social] bsky image request")
+				return "/og-bsky.png";
+			}
+			if (/\btwitterbot\b/i.test(ua)) {
+				publicLog("[social] twitter image request")
+				return "/og-twitter.png";
+			}
+			publicLog("[social] OpenGraph image request")
 			return requestPath
 		},
 	})
@@ -32,7 +38,8 @@ export function client(serverDir: string) {
 	let html = "";
 	let lastGen = 0
 	let timeout: NodeJS.Timeout
-	const getHtml = async () => {
+	let htmlPromise: Promise<string> | null
+	const _getHtml = async () => {
 		if (!html || Date.now() - lastGen > REGEN_DELAY) {
 			lastGen = Date.now()
 			html = await prerenderClientIndex(serverDir);
@@ -42,7 +49,16 @@ export function client(serverDir: string) {
 		}
 		return html;
 	};
-	getHtml()
+	const getHtml = () => {
+		if (htmlPromise) return htmlPromise
+		const promise = _getHtml()
+		htmlPromise = promise
+		promise.then(() => {
+			if (htmlPromise === promise) htmlPromise = null
+		})
+		return htmlPromise
+	}
+	setImmediate(getHtml).unref()
 
 	const app = new Hono();
 

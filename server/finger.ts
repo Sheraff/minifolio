@@ -43,6 +43,7 @@ export function createFingerServer() {
 
 			if (query.length > 512) {
 				socket.end('Query too long\r\n')
+				publicLog(`[WARN] finger too long`);
 				return
 			}
 
@@ -71,9 +72,11 @@ export function createFingerServer() {
 			}
 
 			socket.end(`No such user: ${username}\r\n`)
+			publicLog(`[finger] unknown user request`);
 		})
 
 		socket.on('error', (e) => {
+			publicLog(`[WARN] finger socket error`);
 			console.error('Socket error:', e)
 		})
 	})

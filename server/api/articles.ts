@@ -87,6 +87,10 @@ async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
 
 	try {
 		const data = await tanstackArticlesPromise
+		const prevCount = tanstackArticlesCache?.data.articles.length
+		if (prevCount !== undefined && data.articles.length > prevCount) {
+			publicLog("[data] new article")
+		}
 		tanstackArticlesCache = {
 			data,
 			expiresAt: Date.now() + ONE_HOUR_MS,

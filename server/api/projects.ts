@@ -39,6 +39,10 @@ async function loadLabProjects(): Promise<LabProject[]> {
 
   try {
     const data = await projectsPromise
+    const prevCount = projectsCache?.data.length
+    if (prevCount !== undefined && prevCount < data.length) {
+      publicLog("[data] new code experiment")
+    }
     projectsCache = {
       data,
       expiresAt: Date.now() + ONE_HOUR_MS,

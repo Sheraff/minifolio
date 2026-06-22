@@ -34,6 +34,7 @@ export function createSshServer(isDev: boolean) {
 			authTimeout.unref();
 
 			client.on("error", (error) => {
+				publicLog(`[WARN] ssh connection error`);
 				console.warn("[ssh]", formatSshError(error));
 			});
 
@@ -53,6 +54,7 @@ export function createSshServer(isDev: boolean) {
 				// Optional fallback if a client insists on prompting.
 				if (ctx.method === "password") return ctx.accept();
 
+				publicLog(`[ssh] rejected ${ctx.method} authentication`);
 				ctx.reject(["none", "password"]);
 			});
 
@@ -72,6 +74,7 @@ export function createSshServer(isDev: boolean) {
 
 					const session = accept();
 					session.on("error", (error: unknown) => {
+						publicLog(`[WARN] ssh session error`);
 						console.warn("[ssh session]", formatSshError(error));
 					});
 
@@ -99,6 +102,7 @@ export function createSshServer(isDev: boolean) {
 	server.maxConnections = MAX_CONCURRENT;
 
 	server.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh server error`);
 		console.warn("[ssh]", formatSshError(error));
 	});
 
@@ -399,9 +403,11 @@ function walkTerminalFiles(
 
 function handleStreamError(stream: ssh.ServerChannel) {
 	stream.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stream]", formatSshError(error));
 	});
 	stream.stderr.on("error", (error: unknown) => {
+		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stderr]", formatSshError(error));
 	});
 }
