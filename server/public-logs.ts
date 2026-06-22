@@ -135,18 +135,14 @@ export function publicLogBroadcast() {
 }
 
 function getClientAddress(c: Context) {
-	const remoteAddress = getConnInfo(c).remote.address ?? "unknown";
-	console.log("remote address", remoteAddress);
-
 	const forwardedFor = c.req.header("x-forwarded-for");
-	const forwardedAddress = forwardedFor?.split(",")[0]?.trim();
-	console.log("forwardedFor", forwardedFor);
+	const forwardedAddress = forwardedFor?.split(",", 1)[0]?.trim();
 
 	if (forwardedAddress && isIP(forwardedAddress)) {
 		return forwardedAddress;
 	}
-
-	return remoteAddress;
+	
+	return getConnInfo(c).remote.address ?? "unknown";
 }
 
 // TODO: how can we send one last message to all streams just before we die?
