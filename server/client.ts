@@ -7,6 +7,7 @@ import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
 import type { HttpServer } from "vite";
 import type { ServerType } from "@hono/node-server";
 import { publicLog } from "./public-logs.ts";
+import { registerClose } from "./utils/shutdown.ts";
 
 const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 
@@ -88,6 +89,8 @@ export async function devClient(server: ServerType) {
 			hmr: { server: server as HttpServer },
 		},
 	});
+
+	registerClose(vite, 'vite server')
 
 	return createMiddleware(async (c, next) => {
 		if (c.req.path.startsWith("/api")) {
