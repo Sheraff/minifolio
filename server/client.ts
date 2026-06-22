@@ -4,10 +4,9 @@ import path from "node:path";
 import { prerenderClientIndex } from "./prerender.ts";
 import { createMiddleware } from "hono/factory";
 import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
-import type { HttpServer } from "vite";
-import type { ServerType } from "@hono/node-server";
 import { publicLog } from "./public-logs.ts";
-import { registerClose } from "./utils/shutdown.ts";
+import type { ShutdownScope } from "./utils/shutdown.ts";
+import type { Server } from "node:http";
 
 const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 
@@ -33,13 +32,19 @@ export function ogImage(imageDir: string) {
 	})
 }
 
-export function client(serverDir: string) {
+export function client(serverDir: string, parentScope: ShutdownScope) {
 	const clientDistDir = path.resolve(serverDir, "../client");
 
 	let html = "";
 	let lastGen = 0
 	let timeout: NodeJS.Timeout
 	let htmlPromise: Promise<string> | null
+	parentScope.child("client prerender", {
+		close: async () => {
+			if (timeout) clearTimeout(timeout)
+			await htmlPromise
+		},
+	})
 	const _getHtml = async () => {
 		if (!html || Date.now() - lastGen > REGEN_DELAY) {
 			lastGen = Date.now()
@@ -80,17 +85,25 @@ export function client(serverDir: string) {
 	return app;
 }
 
-export async function devClient(server: ServerType) {
+export async function devClient(server: Server, parentScope: ShutdownScope) {
+	const signalListeners = snapshotShutdownSignalListeners();
 	const { createServer } = await import("vite");
 
 	const vite = await createServer({
 		server: {
 			middlewareMode: true,
-			hmr: { server: server as HttpServer },
+			hmr: { server },
 		},
 	});
+	// Vite middleware mode still installs process signal listeners. The app owns
+	// shutdown and closes Vite through the scope tree, so remove only listeners
+	// added by createServer() to avoid an early process exit on SIGINT/SIGTERM.
+	// This is very hacky, we should see if we can PR (or help move along a PR) on vite itself
+	removeNewShutdownSignalListeners(signalListeners);
 
-	registerClose(vite, 'vite server')
+	parentScope.child("vite server", {
+		close: () => vite.close(),
+	})
 
 	return createMiddleware(async (c, next) => {
 		if (c.req.path.startsWith("/api")) {
@@ -121,4 +134,27 @@ export async function devClient(server: ServerType) {
 			return c.text(err.stack ?? err.message, 500);
 		}
 	});
+}
+
+const shutdownSignals = ["SIGINT", "SIGTERM"] as const;
+
+function snapshotShutdownSignalListeners() {
+	return new Map(
+		shutdownSignals.map((signal) => [
+			signal,
+			new Set(process.listeners(signal)),
+		]),
+	);
+}
+
+function removeNewShutdownSignalListeners(
+	previous: ReturnType<typeof snapshotShutdownSignalListeners>,
+) {
+	for (const signal of shutdownSignals) {
+		const previousListeners = previous.get(signal)!;
+		for (const listener of process.listeners(signal)) {
+			if (previousListeners.has(listener)) continue;
+			process.off(signal, listener as (...args: unknown[]) => void);
+		}
+	}
 }

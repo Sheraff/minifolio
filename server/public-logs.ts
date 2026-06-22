@@ -5,11 +5,7 @@ import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
 import { simpleUserAgent } from "./utils/simple-ua.ts";
-import {
-	isShuttingDown,
-	registerClose,
-	unregisterClose,
-} from "./utils/shutdown.ts";
+import type { ShutdownScope } from "./utils/shutdown.ts";
 import { isIP } from "node:net";
 
 let initialized = false;
@@ -27,23 +23,22 @@ export function publicLog(message: string) {
 	queued = true;
 	setImmediate(() => {
 		queued = false;
-		const prev = pending;
-		pending = Promise.withResolvers();
-		prev.resolve();
+		wakeStreams();
 	}).unref();
 }
 
-export async function flushPublicLogs(delayMs = 200) {
+function wakeStreams() {
 	const prev = pending;
 	pending = Promise.withResolvers();
 	prev.resolve();
-
-	await new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-export function publicLogBroadcast() {
+export function publicLogBroadcast(parentScope: ShutdownScope) {
 	const app = new Hono();
 	initialized = true;
+	const scope = parentScope.child("sse log streams", {
+		close: () => wakeStreams(),
+	});
 
 	// /**
 	//  * this is not a ping, it's just to make sure we regularly flush
@@ -75,7 +70,7 @@ export function publicLogBroadcast() {
 	 * @see https://hono.dev/docs/helpers/streaming#streamsse
 	 */
 	app.get("/stream", sValidator("query", streamQuerySchema), async (c) => {
-		if (isShuttingDown()) {
+		if (scope.closing) {
 			c.header("Retry-After", "20");
 			return c.text("shutting down", 503);
 		}
@@ -113,7 +108,14 @@ export function publicLogBroadcast() {
 		return streamSSE(c, async (stream) => {
 			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
 			timeout.unref();
-			registerClose(stream, "sse stream");
+			const closed = Promise.withResolvers<void>();
+			const streamScope = scope.child("sse stream", {
+				close: () => {
+					wakeStreams();
+					return closed.promise;
+				},
+				force: () => stream.abort(),
+			});
 			const abortPromise = abortPromiseFromStream(stream);
 			try {
 				let item = history.get(lastEventId);
@@ -124,7 +126,7 @@ export function publicLogBroadcast() {
 						id: String(item.id),
 					});
 				}
-				while (!stream.aborted && !isShuttingDown()) {
+				while (!stream.aborted) {
 					while (item.next) {
 						item = item.next;
 						await stream.writeSSE({
@@ -133,19 +135,23 @@ export function publicLogBroadcast() {
 							id: String(item.id),
 						});
 					}
-					if (!isShuttingDown()) {
-						await Promise.race([abortPromise, pending.promise]);
-					}
+					if (streamScope.closing || scope.closing) break;
+					await Promise.race([abortPromise, pending.promise]);
 				}
 			} finally {
 				activeStreams--;
 				clearTimeout(timeout);
-				unregisterClose(stream);
-				publicLog(`[http] closed ${ua} session`);
+				streamScope.unregister();
+				closed.resolve();
+				if (!scope.closing) {
+					publicLog(`[http] closed ${ua} session`);
+				}
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
 					perClientStreams.delete(clientKey);
-					publicLog(`[http] ${ua} left`);
+					if (!scope.closing) {
+						publicLog(`[http] ${ua} left`);
+					}
 					clientIds.delete(clientKey);
 				} else {
 					perClientStreams.set(clientKey, clientCount - 1);
