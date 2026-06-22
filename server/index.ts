@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import { publicLog } from "./public-logs.ts";
-import { registerClose } from "./utils/shutdown.ts";
+import { registerClose, registerShutdownManager } from "./utils/shutdown.ts";
 
 const parsed = parseArgs({
 	options: {
@@ -24,6 +24,8 @@ const parsed = parseArgs({
 
 const isDev = parsed.values.dev === true;
 const portSchema = v.pipe(v.string(), v.toNumber(), v.number(), v.integer());
+
+registerShutdownManager(isDev);
 
 const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
 if (webPort.success) {
