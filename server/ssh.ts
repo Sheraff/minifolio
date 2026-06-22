@@ -37,10 +37,6 @@ export function createSshServer(isDev: boolean) {
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
-			client.on("error", (error) => {
-				publicLog(`[WARN] ssh connection error`);
-				console.warn("[ssh]", formatSshError(error));
-			});
 
 			const ipConnections = connectionsByIp.get(info.ip) ?? 0;
 			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
@@ -53,6 +49,11 @@ export function createSshServer(isDev: boolean) {
 			let username = "";
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
 			authTimeout.unref();
+
+			client.on("error", (error) => {
+				publicLog(`[WARN] ssh connection error`);
+				console.warn("[ssh]", formatSshError(error));
+			});
 
 			let closed = false;
 			client.on("close", () => {
