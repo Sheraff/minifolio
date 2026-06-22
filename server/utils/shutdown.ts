@@ -46,7 +46,7 @@ export class ShutdownScope {
 		return this.#isClosed;
 	}
 
-	unregister() {
+	done() {
 		if (this.#isClosed) return;
 		this.#isClosed = true;
 		if (this.#parent) this.#parent.#children.delete(this);
@@ -90,7 +90,7 @@ export class ShutdownScope {
 		void childrenClose.then(childrenClosed.resolve, childrenClosed.reject);
 
 		await childrenClose;
-		if (!this.resource) this.unregister();
+		if (!this.resource) this.done();
 		await this.#closed.promise;
 		if (this.resource && closeRequested) {
 			console.log(`${this.name} closed successfully`);

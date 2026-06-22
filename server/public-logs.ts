@@ -39,7 +39,7 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 	const scope = parentScope.child("sse log streams", {
 		close: (ctx) => {
 			wakeStreams()
-			void ctx.childrenClosed.then(() => scope.unregister())
+			void ctx.childrenClosed.then(() => scope.done())
 		},
 	});
 
@@ -139,7 +139,7 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 			} finally {
 				activeStreams--;
 				clearTimeout(timeout);
-				streamScope.unregister();
+				streamScope.done();
 				if (!scope.closing) {
 					publicLog(`[http] closed ${ua} session`);
 				}

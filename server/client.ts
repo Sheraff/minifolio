@@ -43,7 +43,7 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 		close: async () => {
 			if (timeout) clearTimeout(timeout)
 			await htmlPromise
-			prerenderScope.unregister()
+			prerenderScope.done()
 		},
 	})
 	const _getHtml = async () => {
@@ -105,7 +105,7 @@ export async function devClient(server: Server, parentScope: ShutdownScope) {
 	const viteScope = parentScope.child("vite server", {
 		close: async () => {
 			await vite.close()
-			viteScope.unregister()
+			viteScope.done()
 		},
 	})
 

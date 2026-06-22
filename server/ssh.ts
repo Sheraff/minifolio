@@ -77,7 +77,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			client.on("close", () => {
 				if (closed) return;
 				closed = true;
-				clientScope.unregister();
+				clientScope.done();
 				clearTimeout(authTimeout);
 				const ipConnections = connectionsByIp.get(info.ip);
 				if (!ipConnections || ipConnections === 1) {
@@ -142,7 +142,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 							close: () => closeSshShell(stream),
 							force: () => void stream.destroy(),
 						});
-						stream.once("close", () => streamScope.unregister());
+						stream.once("close", () => streamScope.done());
 						interactiveStream(
 							username,
 							info,
@@ -161,7 +161,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 		publicLog(`[WARN] ssh server error`);
 		console.warn("[ssh]", formatSshError(error));
 	});
-	server.once("close", () => serverScope.unregister());
+	server.once("close", () => serverScope.done());
 
 	return server;
 }

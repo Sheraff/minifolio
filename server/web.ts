@@ -24,7 +24,7 @@ export async function createWebServer(
 		},
 		force: () => server.closeAllConnections(),
 	});
-	server.once("close", () => scope.unregister());
+	server.once("close", () => scope.done());
 
 	app.route("/", llms());
 	app.route("/api/brew", teapot());

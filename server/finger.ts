@@ -49,7 +49,7 @@ export function createFingerServer(parentScope: ShutdownScope) {
 
 		let query = ''
 
-		socket.on('close', () => socketScope.unregister())
+		socket.on('close', () => socketScope.done())
 
 		socket.on('data', (chunk) => {
 			query += chunk
@@ -94,7 +94,7 @@ export function createFingerServer(parentScope: ShutdownScope) {
 		})
 	})
 	server.once('close', () => {
-		scope.unregister()
+		scope.done()
 	})
 	return server
 }
