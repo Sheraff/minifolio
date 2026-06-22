@@ -2,6 +2,7 @@ import * as v from "valibot";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import { publicLog } from "./public-logs.ts";
+import { registerClose } from "./utils/shutdown.ts";
 
 const parsed = parseArgs({
 	options: {
@@ -22,7 +23,6 @@ const parsed = parseArgs({
 });
 
 const isDev = parsed.values.dev === true;
-
 const portSchema = v.pipe(v.string(), v.toNumber(), v.number(), v.integer());
 
 const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
@@ -35,6 +35,7 @@ if (webPort.success) {
 		server.listen(port, () => {
 			console.log(`http://localhost:${port}`);
 		});
+		registerClose(server, "http server");
 		publicLog("[root] http server started");
 	}
 }
@@ -48,6 +49,7 @@ if (fingerPort.success) {
 		server.listen(port, () => {
 			console.log(`Finger server listening on :${port}`);
 		});
+		registerClose(server, "finger server");
 		publicLog("[root] finger server started");
 	}
 }
@@ -61,6 +63,7 @@ if (sshPort.success) {
 		server.listen(port, () => {
 			console.log(`SSH server listening on :${port}`);
 		});
+		registerClose(server, "ssh server");
 		publicLog("[root] ssh server started");
 	}
 }

@@ -1,10 +1,11 @@
-import { streamSSE } from "hono/streaming";
+import { SSEStreamingApi, streamSSE } from "hono/streaming";
 import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
 import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
 import { simpleUserAgent } from "./utils/simple-ua.ts";
+import { isShuttingDown } from "./utils/shutdown.ts";
 
 let initialized = false;
 
@@ -27,22 +28,30 @@ export function publicLog(message: string) {
 	}).unref();
 }
 
+export async function flushPublicLogs(delayMs = 200) {
+	const prev = pending;
+	pending = Promise.withResolvers();
+	prev.resolve();
+
+	await new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
 export function publicLogBroadcast() {
 	const app = new Hono();
 	initialized = true;
 
-	/**
-	 * this is not a ping, it's just to make sure we regularly flush
-	 * streams that have been aborted between logs.
-	 * we don't need to ping, it's ok if some streams die, client
-	 * will reconnect if they need to.
-	 */
-	const interval = setInterval(() => {
-		const prev = pending;
-		pending = Promise.withResolvers();
-		prev.resolve();
-	}, 1000);
-	interval.unref();
+	// /**
+	//  * this is not a ping, it's just to make sure we regularly flush
+	//  * streams that have been aborted between logs.
+	//  * we don't need to ping, it's ok if some streams die, client
+	//  * will reconnect if they need to.
+	//  */
+	// const interval = setInterval(() => {
+	// 	const prev = pending;
+	// 	pending = Promise.withResolvers();
+	// 	prev.resolve();
+	// }, 1000);
+	// interval.unref();
 
 	const streamQuerySchema = v.object({
 		lastEventId: v.optional(v.pipe(v.string(), v.toNumber(), v.integer())),
@@ -61,6 +70,11 @@ export function publicLogBroadcast() {
 	 * @see https://hono.dev/docs/helpers/streaming#streamsse
 	 */
 	app.get("/stream", sValidator("query", streamQuerySchema), async (c) => {
+		if (isShuttingDown()) {
+			c.header("Retry-After", "20");
+			return c.text("shutting down", 503);
+		}
+
 		if (activeStreams >= MAX_STREAMS) {
 			publicLog(`[WARN] too many streams`);
 			return c.text("too many streams", 503);
@@ -94,6 +108,7 @@ export function publicLogBroadcast() {
 		return streamSSE(c, async (stream) => {
 			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
 			timeout.unref();
+			const abortPromise = abortPromiseFromStream(stream);
 			try {
 				let item = history.get(lastEventId);
 				if (lastEventId === undefined || lastEventId !== item.id) {
@@ -112,7 +127,7 @@ export function publicLogBroadcast() {
 							id: String(item.id),
 						});
 					}
-					await pending.promise;
+					await Promise.race([abortPromise, pending.promise]);
 				}
 			} finally {
 				activeStreams--;
@@ -131,6 +146,12 @@ export function publicLogBroadcast() {
 	});
 
 	return app;
+}
+
+function abortPromiseFromStream(stream: SSEStreamingApi): Promise<void> {
+	return new Promise((resolve) => {
+		stream.onAbort(resolve);
+	});
 }
 
 // TODO: how can we send one last message to all streams just before we die?
