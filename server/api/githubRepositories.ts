@@ -318,7 +318,7 @@ async function fetchContributedRepositoriesSliceFromApi(year: number) {
 }
 
 async function fetchContributedRepositoriesFromApi(): Promise<ContributedRepositoriesResponse> {
-	publicLog("[data] fetching gitub contributions")
+	publicLog("[data] fetching github contributions")
 	const years = await fetchContributionYearsFromApi()
 	const contributionSlices = await Promise.all(
 		years.map((year) => fetchContributedRepositoriesSliceFromApi(year)),
