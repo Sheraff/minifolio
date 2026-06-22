@@ -13,6 +13,7 @@ import type { ShutdownScope } from "./utils/shutdown.ts";
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
 const SESSION_TIMEOUT_MS = 3_000;
+const UNSUPPORTED_SESSION_CLOSE_DELAY_MS = 1_000;
 const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
 const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
@@ -133,7 +134,13 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 					});
 
 					session.on("pty", simpleAccept);
-					session.on("exec", acceptAndExit);
+					session.on("exec", (accept, reject) => {
+						acceptAndExit(accept, reject);
+						client.noMoreSessions = true;
+						setTimeout(() => {
+							if (!closed) client.end();
+						}, UNSUPPORTED_SESSION_CLOSE_DELAY_MS).unref();
+					});
 					session.on("subsystem", simpleReject);
 					session.on("sftp", simpleReject);
 					session.on("signal", simpleAccept);
