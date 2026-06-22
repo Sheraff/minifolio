@@ -1,7 +1,6 @@
 // server/toy-ssh.ts
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
-import { hash, randomBytes } from "node:crypto";
 import ssh from "ssh2";
 import {
 	autocomplete,
@@ -17,12 +16,12 @@ const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
 const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
 const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
+const MAX_PER_IP_CONNECTIONS = 2;
 
 export function createSshServer(isDev: boolean) {
 	const hostKey = readHostKey(isDev);
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
-	const clientKeySalt = randomBytes(32).toString("hex");
-	const activeClients = new Set<string>();
+	const connectionsByIp = new Map<string, number>();
 
 	const server = new ssh.Server(
 		{
@@ -45,13 +44,13 @@ export function createSshServer(isDev: boolean) {
 				console.warn("[ssh]", formatSshError(error));
 			});
 
-			const clientKey = getClientKey(info, clientKeySalt);
-			if (activeClients.has(clientKey)) {
+			const ipConnections = connectionsByIp.get(info.ip) ?? 0;
+			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
 				publicLog(`[WARN] too many ssh connections`);
 				client.end();
 				return;
 			}
-			activeClients.add(clientKey);
+			connectionsByIp.set(info.ip, ipConnections + 1);
 
 			let username = "";
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
@@ -62,7 +61,12 @@ export function createSshServer(isDev: boolean) {
 				if (closed) return;
 				closed = true;
 				clearTimeout(authTimeout);
-				activeClients.delete(clientKey);
+				const ipConnections = connectionsByIp.get(info.ip);
+				if (!ipConnections || ipConnections === 1) {
+					connectionsByIp.delete(info.ip);
+				} else {
+					connectionsByIp.set(info.ip, ipConnections - 1);
+				}
 			});
 
 			client.on("authentication", (ctx) => {
@@ -127,12 +131,6 @@ export function createSshServer(isDev: boolean) {
 	});
 
 	return server;
-}
-
-function getClientKey(info: ssh.ClientInfo, salt: string) {
-	return hash("sha256", `${salt}\0${info.ip}\0${info.header.identRaw}`, {
-		outputEncoding: "base64",
-	});
 }
 
 function readHostKey(isDev: boolean) {
