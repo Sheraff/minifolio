@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
+import { simpleUserAgent } from "./utils/simple-ua.ts";
 
 let initialized = false;
 
@@ -80,11 +81,13 @@ export function publicLogBroadcast() {
 			activeStreams++;
 		}
 
+		const ua = simpleUserAgent(c.req.header("User-Agent"));
+
 		if (!clientIds.has(clientKey)) {
 			clientIds.add(clientKey);
-			publicLog(`[http] visitor connected`);
+			publicLog(`[http] ${ua} connected`);
 		}
-		publicLog(`[http] new web session`);
+		publicLog(`[http] new ${ua} session`);
 
 		const { lastEventId } = c.req.valid("query");
 
@@ -114,11 +117,11 @@ export function publicLogBroadcast() {
 			} finally {
 				activeStreams--;
 				clearTimeout(timeout);
-				publicLog(`[http] visitor closed session`);
+				publicLog(`[http] closed ${ua} session`);
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
 					perClientStreams.delete(clientKey);
-					publicLog(`[http] visitor left`);
+					publicLog(`[http] ${ua} left`);
 					clientIds.delete(clientKey);
 				} else {
 					perClientStreams.set(clientKey, clientCount - 1);
