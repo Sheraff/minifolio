@@ -37,6 +37,7 @@ export function createSshServer(isDev: boolean) {
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
+			// info.ip
 			let username = "";
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
 			authTimeout.unref();
@@ -199,7 +200,7 @@ function interactiveStream(
 		allowedUrlPrefixes: SSH_ALLOWED_URL_PREFIXES,
 		...(isDev ? {} : { loadGitLog: readSshGitLog }),
 		exitCommand: {
-			message: "bye",
+			message: exitMessage(username),
 			requestExit: true,
 		},
 	});
@@ -300,7 +301,7 @@ function interactiveStream(
 	stream.write(`Port: ${info.port}\r\n`);
 	stream.write(`Ident: ${info.header.identRaw}\r\n`);
 	stream.write("\r\n");
-	stream.write("Type `help`.\r\n");
+	stream.write("Type `help`.\r\n\r\n");
 	prompt();
 
 	stream.on("data", (chunk: Uint8Array) => {
@@ -418,4 +419,16 @@ function handleStreamError(stream: ssh.ServerChannel) {
 		publicLog(`[WARN] ssh stream error`);
 		console.warn("[ssh stderr]", formatSshError(error));
 	});
+}
+
+function exitMessage(username: string) {
+	return `
+teardown ssh://minifolio
+
+edge removed:
+[${username}] ──X── [minifolio]
+
+status: 200 goodbye
+Thanks for the packets.
+`;
 }
