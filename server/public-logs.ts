@@ -5,16 +5,7 @@ import * as v from "valibot";
 
 let initialized = false;
 
-declare global {
-	interface PromiseConstructor {
-		withResolvers: () => {
-			resolve: () => {};
-			reject: () => {};
-			promise: Promise<void>;
-		};
-	}
-}
-let pending = Promise.withResolvers();
+let pending = Promise.withResolvers<void>();
 
 const history = createLinkedList<string>();
 history.push("--init--");
