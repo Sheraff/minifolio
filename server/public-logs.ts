@@ -10,18 +10,30 @@ let pending = Promise.withResolvers<void>();
 const history = createLinkedList<string>();
 history.push("--init--");
 
+let queued = false
 export function publicLog(message: string) {
 	if (!initialized) return;
 	history.push(message);
-	const prev = pending;
-	pending = Promise.withResolvers();
-	prev.resolve();
+	if (queued) return
+	queued = true
+	setImmediate(() => {
+		queued = false
+		const prev = pending;
+		pending = Promise.withResolvers();
+		prev.resolve();
+	}).unref()
 }
 
 export function publicLogBroadcast() {
 	const app = new Hono();
 	initialized = true;
 
+	/**
+	 * this is not a ping, it's just to make sure we regularly flush
+	 * streams that have been aborted between logs.
+	 * we don't need to ping, it's ok if some streams die, client
+	 * will reconnect if they need to.
+	 */
 	const interval = setInterval(() => {
 		const prev = pending;
 		pending = Promise.withResolvers();
@@ -44,7 +56,7 @@ export function publicLogBroadcast() {
 		const { lastEventId } = c.req.valid("query");
 		return streamSSE(c, async (stream) => {
 			let item = history.get(lastEventId);
-			if (!lastEventId || lastEventId !== item.id) {
+			if (lastEventId === undefined || lastEventId !== item.id) {
 				await stream.writeSSE({
 					data: item.value,
 					event: "log",
@@ -78,7 +90,7 @@ export function publicLogBroadcast() {
 function createLinkedList<T>() {
 	type Item = { value: T; next: Item | null; id: number };
 
-	const maxSize = 50;
+	const maxSize = 200;
 
 	let id = 0;
 	let first: Item;

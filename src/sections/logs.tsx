@@ -3,13 +3,13 @@ import { createSignal, For, onCleanup, onMount } from "solid-js";
 
 export default function Logs() {
 	const [logs, setLogs] = createSignal<string[]>([]);
-	const [live, setLive] = createSignal(false);
+	const [_live, setLive] = createSignal(false);
 
 	let lastEventId: string;
 	let sse: EventSource;
 	let controller: AbortController;
 	let timeout: ReturnType<typeof setTimeout>;
-	let retryDelay = 10;
+	let retryDelay = 80;
 
 	function startStream() {
 		if (lastEventId) {
@@ -24,7 +24,13 @@ export default function Logs() {
 			"log",
 			(e) => {
 				lastEventId = e.lastEventId;
-				setLogs((l) => [...l, e.data]);
+				setLogs((l) => {
+					const max = 200;
+					const next =
+						l.length < max ? l.slice() : l.slice(l.length - max);
+					next.push(e.data);
+					return next;
+				});
 			},
 			{ signal: controller.signal },
 		);
@@ -36,7 +42,7 @@ export default function Logs() {
 				sse.close();
 				controller.abort();
 				timeout = setTimeout(startStream, retryDelay);
-				retryDelay *= 2;
+				retryDelay = Math.min(retryDelay * 2 + Math.random() * 40, 120_000);
 			},
 			{ signal: controller.signal, once: true },
 		);
@@ -44,7 +50,7 @@ export default function Logs() {
 		sse.addEventListener(
 			"open",
 			() => {
-				retryDelay = 10;
+				retryDelay = 80;
 				setLive(true);
 			},
 			{ signal: controller.signal, once: true },

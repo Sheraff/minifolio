@@ -64,7 +64,7 @@ export function createSshServer(isDev: boolean) {
 				);
 				sessionTimeout.unref();
 				client.once("close", () => {
-					publicLog("[ssh] shell session terminated");
+					publicLog("[ssh] session terminated");
 					clearTimeout(sessionTimeout);
 				});
 				client.on("session", (accept, _reject) => {
