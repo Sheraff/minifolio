@@ -87,7 +87,6 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 }
 
 export async function devClient(server: Server, parentScope: ShutdownScope) {
-	const signalListeners = snapshotShutdownSignalListeners();
 	const { createServer } = await import("vite");
 
 	const vite = await createServer({
@@ -96,11 +95,6 @@ export async function devClient(server: Server, parentScope: ShutdownScope) {
 			hmr: { server },
 		},
 	});
-	// Vite middleware mode still installs process signal listeners. The app owns
-	// shutdown and closes Vite through the scope tree, so remove only listeners
-	// added by createServer() to avoid an early process exit on SIGINT/SIGTERM.
-	// This is very hacky, we should see if we can PR (or help move along a PR) on vite itself
-	removeNewShutdownSignalListeners(signalListeners);
 
 	const viteScope = parentScope.child("vite server", {
 		close: async () => {
@@ -138,27 +132,4 @@ export async function devClient(server: Server, parentScope: ShutdownScope) {
 			return c.text(err.stack ?? err.message, 500);
 		}
 	});
-}
-
-const shutdownSignals = ["SIGINT", "SIGTERM"] as const;
-
-function snapshotShutdownSignalListeners() {
-	return new Map(
-		shutdownSignals.map((signal) => [
-			signal,
-			new Set(process.listeners(signal)),
-		]),
-	);
-}
-
-function removeNewShutdownSignalListeners(
-	previous: ReturnType<typeof snapshotShutdownSignalListeners>,
-) {
-	for (const signal of shutdownSignals) {
-		const previousListeners = previous.get(signal)!;
-		for (const listener of process.listeners(signal)) {
-			if (previousListeners.has(listener)) continue;
-			process.off(signal, listener as (...args: unknown[]) => void);
-		}
-	}
 }
