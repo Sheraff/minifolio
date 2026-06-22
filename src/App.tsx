@@ -10,6 +10,7 @@ import { createSignal, lazy, Show, Suspense } from "solid-js";
 import { NoHydration } from "solid-js/web";
 
 const Glitch = lazy(() => import("#/svg/glitch"));
+const Logs = lazy(() => import("#/sections/logs"));
 
 function App() {
 	return (
@@ -21,6 +22,7 @@ function App() {
 				<hr data-big />
 			</NoHydration>
 			<main>
+				<Logs />
 				<Identity />
 				<NoHydration>
 					<hr data-big />

@@ -1,3 +1,5 @@
+import { publicLog } from "#server/public-logs.ts"
+
 const projectsUrl = 'https://sheraff.github.io/vite-labs/projects.json'
 const ONE_HOUR_MS = 60 * 60 * 1000
 
@@ -51,6 +53,7 @@ async function loadLabProjects(): Promise<LabProject[]> {
 }
 
 async function fetchLabProjectsFromApi(): Promise<LabProject[]> {
+  publicLog("[data] fetching code experiments")
   const response = await fetch(projectsUrl)
 
   if (!response.ok) {

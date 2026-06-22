@@ -4,6 +4,7 @@ import { llms } from "./llms.ts";
 import { client, devClient } from "./client.ts";
 import { api } from "./api/index.ts";
 import { teapot } from "./teapot.ts";
+import { publicLogBroadcast } from "./public-logs.ts";
 
 export async function createWebServer(isDev: boolean, serverDir: string) {
 	const app = new Hono<{ Bindings: HttpBindings }>();
@@ -12,6 +13,7 @@ export async function createWebServer(isDev: boolean, serverDir: string) {
 	app.route("/", llms());
 	app.route("/api/brew", teapot());
 	app.route("/api", api());
+	app.route("/events", publicLogBroadcast());
 
 	if (isDev) {
 		app.use("*", await devClient(server));

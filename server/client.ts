@@ -6,6 +6,7 @@ import { createMiddleware } from "hono/factory";
 import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
 import type { HttpServer } from "vite";
 import type { ServerType } from "@hono/node-server";
+import { publicLog } from "./public-logs.ts";
 
 const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 
@@ -15,6 +16,7 @@ export function ogImage(imageDir: string) {
 		rewriteRequestPath: (requestPath, c) => {
 			if (requestPath !== "/og.png") return requestPath
 
+			publicLog("[social] OpenGraph image request")
 			c.header("Vary", "User-Agent")
 			const ua = c.req.header("User-Agent") ?? "";
 			if (/cardyb|bluesky|bsky/i.test(ua)) return "/og-bsky.png";

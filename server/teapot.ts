@@ -1,6 +1,7 @@
 import { sValidator } from "@hono/standard-validator";
 import { Hono } from "hono";
 import * as v from "valibot";
+import { publicLog } from "./public-logs.ts";
 
 export function teapot() {
 	const app = new Hono();
@@ -16,6 +17,7 @@ export function teapot() {
 		c.header("Cache-Control", "no-store");
 
 		if (drink === "coffee") {
+			publicLog("[api] I'm a teapot");
 			return c.text(
 				"This node is a teapot. Coffee cannot be brewed here.\n",
 				418,

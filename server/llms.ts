@@ -3,6 +3,7 @@ import { fetchTanstackArticles } from './api/articles.ts'
 import { fetchGitHubContributions } from './api/github.ts'
 import { fetchContributedRepositories } from './api/githubRepositories.ts'
 import { fetchLabProjects, type LabProject } from './api/projects.ts'
+import { publicLog } from './public-logs.ts'
 
 const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
@@ -169,6 +170,7 @@ async function streamLlmsTxt() {
 export function llms() {
   const app = new Hono()
   app.get('/llms.txt', async (c) => {
+  	publicLog("[llm] crawling...")
     c.header('Cache-Control', 'public, max-age=3600')
     c.header('Content-Type', 'text/plain; charset=UTF-8')
 
