@@ -68,7 +68,7 @@ export function publicLogBroadcast() {
 		}
 
 		const remoteAddress = getClientAddress(c) ?? "unknown";
-		const clientKey = hash("sha256", clientKeySalt + remoteAddress, {
+		const clientKey = hash("sha256", clientKeySalt + "\0" + remoteAddress, {
 			outputEncoding: "base64",
 		});
 
@@ -141,7 +141,7 @@ function getClientAddress(c: Context) {
 	if (forwardedAddress && isIP(forwardedAddress)) {
 		return forwardedAddress;
 	}
-	
+
 	return getConnInfo(c).remote.address ?? "unknown";
 }
 

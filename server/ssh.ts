@@ -1,6 +1,7 @@
 // server/toy-ssh.ts
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import { hash, randomBytes } from "node:crypto";
 import ssh from "ssh2";
 import {
 	autocomplete,
@@ -20,6 +21,8 @@ const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
 export function createSshServer(isDev: boolean) {
 	const hostKey = readHostKey(isDev);
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
+	const clientKeySalt = randomBytes(32).toString("hex");
+	const activeClients = new Set<string>();
 
 	const server = new ssh.Server(
 		{
@@ -37,21 +40,29 @@ export function createSshServer(isDev: boolean) {
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
-			// info.ip
-			let username = "";
-			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
-			authTimeout.unref();
-
 			client.on("error", (error) => {
 				publicLog(`[WARN] ssh connection error`);
 				console.warn("[ssh]", formatSshError(error));
 			});
+
+			const clientKey = getClientKey(info, clientKeySalt);
+			if (activeClients.has(clientKey)) {
+				publicLog(`[WARN] too many ssh connections`);
+				client.end();
+				return;
+			}
+			activeClients.add(clientKey);
+
+			let username = "";
+			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
+			authTimeout.unref();
 
 			let closed = false;
 			client.on("close", () => {
 				if (closed) return;
 				closed = true;
 				clearTimeout(authTimeout);
+				activeClients.delete(clientKey);
 			});
 
 			client.on("authentication", (ctx) => {
@@ -116,6 +127,12 @@ export function createSshServer(isDev: boolean) {
 	});
 
 	return server;
+}
+
+function getClientKey(info: ssh.ClientInfo, salt: string) {
+	return hash("sha256", `${salt}\0${info.ip}\0${info.header.identRaw}`, {
+		outputEncoding: "base64",
+	});
 }
 
 function readHostKey(isDev: boolean) {
