@@ -60,7 +60,7 @@ export default function Logs() {
 	onMount(startStream);
 
 	onCleanup(() => {
-		if (sse && !sse.CLOSED) sse.close();
+		if (sse && sse.readyState !== EventSource.CLOSED) sse.close();
 		if (controller) controller.abort();
 		if (timeout) clearTimeout(timeout);
 	});
