@@ -50,9 +50,10 @@ export function publicLogBroadcast() {
 	let visitorCount = 0;
 	const clientIds = new Map<string, number>();
 	let activeStreams = 0;
-	const MAX_STREAMS = 60;
+	const MAX_STREAMS = 80;
 	const perClientStreams = new Map<string, number>();
-	const MAX_PER_CLIENT = 4;
+	const MAX_PER_CLIENT = 3;
+	const MAX_STREAM_AGE_MS = 5 * 60 * 1000;
 
 	const clientKeySalt = randomBytes(32).toString("hex");
 
@@ -91,6 +92,8 @@ export function publicLogBroadcast() {
 		const { lastEventId } = c.req.valid("query");
 
 		return streamSSE(c, async (stream) => {
+			const timeout = setTimeout(() => stream.abort(), MAX_STREAM_AGE_MS);
+			timeout.unref();
 			try {
 				let item = history.get(lastEventId);
 				if (lastEventId === undefined || lastEventId !== item.id) {
@@ -113,6 +116,7 @@ export function publicLogBroadcast() {
 				}
 			} finally {
 				activeStreams--;
+				clearTimeout(timeout);
 				const clientCount = perClientStreams.get(clientKey);
 				if (!clientCount || clientCount === 1) {
 					perClientStreams.delete(clientKey);
