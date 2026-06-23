@@ -99,6 +99,20 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 
 	const clientKeySalt = randomBytes(32).toString("hex");
 
+	app.get("/", (c) => {
+		const snapshot = history.snapshot();
+		const accept = c.req.header("Accept") ?? "";
+
+		if (accept.includes("application/json")) {
+			return c.json(snapshot);
+		}
+
+		let id = snapshot.firstId;
+		let txt = "";
+		for (const entry of snapshot.entries) txt += id++ + " " + entry + "\n";
+		return c.text(txt);
+	});
+
 	/**
 	 * @see https://hono.dev/docs/helpers/streaming#streamsse
 	 */
