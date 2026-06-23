@@ -317,7 +317,7 @@ function interactiveStream(
 	});
 
 	function promptText() {
-		return `${terminalUser}@minifolio:~$ `;
+		return `\x1b[1;32m${terminalUser}@minifolio:~$\x1b[0m `;
 	}
 
 	async function runCommand(command: string) {
