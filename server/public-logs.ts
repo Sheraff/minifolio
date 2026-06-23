@@ -4,16 +4,42 @@ import { Context, Hono } from "hono";
 import * as v from "valibot";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { hash, randomBytes } from "node:crypto";
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	renameSync,
+	writeFileSync,
+} from "node:fs";
 import { simpleUserAgent } from "./utils/simple-ua.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 import { isIP } from "node:net";
+import { dirname, resolve } from "node:path";
 
 let initialized = false;
 
 let pending = Promise.withResolvers<void>();
 
-const history = createLinkedList<string>();
-history.push("--init--");
+const PUBLIC_LOG_HISTORY_VERSION = 2;
+const PUBLIC_LOG_HISTORY_PATH = resolve("logs/public-logs.json");
+
+const persistedHistorySchema = v.pipe(
+	v.string(),
+	v.parseJson(),
+	v.object({
+		version: v.literal(PUBLIC_LOG_HISTORY_VERSION),
+		firstId: v.pipe(
+			v.number(),
+			v.integer(),
+			v.maxValue(Number.MAX_SAFE_INTEGER),
+		),
+		entries: v.array(v.string()),
+	}),
+);
+
+type PersistedHistory = v.InferOutput<typeof persistedHistorySchema>;
+
+const history = createLinkedList<string>(loadPersistedHistory());
 
 let queued = false;
 export function publicLog(message: string) {
@@ -36,10 +62,14 @@ function wakeStreams() {
 export function publicLogBroadcast(parentScope: ShutdownScope) {
 	const app = new Hono();
 	initialized = true;
+	history.push("--init--");
 	const scope = parentScope.child("sse log streams", {
 		close: (ctx) => {
-			wakeStreams()
-			void ctx.childrenClosed.then(() => scope.done())
+			wakeStreams();
+			void ctx.childrenClosed.then(() => {
+				savePersistedHistory();
+				scope.done();
+			});
 		},
 	});
 
@@ -177,31 +207,84 @@ function getClientAddress(c: Context) {
 	return getConnInfo(c).remote.address ?? "unknown";
 }
 
-// TODO: how can we send one last message to all streams just before we die?
-// (and not block the exit)
-// process.on('SIGKILL', () => {
-// 	publicLog("--exit--")
-// })
+function loadPersistedHistory(): Omit<PersistedHistory, "version"> {
+	if (!existsSync(PUBLIC_LOG_HISTORY_PATH)) return { firstId: 0, entries: [] };
 
-function createLinkedList<T>() {
+	try {
+		return v.parse(
+			persistedHistorySchema,
+			readFileSync(PUBLIC_LOG_HISTORY_PATH, "utf8"),
+		);
+	} catch (cause) {
+		console.error(new Error("Failed to restore public logs", { cause }));
+	}
+
+	return { firstId: 0, entries: [] };
+}
+
+function savePersistedHistory() {
+	try {
+		mkdirSync(dirname(PUBLIC_LOG_HISTORY_PATH), { recursive: true });
+
+		const temporaryPath = `${PUBLIC_LOG_HISTORY_PATH}.${process.pid}.tmp`;
+		writeFileSync(
+			temporaryPath,
+			JSON.stringify(
+				{
+					version: PUBLIC_LOG_HISTORY_VERSION,
+					...history.snapshot(),
+				},
+				null,
+				"\t",
+			) + "\n",
+		);
+		renameSync(temporaryPath, PUBLIC_LOG_HISTORY_PATH);
+	} catch (cause) {
+		console.error(new Error("Failed to persist public logs", { cause }));
+	}
+}
+
+function createLinkedList<T>(init?: { entries: T[]; firstId: number }) {
 	type Item = { value: T; next: Item | null; id: number };
 
 	const maxSize = 200;
 
-	let id = 0;
-	let first: Item;
-	let last: Item;
+	let nextId = init?.firstId ?? 0;
+	let size = 0;
+	let first: Item | undefined;
+	let last: Item | undefined;
+
+	function pushItem(value: T) {
+		const id = nextId;
+		const item = { value, next: null, id };
+		if (last) last.next = item;
+		last = item;
+		first ??= item;
+		nextId = Math.max(nextId, id + 1);
+		size++;
+
+		if (size > maxSize) {
+			first = first.next!;
+			size--;
+		}
+	}
+
+	if (init?.entries) for (const entry of init.entries) pushItem(entry);
 
 	return {
-		push: (value: T) => {
-			const item = { value, next: null, id: id++ };
-			if (last) last.next = item;
-			last = item;
-			if (!first) first = item;
-			if (id > maxSize) first = first.next!;
+		push: pushItem,
+		snapshot: () => {
+			const entries: T[] = [];
+			let current = first;
+			while (current) {
+				entries.push(current.value);
+				current = current.next ?? undefined;
+			}
+			return { firstId: first?.id ?? nextId, entries };
 		},
 		get: (id?: number): Item => {
-			if (!id) return first;
+			if (!first || !last) throw new Error("Public log history is empty");
+			if (id === undefined) return first;
 			if (id < first.id) return first;
 			if (id > last.id) return last;
 			let current: Item | null = first;
