@@ -31,7 +31,7 @@ export async function createWebServer(
 					"object-src 'none'",
 					"frame-ancestors 'none'",
 					"form-action 'self'",
-					"img-src 'self' data:",
+					"img-src 'self' https:",
 					"font-src 'self'",
 					"connect-src 'self'",
 					"script-src 'self' 'unsafe-inline'",
