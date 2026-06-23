@@ -18,6 +18,8 @@ import type { ShutdownScope } from "./utils/shutdown.ts";
 const MAX_CONCURRENT = 10;
 const AUTH_TIMEOUT_MS = 10_000;
 const SESSION_TIMEOUT_MS = 3_000;
+const SSH_SHELL_IDLE_TIMEOUT_MS = 2 * 60_000;
+const SSH_SHELL_MAX_SESSION_AGE_MS = 15 * 60_000;
 const UNSUPPORTED_SESSION_CLOSE_DELAY_MS = 1_000;
 const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
@@ -227,6 +229,62 @@ function closeSshShell(stream: ssh.ServerChannel) {
 	stream.destroy();
 }
 
+function enforceSshShellTimeouts(stream: ssh.ServerChannel) {
+	let idleTimeout: NodeJS.Timeout | undefined;
+	let expired = false;
+	let cleanedUp = false;
+
+	const maxAgeTimeout = setTimeout(() => {
+		expire(
+			"session timeout",
+			"maximum session age reached; closing SSH shell.",
+		);
+	}, SSH_SHELL_MAX_SESSION_AGE_MS).unref();
+
+	function resetIdleTimeout() {
+		if (cleanedUp) return;
+		if (idleTimeout) clearTimeout(idleTimeout);
+		idleTimeout = setTimeout(() => {
+			expire("idle timeout", "idle timeout; closing SSH shell.");
+		}, SSH_SHELL_IDLE_TIMEOUT_MS).unref();
+	}
+
+	function expire(reason: string, message: string) {
+		if (expired) return;
+		expired = true;
+		cleanup();
+		if (stream.closed || stream.destroyed) return;
+
+		publicLog(`[ssh] shell ${reason}`);
+		endSshShell(stream, message);
+	}
+
+	function cleanup() {
+		if (cleanedUp) return;
+		cleanedUp = true;
+		clearTimeout(maxAgeTimeout);
+		if (idleTimeout) clearTimeout(idleTimeout);
+		stream.off("data", resetIdleTimeout);
+	}
+
+	stream.on("data", resetIdleTimeout);
+	resetIdleTimeout();
+	stream.once("close", cleanup);
+}
+
+function endSshShell(stream: ssh.ServerChannel, message: string) {
+	if (stream.closed || stream.destroyed) return;
+	if (!stream.writableEnded) {
+		stream.write(`\r\n${message}\r\n`);
+		stream.exit(0);
+		stream.end();
+	}
+
+	setTimeout(() => {
+		if (!stream.closed && !stream.destroyed) stream.destroy();
+	}, UNSUPPORTED_SESSION_CLOSE_DELAY_MS).unref();
+}
+
 function readHostKey(isDev: boolean) {
 	try {
 		return readFileSync(HOST_KEY_PATH);
@@ -351,6 +409,7 @@ function interactiveStream(
 		historySize: 1_000,
 		completer,
 	});
+	enforceSshShellTimeouts(stream);
 
 	stream.write(helloMessage(username, info));
 	stream.write("\r\n");
