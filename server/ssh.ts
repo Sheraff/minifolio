@@ -162,7 +162,8 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 					});
 					session.on("window-change", (accept, _reject, info) => {
 						updateTerminalSize(terminalSize, info);
-						if (shellStream) applyTerminalSize(shellStream, terminalSize, true);
+						if (shellStream)
+							applyTerminalSize(shellStream, terminalSize, true);
 						if (typeof accept === "function") accept();
 					});
 					session.on("exec", (accept, reject) => {
@@ -314,8 +315,6 @@ function interactiveStream(
 			requestExit: true,
 		},
 	});
-	let pending = Promise.resolve();
-	let readlineClosed = false;
 
 	function promptText() {
 		return `${terminalUser}@minifolio:~$ `;
@@ -357,15 +356,20 @@ function interactiveStream(
 	stream.write("\r\n");
 	rl.prompt();
 
+	let pending = Promise.resolve();
 	rl.on("line", (line) => {
-		pending = pending
+		const self = (pending = pending
 			.then(() => executeReadlineCommand(rl, stream, line, runCommand))
 			.catch((error: unknown) => {
 				if (stream.writableEnded || stream.destroyed) return;
 				stream.write(`${formatSshError(error)}\r\n`);
 				rl.prompt();
-			});
+			})
+			.then(() => {
+				if (self === pending) pending = Promise.resolve();
+			}));
 	});
+
 	rl.on("SIGINT", () => {
 		clearReadlineInput(rl);
 		stream.write("^C\r\n");
@@ -375,6 +379,8 @@ function interactiveStream(
 		publicLog(`[WARN] ssh readline error`);
 		console.warn("[ssh readline]", formatSshError(error));
 	});
+
+	let readlineClosed = false;
 	rl.once("close", () => {
 		readlineClosed = true;
 		if (!stream.closed && !stream.destroyed && !stream.writableEnded)
