@@ -5,6 +5,7 @@ import { client, devClient } from "./client.ts";
 import { api } from "./api/index.ts";
 import { teapot } from "./teapot.ts";
 import { publicLogBroadcast } from "./public-logs.ts";
+import { uptime } from "./uptime.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 import type { Server } from "node:http";
 
@@ -62,6 +63,7 @@ export async function createWebServer(
 	server.once("close", () => scope.done());
 
 	app.route("/", llms());
+	app.route("/uptime", uptime());
 	app.route("/api/brew", teapot());
 	app.route("/api", api());
 	app.route("/events", publicLogBroadcast(scope));
