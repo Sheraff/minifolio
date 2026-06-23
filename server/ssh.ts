@@ -150,7 +150,21 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 						console.warn("[ssh session]", formatSshError(error));
 					});
 
-					session.on("pty", simpleAccept);
+					const terminalSize: TerminalSize = {
+						columns: DEFAULT_TERMINAL_COLUMNS,
+						rows: DEFAULT_TERMINAL_ROWS,
+					};
+					let shellStream: ssh.ServerChannel | undefined;
+
+					session.on("pty", (accept, _reject, info) => {
+						updateTerminalSize(terminalSize, info);
+						if (typeof accept === "function") accept();
+					});
+					session.on("window-change", (accept, _reject, info) => {
+						updateTerminalSize(terminalSize, info);
+						if (shellStream) applyTerminalSize(shellStream, terminalSize, true);
+						if (typeof accept === "function") accept();
+					});
 					session.on("exec", (accept, reject) => {
 						acceptAndExit(accept, reject);
 						client.noMoreSessions = true;
@@ -170,30 +184,16 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 
 						publicLog("[ssh] shell access granted");
 						const stream = accept();
+						shellStream = stream;
 
 						const streamScope = clientScope.child("ssh shell session", {
 							close: () => closeSshShell(stream),
 							force: () => void stream.destroy(),
 						});
 						stream.once("close", () => {
+							if (shellStream === stream) shellStream = undefined;
 							streamScope.done();
 							publicLog("[ssh] shell session terminated");
-						});
-
-						const terminalSize: TerminalSize = {
-							columns: DEFAULT_TERMINAL_COLUMNS,
-							rows: DEFAULT_TERMINAL_ROWS,
-						};
-
-						session.off("pty", simpleAccept);
-						session.on("pty", (accept, _reject, info) => {
-							updateTerminalSize(terminalSize, info);
-							accept();
-						});
-						session.on("window-change", (accept, _reject, info) => {
-							updateTerminalSize(terminalSize, info);
-							applyTerminalSize(stream, terminalSize, true);
-							accept();
 						});
 
 						interactiveStream(
@@ -269,14 +269,14 @@ function simpleReject(
 	_accept: ssh.AcceptConnection<ssh.ServerChannel>,
 	reject: ssh.RejectConnection,
 ) {
-	reject();
+	if (typeof reject === "function") reject();
 }
 
 function simpleAccept(
 	accept: ssh.AcceptConnection<ssh.ServerChannel>,
 	_reject: ssh.RejectConnection,
 ) {
-	accept();
+	if (typeof accept === "function") accept();
 }
 
 function acceptAndExit(
