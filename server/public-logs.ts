@@ -102,6 +102,8 @@ export function publicLogBroadcast(parentScope: ShutdownScope) {
 	app.get("/", (c) => {
 		const snapshot = history.snapshot();
 		const accept = c.req.header("Accept") ?? "";
+		c.header("Vary", "Accept");
+		c.header("Cache-Control", "no-store");
 
 		if (accept.includes("application/json")) {
 			return c.json(snapshot);
