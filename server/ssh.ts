@@ -1,6 +1,11 @@
 // server/toy-ssh.ts
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+import {
+	createInterface,
+	type AsyncCompleter,
+	type Interface as ReadlineInterface,
+} from "node:readline";
 import ssh from "ssh2";
 import {
 	autocomplete,
@@ -19,6 +24,18 @@ const TERMINAL_FILES_ROOT = "fs";
 const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
 const SSH_ALLOWED_URL_PREFIXES = ["https://florianpellet.com/api/"];
 const MAX_PER_IP_CONNECTIONS = 2;
+const DEFAULT_TERMINAL_COLUMNS = 80;
+const DEFAULT_TERMINAL_ROWS = 24;
+
+type TerminalSize = {
+	columns: number;
+	rows: number;
+};
+
+type ReadlineTerminalStream = ssh.ServerChannel & {
+	columns?: number;
+	rows?: number;
+};
 
 export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 	const hostKey = readHostKey(isDev);
@@ -153,6 +170,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 
 						publicLog("[ssh] shell access granted");
 						const stream = accept();
+
 						const streamScope = clientScope.child("ssh shell session", {
 							close: () => closeSshShell(stream),
 							force: () => void stream.destroy(),
@@ -161,11 +179,29 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 							streamScope.done();
 							publicLog("[ssh] shell session terminated");
 						});
+
+						const terminalSize: TerminalSize = {
+							columns: DEFAULT_TERMINAL_COLUMNS,
+							rows: DEFAULT_TERMINAL_ROWS,
+						};
+
+						session.off("pty", simpleAccept);
+						session.on("pty", (accept, _reject, info) => {
+							updateTerminalSize(terminalSize, info);
+							accept();
+						});
+						session.on("window-change", (accept, _reject, info) => {
+							updateTerminalSize(terminalSize, info);
+							applyTerminalSize(stream, terminalSize, true);
+							accept();
+						});
+
 						interactiveStream(
 							username,
 							info,
 							stream,
 							terminalFiles,
+							terminalSize,
 							isDev,
 						);
 					});
@@ -262,9 +298,11 @@ function interactiveStream(
 	info: ssh.ClientInfo,
 	stream: ssh.ServerChannel,
 	terminalFiles: Record<string, string>,
+	terminalSize: TerminalSize,
 	isDev: boolean,
 ) {
 	handleStreamError(stream);
+	applyTerminalSize(stream, terminalSize);
 	const terminalUser = username || "user";
 	const terminal = createTerminalSession({
 		files: { ...terminalFiles },
@@ -276,46 +314,11 @@ function interactiveStream(
 			requestExit: true,
 		},
 	});
-	let input = "";
-	let escapeBuffer: number[] = [];
-	let historyCursor = terminal.history.length;
-	let historyDraft = "";
 	let pending = Promise.resolve();
+	let readlineClosed = false;
 
 	function promptText() {
 		return `${terminalUser}@minifolio:~$ `;
-	}
-
-	function prompt() {
-		stream.write(promptText());
-	}
-
-	function redrawInput(value: string) {
-		input = value;
-		stream.write(`\r\x1b[2K${promptText()}${input}`);
-	}
-
-	function resetHistoryCursor() {
-		historyCursor = terminal.history.length;
-		historyDraft = "";
-	}
-
-	function resetHistoryAfterEdit() {
-		if (historyCursor !== terminal.history.length) resetHistoryCursor();
-	}
-
-	function ringBell() {
-		stream.write("\x07");
-	}
-
-	function queueInput(chunk: Uint8Array) {
-		pending = pending
-			.then(() => processInput(chunk))
-			.catch((error) => {
-				if (stream.writableEnded) return;
-				stream.write(`${formatSshError(error)}\r\n`);
-				prompt();
-			});
 	}
 
 	async function runCommand(command: string) {
@@ -327,124 +330,111 @@ function interactiveStream(
 		if (result.exitRequested) stream.end();
 	}
 
-	async function completeInput() {
-		const suggestion = await autocomplete(input, terminal);
-		if (!suggestion || suggestion === input) {
-			ringBell();
-			return;
-		}
-
-		resetHistoryAfterEdit();
-		redrawInput(suggestion);
-	}
-
-	function showPreviousHistory() {
-		if (terminal.history.length === 0) {
-			ringBell();
-			return;
-		}
-
-		if (historyCursor === terminal.history.length) historyDraft = input;
-		if (historyCursor > 0) {
-			historyCursor--;
-			redrawInput(terminal.history[historyCursor]);
-		} else {
-			ringBell();
-		}
-	}
-
-	function showNextHistory() {
-		if (historyCursor >= terminal.history.length) {
-			ringBell();
-			return;
-		}
-
-		historyCursor++;
-		redrawInput(
-			historyCursor === terminal.history.length
-				? historyDraft
-				: terminal.history[historyCursor],
+	const completer: AsyncCompleter = (line, callback) => {
+		void autocomplete(line, terminal).then(
+			(suggestion) => {
+				callback(null, [
+					suggestion && suggestion !== line ? [suggestion] : [],
+					line,
+				]);
+			},
+			(error: unknown) => {
+				callback(error instanceof Error ? error : new Error(String(error)));
+			},
 		);
-		if (historyCursor === terminal.history.length) historyDraft = "";
-	}
+	};
+
+	const rl = createInterface({
+		input: stream,
+		output: stream,
+		terminal: true,
+		prompt: promptText(),
+		historySize: 1_000,
+		completer,
+	});
 
 	stream.write(helloMessage(username, info));
 	stream.write("\r\n");
-	prompt();
+	rl.prompt();
 
-	stream.on("data", (chunk: Uint8Array) => {
-		queueInput(chunk);
+	rl.on("line", (line) => {
+		pending = pending
+			.then(() => executeReadlineCommand(rl, stream, line, runCommand))
+			.catch((error: unknown) => {
+				if (stream.writableEnded || stream.destroyed) return;
+				stream.write(`${formatSshError(error)}\r\n`);
+				rl.prompt();
+			});
 	});
+	rl.on("SIGINT", () => {
+		clearReadlineInput(rl);
+		stream.write("^C\r\n");
+		rl.prompt();
+	});
+	rl.on("error", (error: Error) => {
+		publicLog(`[WARN] ssh readline error`);
+		console.warn("[ssh readline]", formatSshError(error));
+	});
+	rl.once("close", () => {
+		readlineClosed = true;
+		if (!stream.closed && !stream.destroyed && !stream.writableEnded)
+			stream.end();
+	});
+	stream.once("close", () => {
+		if (!readlineClosed) rl.close();
+	});
+}
 
-	async function processInput(chunk: Uint8Array) {
-		for (const byte of chunk) {
-			if (await processEscapeByte(byte)) {
-				continue;
-			} else if (byte === 3) {
-				input = "";
-				resetHistoryCursor();
-				stream.write("^C\r\n");
-				prompt();
-			} else if (byte === 4) {
-				stream.end();
-			} else if (byte === 9) {
-				await completeInput();
-			} else if (byte === 13 || byte === 10) {
-				const command = input;
-				input = "";
-				escapeBuffer = [];
-				stream.write("\r\n");
-				try {
-					await runCommand(command);
-				} catch (error) {
-					stream.write(`${formatSshError(error)}\r\n`);
-				} finally {
-					resetHistoryCursor();
-					if (!stream.writableEnded) prompt();
-				}
-			} else if (byte === 127 || byte === 8) {
-				if (input.length > 0) {
-					resetHistoryAfterEdit();
-					input = input.slice(0, -1);
-					stream.write("\b \b");
-				}
-			} else if (byte >= 32) {
-				resetHistoryAfterEdit();
-				const char = String.fromCharCode(byte);
-				input += char;
-				stream.write(char);
-			}
+async function executeReadlineCommand(
+	rl: ReadlineInterface,
+	stream: ssh.ServerChannel,
+	line: string,
+	runCommand: (command: string) => Promise<void>,
+) {
+	rl.pause();
+	try {
+		await runCommand(line);
+	} catch (error) {
+		if (!stream.writableEnded && !stream.destroyed) {
+			stream.write(`${formatSshError(error)}\r\n`);
+		}
+	} finally {
+		if (!stream.writableEnded && !stream.destroyed) {
+			rl.resume();
+			rl.prompt();
 		}
 	}
+}
 
-	async function processEscapeByte(byte: number) {
-		if (escapeBuffer.length === 0 && byte !== 27) return false;
+function clearReadlineInput(rl: ReadlineInterface) {
+	rl.write(null, { ctrl: true, name: "u" });
+	rl.write(null, { ctrl: true, name: "k" });
+}
 
-		escapeBuffer.push(byte);
-		if (escapeBuffer.length === 1) return true;
-		if (escapeBuffer.length === 2 && (byte === 0x5b || byte === 0x4f))
-			return true;
+function updateTerminalSize(
+	terminalSize: TerminalSize,
+	info: ssh.PseudoTtyInfo | ssh.WindowChangeInfo,
+) {
+	terminalSize.columns = normalizeTerminalDimension(
+		info.cols,
+		terminalSize.columns,
+	);
+	terminalSize.rows = normalizeTerminalDimension(info.rows, terminalSize.rows);
+}
 
-		const finalByte = byte >= 0x40 && byte <= 0x7e;
-		if (!finalByte) return true;
+function normalizeTerminalDimension(value: number, fallback: number) {
+	return Number.isFinite(value) && value > 0 ? value : fallback;
+}
 
-		const sequence = String.fromCharCode(...escapeBuffer);
-		escapeBuffer = [];
-
-		if (
-			sequence === "\x1bOA" ||
-			(sequence.startsWith("\x1b[") && sequence.endsWith("A"))
-		) {
-			showPreviousHistory();
-		} else if (
-			sequence === "\x1bOB" ||
-			(sequence.startsWith("\x1b[") && sequence.endsWith("B"))
-		) {
-			showNextHistory();
-		}
-
-		return true;
-	}
+function applyTerminalSize(
+	stream: ssh.ServerChannel,
+	terminalSize: TerminalSize,
+	emitResize = false,
+) {
+	const terminalStream = stream as ReadlineTerminalStream;
+	terminalStream.columns = terminalSize.columns;
+	terminalStream.rows = terminalSize.rows;
+	if (emitResize) terminalStream.emit("resize");
 }
 
 function writeTerminalOutput(stream: ssh.ServerChannel, output: string) {
