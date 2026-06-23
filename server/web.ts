@@ -14,6 +14,36 @@ export async function createWebServer(
 	parentScope: ShutdownScope,
 ) {
 	const app = new Hono<{ Bindings: HttpBindings }>();
+
+	if (!isDev) {
+		app.use("*", async (c, next) => {
+			c.header("X-Content-Type-Options", "nosniff");
+			c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+			c.header(
+				"Permissions-Policy",
+				"camera=(), microphone=(), geolocation=(), payment=()",
+			);
+			c.header(
+				"Content-Security-Policy",
+				[
+					"default-src 'self'",
+					"base-uri 'self'",
+					"object-src 'none'",
+					"frame-ancestors 'none'",
+					"form-action 'self'",
+					"img-src 'self' data:",
+					"font-src 'self'",
+					"connect-src 'self'",
+					"script-src 'self' 'unsafe-inline'",
+					"script-src-attr 'none'",
+					"style-src 'self' 'unsafe-inline'",
+				].join("; "),
+			);
+
+			await next();
+		});
+	}
+
 	// `server` type depends on whether you pass in `createServer` from 'node:http2'
 	const server = createAdaptorServer({ fetch: app.fetch }) as Server;
 	const scope = parentScope.child("http server", {
