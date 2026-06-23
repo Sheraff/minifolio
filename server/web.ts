@@ -15,6 +15,11 @@ export async function createWebServer(
 ) {
 	const app = new Hono<{ Bindings: HttpBindings }>();
 
+	app.use("*", async (c, next) => {
+		c.header("X-Clacks-Overhead", "GNU Terry Pratchett");
+		await next();
+	});
+
 	if (!isDev) {
 		app.use("*", async (c, next) => {
 			c.header("X-Content-Type-Options", "nosniff");
