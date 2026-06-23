@@ -103,6 +103,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			});
 
 			client.on("ready", () => {
+				let hasSession = false;
 				clearTimeout(authTimeout);
 				const sessionTimeout = setTimeout(
 					() => client.end(),
@@ -110,10 +111,15 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 				);
 				sessionTimeout.unref();
 				client.once("close", () => {
-					publicLog("[ssh] session terminated");
+					if (hasSession) {
+						publicLog("[ssh] session terminated");
+					} else {
+						publicLog("[ssh] probe");
+					}
 					clearTimeout(sessionTimeout);
 				});
 				client.on("session", (accept, reject) => {
+					hasSession = true;
 					if (clientScope.closing) {
 						reject();
 						return;
