@@ -27,41 +27,73 @@ const tanstackArticlesResponseSchema = v.object({
 	articles: v.array(tanstackArticleSchema),
 })
 
-type TanstackArticle = {
-	title: string
-	link: string
-	guid: string
-	pubDate: string
-	author: string
-	description: string
-	imageUrl: string | null
-}
+type TanstackArticle = v.InferOutput<typeof tanstackArticleSchema>
+type TanstackArticlesResponse = v.InferOutput<typeof tanstackArticlesResponseSchema>
 
-type TanstackArticlesResponse = {
-	articles: TanstackArticle[]
-}
+const nonEmptyRssTextSchema = v.pipe(
+	v.string(),
+	v.trim(),
+	v.nonEmpty(),
+)
 
-type ParsedTextValue = string | { '#text'?: unknown } | null | undefined
+const rssTextSchema = v.union([
+	nonEmptyRssTextSchema,
+	v.pipe(
+		v.object({ '#text': nonEmptyRssTextSchema }),
+		v.transform((value) => value['#text']),
+	),
+])
 
-type ParsedRssItem = {
-	title?: ParsedTextValue
-	link?: ParsedTextValue
-	guid?: ParsedTextValue
-	pubDate?: ParsedTextValue
-	author?: ParsedTextValue
-	description?: ParsedTextValue
-	enclosure?: {
-		url?: unknown
-	} | null
-}
+const rssEnclosureUrlSchema = v.pipe(
+	v.object({ url: nonEmptyRssTextSchema }),
+	v.transform((enclosure) => enclosure.url),
+)
 
-type ParsedRssFeed = {
-	rss?: {
-		channel?: {
-			item?: ParsedRssItem | ParsedRssItem[]
-		}
-	}
-}
+const rssArticleSchema = v.pipe(
+	v.object({
+		title: rssTextSchema,
+		link: rssTextSchema,
+		guid: v.optional(rssTextSchema),
+		pubDate: rssTextSchema,
+		author: rssTextSchema,
+		description: rssTextSchema,
+		enclosure: v.optional(
+			v.fallback(v.nullable(rssEnclosureUrlSchema), null),
+			null,
+		),
+	}),
+	v.check((item) => item.author.toLowerCase().includes(AUTHOR_MATCH)),
+	v.transform((item): TanstackArticle => ({
+		title: item.title,
+		link: item.link,
+		guid: item.guid ?? item.link,
+		pubDate: item.pubDate,
+		author: item.author,
+		description: item.description,
+		imageUrl: item.enclosure,
+	})),
+)
+
+const optionalRssArticleSchema = v.fallback(v.optional(rssArticleSchema), undefined)
+
+const rssArticlesSchema = v.pipe(
+	v.union([
+		v.array(optionalRssArticleSchema),
+		v.pipe(
+			optionalRssArticleSchema,
+			v.transform((article) => [article]),
+		),
+	]),
+	v.transform((articles) => articles.filter((article): article is TanstackArticle => article !== undefined)),
+)
+
+const rssFeedSchema = v.object({
+	rss: v.optional(v.object({
+		channel: v.optional(v.object({
+			item: v.optional(rssArticlesSchema, []),
+		})),
+	})),
+})
 
 let tanstackArticlesCache:
 	| {
@@ -118,71 +150,10 @@ async function fetchTanstackArticlesFromRss(): Promise<TanstackArticlesResponse>
 	}
 
 	const xml = await response.text()
-	const feed = parser.parse(xml) as ParsedRssFeed
-	const items = asArray(feed.rss?.channel?.item)
-	const articles = items
-		.map(mapRssItemToArticle)
-		.filter((article): article is TanstackArticle => article !== null)
+	const feed = v.parse(rssFeedSchema, parser.parse(xml))
+	const articles = feed.rss?.channel?.item ?? []
 
 	return v.parse(tanstackArticlesResponseSchema, { articles })
-}
-
-function mapRssItemToArticle(item: ParsedRssItem): TanstackArticle | null {
-	const author = readText(item.author)
-	if (!author || !author.toLowerCase().includes(AUTHOR_MATCH)) {
-		return null
-	}
-
-	const title = readText(item.title)
-	const link = readText(item.link)
-	const guid = readText(item.guid) ?? link
-	const pubDate = readText(item.pubDate)
-	const description = readText(item.description)
-
-	if (!title || !link || !guid || !pubDate || !description) {
-		return null
-	}
-
-	return {
-		title,
-		link,
-		guid,
-		pubDate,
-		author,
-		description,
-		imageUrl: readEnclosureUrl(item.enclosure),
-	}
-}
-
-function asArray<T>(value: T | T[] | undefined): T[] {
-	if (Array.isArray(value)) {
-		return value
-	}
-
-	return value ? [value] : []
-}
-
-function readText(value: ParsedTextValue): string | null {
-	if (typeof value === 'string') {
-		const text = value.trim()
-		return text.length > 0 ? text : null
-	}
-
-	if (value && typeof value === 'object' && '#text' in value && typeof value['#text'] === 'string') {
-		const text = value['#text'].trim()
-		return text.length > 0 ? text : null
-	}
-
-	return null
-}
-
-function readEnclosureUrl(enclosure: ParsedRssItem['enclosure']): string | null {
-	if (!enclosure || typeof enclosure !== 'object' || typeof enclosure.url !== 'string') {
-		return null
-	}
-
-	const url = enclosure.url.trim()
-	return url.length > 0 ? url : null
 }
 
 export async function fetchTanstackArticles() {

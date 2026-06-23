@@ -1,4 +1,5 @@
 import { publicLog } from "#server/public-logs.ts"
+import * as v from 'valibot'
 
 const projectsUrl = 'https://sheraff.github.io/vite-labs/projects.json'
 const ONE_HOUR_MS = 60 * 60 * 1000
@@ -15,6 +16,36 @@ export type LabProject = {
     firstAdded: number
   }
 }
+
+const optionalNullableStringSchema = v.optional(
+  v.fallback(v.nullable(v.string()), null),
+  null,
+)
+
+const stringArraySchema = v.pipe(
+  v.array(v.fallback(v.optional(v.string()), undefined)),
+  v.transform((items) => items.filter((item): item is string => item !== undefined)),
+)
+
+const labProjectTagsSchema = v.optional(v.fallback(stringArraySchema, []), [])
+
+const labProjectSchema = v.object({
+  route: v.string(),
+  url: v.string(),
+  title: v.string(),
+  description: optionalNullableStringSchema,
+  tags: labProjectTagsSchema,
+  image: optionalNullableStringSchema,
+  git: v.object({
+    lastModified: v.number(),
+    firstAdded: v.number(),
+  }),
+})
+
+const labProjectsResponseSchema = v.pipe(
+  v.array(v.fallback(v.optional(labProjectSchema), undefined)),
+  v.transform((projects) => projects.filter((project): project is LabProject => project !== undefined)),
+)
 
 let projectsCache:
   | {
@@ -72,49 +103,5 @@ export async function fetchLabProjects(): Promise<LabProject[]> {
 }
 
 function readLabProjects(value: unknown): LabProject[] {
-  if (!Array.isArray(value)) {
-    throw new Error('Projects response did not contain an array')
-  }
-
-  return value.flatMap((project) => {
-    if (!project || typeof project !== 'object') {
-      return []
-    }
-
-    const entry = project as Record<string, unknown>
-    const rawGit = entry.git
-
-    if (
-      typeof entry.route !== 'string'
-      || typeof entry.url !== 'string'
-      || typeof entry.title !== 'string'
-      || !rawGit
-      || typeof rawGit !== 'object'
-    ) {
-      return []
-    }
-
-    const git = rawGit as Record<string, unknown>
-    if (
-      typeof git.lastModified !== 'number'
-      || typeof git.firstAdded !== 'number'
-    ) {
-      return []
-    }
-
-    return [{
-      route: entry.route,
-      url: entry.url,
-      title: entry.title,
-      description: typeof entry.description === 'string' ? entry.description : null,
-      tags: Array.isArray(entry.tags)
-        ? entry.tags.filter((tag): tag is string => typeof tag === 'string')
-        : [],
-      image: typeof entry.image === 'string' ? entry.image : null,
-      git: {
-        lastModified: git.lastModified,
-        firstAdded: git.firstAdded,
-      },
-    }]
-  })
+  return v.parse(labProjectsResponseSchema, value)
 }
