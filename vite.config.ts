@@ -5,12 +5,10 @@ import solid from 'vite-plugin-solid'
 import { prerenderPlugin } from './scripts/prerender-plugin'
 import { inlineCss } from './scripts/inline-css'
 import { gitLogAsset } from './scripts/git-log-asset'
-import { chunkImportMap } from './scripts/chunk-import-map'
 
 export default defineConfig({
   plugins: [
     solid({ ssr: true }),
-    chunkImportMap(),
     prerenderPlugin(),
     inlineCss(),
     gitLogAsset(),
@@ -27,6 +25,7 @@ export default defineConfig({
         outDir: 'dist/client',
         emptyOutDir: true,
         modulePreload: { polyfill: false },
+        chunkImportMap: true,
       },
       optimizeDeps: {
         rolldownOptions: {

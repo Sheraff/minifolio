@@ -2,17 +2,17 @@ allowBuilds:
    # vite
    esbuild: true
 
-   # just-bash
-   "@mongodb-js/zstd": false
-   node-liblzma: false
-
    # ssh
    ssh2: true
 
 ignoredOptionalDependencies:
-	# ssh
+   # ssh
    - cpu-features
 
    # just-bash
    - "@mongodb-js/zstd"
    - "node-liblzma"
+
+minimumReleaseAgeExclude:
+   - vite@8.1.0
+   - hono@4.12.27

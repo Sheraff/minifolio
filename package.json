@@ -20,11 +20,11 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@hono/node-server": "2.0.5",
-		"@hono/standard-validator": "^0.2.2",
-		"fast-xml-parser": "5.9.0",
-		"hono": "4.12.26",
-		"just-bash": "3.0.1",
+		"@hono/node-server": "2.0.6",
+		"@hono/standard-validator": "0.2.2",
+		"fast-xml-parser": "5.9.3",
+		"hono": "4.12.27",
+		"just-bash": "3.0.2",
 		"solid-js": "1.9.13",
 		"ssh2": "1.17.0",
 		"valibot": "1.4.1"
@@ -34,7 +34,7 @@
 		"@types/ssh2": "1.15.5",
 		"parse5": "8.0.1",
 		"typescript": "6.0.3",
-		"vite": "8.0.16",
+		"vite": "8.1.0",
 		"vite-plugin-solid": "2.11.12",
 		"vitest": "4.1.9"
 	},
