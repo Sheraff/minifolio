@@ -77,6 +77,26 @@ describe('autocomplete', () => {
 		expect((await executeTerminalCommand(session, 'id'))?.output).toContain('uid=1000(visitor)')
 	})
 
+	it('caps virtual filesystem byte growth', async () => {
+		const session = createTerminalSession({ files: {}, quota: { maxBytes: 10, maxFiles: 10 } })
+
+		expect((await executeTerminalCommand(session, 'printf 1234567890 > /tmp/blob'))?.exitCode).toBe(0)
+		const result = await executeTerminalCommand(session, 'printf x >> /tmp/blob')
+
+		expect(result?.exitCode).not.toBe(0)
+		expect(result?.output).toContain('ENOSPC')
+	})
+
+	it('caps virtual filesystem file growth', async () => {
+		const session = createTerminalSession({ files: {}, quota: { maxBytes: 1024, maxFiles: 1 } })
+
+		expect((await executeTerminalCommand(session, 'touch /one'))?.exitCode).toBe(0)
+		const result = await executeTerminalCommand(session, 'touch /two')
+
+		expect(result?.exitCode).not.toBe(0)
+		expect(result?.output).toContain('ENOSPC')
+	})
+
 	it('does not complete empty argument slots', async () => {
 		expect(await autocomplete('cat ', state)).toBe('')
 		expect(await autocomplete('git ', state)).toBe('')
