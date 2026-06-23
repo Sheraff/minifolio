@@ -40,6 +40,14 @@ export function createFingerServer(parentScope: ShutdownScope) {
 	const server = createServer((socket) => {
 		socket.setEncoding('utf8')
 
+		socket.setTimeout(3000)
+		socket.on('timeout', () => {
+			socket.end();
+			publicLog(`[finger] socket timed out`);
+		})
+
+		const timeout = setTimeout(() => socket.destroy(), 5000).unref()
+
 		const socketScope = scope.child('finger socket', {
 			close: () => {
 				if (!socket.destroyed) socket.end()
@@ -49,9 +57,13 @@ export function createFingerServer(parentScope: ShutdownScope) {
 
 		let query = ''
 
-		socket.on('close', () => socketScope.done())
+		socket.on('close', () => {
+			socketScope.done()
+			clearTimeout(timeout)
+		})
 
 		socket.on('data', (chunk) => {
+			if (socket.writableEnded) return
 			query += chunk
 
 			if (query.length > 512) {
@@ -93,8 +105,7 @@ export function createFingerServer(parentScope: ShutdownScope) {
 			console.error('Socket error:', e)
 		})
 	})
-	server.once('close', () => {
-		scope.done()
-	})
+	server.maxConnections = 5
+	server.once('close', () => scope.done())
 	return server
 }
