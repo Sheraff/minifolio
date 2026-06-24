@@ -5,16 +5,17 @@
 }
 
 @font-face {
-	font-family: 'Monaspace Neon';
-	src: url('/fonts/monaspace-neon-var.woff2') format('woff2'),
-		url('/fonts/monaspace-neon-var.woff') format('woff');
+	font-family: "Monaspace Neon";
+	src:
+		url("/fonts/monaspace-neon-var.woff2") format("woff2"),
+		url("/fonts/monaspace-neon-var.woff") format("woff");
 	font-display: swap;
 }
 
 @font-face {
-    font-family: 'Fallback';
-    src: local(Courier New);
-    size-adjust: 118%;
+	font-family: "Fallback";
+	src: local(Courier New);
+	size-adjust: 118%;
 }
 
 :root {
@@ -24,15 +25,35 @@
 	--color: oklch(from var(--theme) 91% 0.03 h);
 	--glow-soft: oklch(from var(--theme) 78% 0.16 h / 0.28);
 	--glow-strong: oklch(from var(--theme) 88% 0.22 h / 0.16);
-	--text-glow: 0 0 0.12em color-mix(in oklab, currentColor 86%, transparent), 0 0 1.4em var(--glow-soft), 0 0 3em var(--glow-strong);
-	--heading-glow: 0 0 0.14em currentColor, 0 0 1.8em var(--glow-soft), 0 0 4.2em var(--glow-strong);
-	--status-glow: 0 0 0.12em color-mix(in oklab, currentColor 86%, transparent), 0 0 1.2em color-mix(in oklab, currentColor 70%, var(--glow-soft)), 0 0 2.8em color-mix(in oklab, currentColor 45%, var(--glow-strong));
+	--text-glow:
+		0 0 0.12em color-mix(in oklab, currentColor 86%, transparent),
+		0 0 1.4em var(--glow-soft), 0 0 3em var(--glow-strong);
+	--heading-glow:
+		0 0 0.14em currentColor, 0 0 1.8em var(--glow-soft),
+		0 0 4.2em var(--glow-strong);
+	--status-glow:
+		0 0 0.12em color-mix(in oklab, currentColor 86%, transparent),
+		0 0 1.2em color-mix(in oklab, currentColor 70%, var(--glow-soft)),
+		0 0 2.8em color-mix(in oklab, currentColor 45%, var(--glow-strong));
 	--border: 1px solid var(--bg-accent);
 
 	background-color: var(--bg);
 	color: var(--color);
-	font-family: 'Monaspace Neon', 'Fallback', 'Courier New', monospace;
-	font-feature-settings: 'calt', 'liga', 'ss01', 'ss02', 'ss03', 'ss04', 'ss05', 'ss06', 'ss07', 'ss08', 'ss09', 'cv01' 4, 'cv31' 0;
+	font-family: "Monaspace Neon", "Fallback", "Courier New", monospace;
+	font-feature-settings:
+		"calt",
+		"liga",
+		"ss01",
+		"ss02",
+		"ss03",
+		"ss04",
+		"ss05",
+		"ss06",
+		"ss07",
+		"ss08",
+		"ss09",
+		"cv01" 4,
+		"cv31" 0;
 	line-height: 1.5;
 }
 
@@ -62,26 +83,49 @@ ul {
 body {
 	margin: 0;
 	display: grid;
-	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(10px, 1fr);
+	grid-template-columns: minmax(10px, 1fr) minmax(auto, 650px) minmax(
+			10px,
+			1fr
+		);
+	grid-template-rows: auto 1fr auto;
 
-	&::before,
-	&::after {
-		content: '';
+	&::before {
+		content: "";
 		height: 10px;
 		display: block;
 		grid-column: 1 / 4;
-	}
-
-	&::before {
+		order: 1;
 		grid-row: 1 / 2;
 		border-bottom: var(--border);
 	}
 
-	&::after {
-		border-top: var(--border);
-		height: 20svh;
+	aside {
+		grid-row: 2 / -2;
+		background-color: rgba(0 0 0 / 0.4);
+		overflow: hidden;
+		min-height: -webkit-fill-available;
+		max-height: 0;
+		&:first-of-type {
+			grid-column: 1 / 2;
+			border-right: var(--border);
+		}
+		&:last-of-type {
+			grid-column: 3 / 4;
+			border-left: var(--border);
+		}
 	}
 
+	:where(#root) {
+		display: grid;
+		align-content: start;
+		grid-template-columns: subgrid;
+		grid-column: 1 / -1;
+		grid-row: 2 / -2;
+
+		:where(& > *, & > main > *) {
+			grid-column: 2 / 3;
+		}
+	}
 }
 
 main {
@@ -97,23 +141,21 @@ hr {
 		height: 2lh;
 		background-size: 10px 10px;
 		border-bottom: var(--border);
-		background-image: repeating-linear-gradient(315deg, var(--bg-accent) 0, var(--bg-accent) 1px, transparent 0, transparent 50%);
+		background-image: repeating-linear-gradient(
+			315deg,
+			var(--bg-accent) 0,
+			var(--bg-accent) 1px,
+			transparent 0,
+			transparent 50%
+		);
 		display: grid;
 		grid-template-columns: subgrid;
-
-		&::after {
-			content: '';
-			display: block;
-			grid-column: 2 / 3;
-			border-inline: var(--border);
-		}
 	}
 }
 
 section {
 	padding: 10px;
 	grid-column: 2 / 3;
-	border-inline: var(--border);
 }
 
 .rgb-mask {
@@ -122,15 +164,17 @@ section {
 	pointer-events: none;
 	z-index: 10;
 	opacity: 0.15;
-	background: repeating-linear-gradient(to right,
-			rgba(255, 60, 60, 0.22) 0,
-			rgba(255, 60, 60, 0.22) 1px,
-			rgba(40, 255, 160, 0.03) 1px,
-			rgba(40, 255, 160, 0.03) 2px,
-			rgba(90, 150, 255, 0.22) 2px,
-			rgba(90, 150, 255, 0.22) 3px,
-			transparent 3px,
-			transparent 4px);
+	background: repeating-linear-gradient(
+		to right,
+		rgba(255, 60, 60, 0.22) 0,
+		rgba(255, 60, 60, 0.22) 1px,
+		rgba(40, 255, 160, 0.03) 1px,
+		rgba(40, 255, 160, 0.03) 2px,
+		rgba(90, 150, 255, 0.22) 2px,
+		rgba(90, 150, 255, 0.22) 3px,
+		transparent 3px,
+		transparent 4px
+	);
 	mix-blend-mode: screen;
 	filter: saturate(1.4);
 }

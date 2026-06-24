@@ -1,6 +1,9 @@
 .footer {
 	font-size: smaller;
 	text-align: center;
+	grid-column: 1 / 4;
+	padding: 1em;
+	min-height: 20svh;
 
 	a {
 		color: currentColor;

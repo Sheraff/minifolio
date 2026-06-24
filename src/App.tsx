@@ -15,48 +15,51 @@ const Logs = lazy(() => import("#/sections/logs"));
 function App() {
 	return (
 		<>
-			<NoHydration>
-				<Links />
-				<hr />
-				<Head />
-				<hr data-big />
-			</NoHydration>
-			<main>
-				<Identity />
+			<div id="root">
 				<NoHydration>
+					<Links />
+					<hr />
+					<Head />
 					<hr data-big />
-					<section>
-						<h2>Contributions</h2>
-					</section>
-					<hr />
-					<Contributions />
-					<hr />
-					<Repositories />
-					<hr data-big />
-					<section>
-						<h2>Articles</h2>
-					</section>
-					<hr />
 				</NoHydration>
-				<Articles />
-				<hr data-big />
-				<section>
-					<h2>Experiments</h2>
-				</section>
-				<hr />
-				<Labs />
-			</main>
-			<NoHydration>
-				<hr data-big />
-				<Footer />
-				<div class="rgb-mask" aria-hidden="true" />
-			</NoHydration>
-			<div style="display:none">
-				<DelayedGlitch />
+				<main>
+					<Identity />
+					<NoHydration>
+						<hr data-big />
+						<section>
+							<h2>Contributions</h2>
+						</section>
+						<hr />
+						<Contributions />
+						<hr />
+						<Repositories />
+						<hr data-big />
+						<section>
+							<h2>Articles</h2>
+						</section>
+						<hr />
+					</NoHydration>
+					<Articles />
+					<hr data-big />
+					<section>
+						<h2>Experiments</h2>
+					</section>
+					<hr />
+					<Labs />
+				</main>
 			</div>
 			<Suspense>
 				<Logs />
 			</Suspense>
+			<aside />
+			<NoHydration>
+				<hr data-big />
+				<Footer />
+			</NoHydration>
+			<div class="rgb-mask" aria-hidden="true" />
+			<div style="display:none">
+				<DelayedGlitch />
+			</div>
 		</>
 	);
 }
