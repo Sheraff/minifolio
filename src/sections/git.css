@@ -1,8 +1,8 @@
 .git-graph {
-	--git-graph-edge: color-mix(in oklch, var(--color) 34%, transparent);
-	--git-graph-edge-main: color-mix(in oklch, var(--color) 52%, transparent);
-	--git-graph-dot: color-mix(in oklch, var(--color) 58%, transparent);
-	--git-graph-dot-main: color-mix(in oklch, var(--color) 78%, transparent);
+	--git-graph-edge: oklch(from var(--bg) 30% 0.1 h);
+	--git-graph-edge-main: oklch(from var(--bg) 40% 0.1 h);
+	--git-graph-dot: oklch(from var(--bg) 30% 0.1 h);
+	--git-graph-dot-main: oklch(from var(--bg) 40% 0.1 h);
 
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) repeat(var(--lanes), 1lh);
@@ -12,7 +12,7 @@
 	contain: strict;
 	padding: 1.2rem 0.9rem;
 	background: none;
-	color: color-mix(in oklch, var(--color) 70%, var(--bg-accent));
+	color: oklch(from var(--bg) 40% 0.15 h);
 	/*font-size: clamp(0.68rem, 0.88vw, 0.9rem);*/
 	font-size: 16px;
 	line-height: 1.25;
@@ -40,7 +40,6 @@
 			margin: 0;
 			padding-inline-end: 0.1lh;
 			overflow: hidden;
-			color: color-mix(in oklch, currentColor 70%, transparent);
 			font-size: 0.72em;
 			line-height: 1.05;
 			text-align: right;
@@ -74,8 +73,8 @@
 			&::after {
 				content: "";
 				display: block;
-				inline-size: 100%;
-				block-size: 100%;
+				width: 100%;
+				height: 100%;
 				border: 1px solid var(--git-graph-edge);
 				border-right: none;
 			}
@@ -108,8 +107,8 @@
 			grid-column: calc(var(--lanes) - var(--lane) + 2) /
 				calc(var(--lanes) - var(--lane) + 3);
 			grid-row: var(--row) / calc(var(--row) + 1);
-			inline-size: 0.46lh;
-			block-size: 0.46lh;
+			width: 0.46lh;
+			height: 0.46lh;
 			border: 1px solid var(--git-graph-dot);
 			border-radius: 50%;
 			background: var(--bg);
