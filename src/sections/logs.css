@@ -1,31 +1,22 @@
 .logs {
-	grid-area: 1 / 1 / 2 / 2;
-	height: 0;
-	position: sticky;
-	top: 0;
-	width: 100%;
-	z-index: -1;
-	/*mix-blend-mode: color-dodge;*/
-
 	ul {
-		position: absolute;
 		inset-inline: 0;
-		top: 0;
 		pointer-events: none;
-		padding: 1em;
-		/*opacity: 0.5;*/
+		padding-inline: 1em;
 		color: oklch(from var(--bg) 30% 0.1 h);
-		/*color: var(--color);*/
-		overflow: hidden;
 		white-space: pre;
 		display: flex;
 		flex-direction: column-reverse;
 		font-size: 0.8rem;
-		height: 100dvh;
 		justify-content: flex-end;
 		font-weight: 200;
-		background-color: rgba(0 0 0 / 0.5);
-		border-right: var(--border);
-		z-index: -1;
+		height: 100%;
+
+		mask-image: linear-gradient(
+			to bottom,
+			black,
+			black calc(100% - 2em),
+			transparent 100%
+		);
 	}
 }
