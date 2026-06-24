@@ -529,10 +529,34 @@ function createEdges(
 	layoutByOid: Map<string, LayoutCommit>,
 ) {
 	const edges: RenderEdge[] = [];
+	const commitsByLane = new Map<number, LayoutCommit[]>();
+
+	for (const item of commits) {
+		const laneCommits = commitsByLane.get(item.lane) ?? [];
+		laneCommits.push(item);
+		commitsByLane.set(item.lane, laneCommits);
+	}
+
+	for (const [lane, laneCommits] of commitsByLane) {
+		if (laneCommits.length < 2) continue;
+
+		const rows = laneCommits.map((item) => item.row);
+		edges.push({
+			fromLane: lane,
+			toLane: lane,
+			fromRow: Math.min(...rows),
+			toRow: Math.max(...rows),
+			type: "branch",
+			isMain: laneCommits.every((item) => item.isMain),
+		});
+	}
+
 	for (const item of commits) {
 		item.commit.parents.forEach((parentOid, index) => {
 			const parent = layoutByOid.get(parentOid);
 			if (!parent) return;
+			if (item.lane === parent.lane) return;
+
 			edges.push({
 				fromLane: item.lane,
 				toLane: parent.lane,

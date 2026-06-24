@@ -107,7 +107,7 @@
       "fromLane": 1,
       "toLane": 1,
       "fromRow": 1,
-      "toRow": 3,
+      "toRow": 6,
       "type": "branch",
       "isMain": true
     },
@@ -118,14 +118,6 @@
       "toRow": 3,
       "type": "fork",
       "isMain": false
-    },
-    {
-      "fromLane": 1,
-      "toLane": 1,
-      "fromRow": 3,
-      "toRow": 5,
-      "type": "branch",
-      "isMain": true
     },
     {
       "fromLane": 1,
@@ -142,14 +134,6 @@
       "toRow": 6,
       "type": "fork",
       "isMain": false
-    },
-    {
-      "fromLane": 1,
-      "toLane": 1,
-      "fromRow": 5,
-      "toRow": 6,
-      "type": "branch",
-      "isMain": true
     }
   ],
   "labels": [
