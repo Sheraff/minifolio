@@ -23,10 +23,57 @@ type RepoRef = {
 	oid: string;
 };
 
-type RepoGraph = {
+type RawRepoGraph = {
 	defaultBranch: string;
 	commits: RepoCommit[];
 	refs: RepoRef[];
+};
+
+type RenderRef = {
+	type: RepoRef["type"];
+	name: string;
+};
+
+type RenderCommit = {
+	oid: string;
+	row: number;
+	lane: number;
+	isMain: boolean;
+	refs: RenderRef[];
+	author: RepoAuthor;
+	date: string;
+	message: string;
+};
+
+type RenderEdge = {
+	fromLane: number;
+	toLane: number;
+	fromRow: number;
+	toRow: number;
+	type: "branch" | "fork" | "merge";
+	isMain: boolean;
+};
+
+type RenderLabel = {
+	row: number;
+	refs: RenderRef[];
+};
+
+type RepoGraph = {
+	defaultBranch: string;
+	lanes: number;
+	rows: number;
+	commits: RenderCommit[];
+	edges: RenderEdge[];
+	labels: RenderLabel[];
+};
+
+type LayoutCommit = {
+	commit: RepoCommit;
+	row: number;
+	lane: number;
+	isMain: boolean;
+	refs: RenderRef[];
 };
 
 type BranchOptions = {
@@ -34,36 +81,32 @@ type BranchOptions = {
 	checkout?: boolean;
 };
 
-type FinalizedRepo = {
-	bareDir: string;
-	graphFile: string;
-	graph: RepoGraph;
-};
-
 export function createRepo({
-	dir,
+	dest,
+	json,
 	name,
 	defaultBranch = "main",
 	author,
 }: {
-	dir: string;
+	dest: string;
+	json?: string;
 	name: string;
 	defaultBranch?: string;
 	author: RepoAuthor;
 }) {
 	assertSafeName(name);
+	const rootDir = fileURLToPath(new URL("..", import.meta.url));
 
-	const outputDir = path.resolve(
-		fileURLToPath(new URL("..", import.meta.url)),
-		dir,
-	);
+	const outputDir = path.join(rootDir, dest);
 	const workRoot = path.join(outputDir, ".work");
 	const workDir = path.join(workRoot, name);
 	const bareDir = path.join(outputDir, `${name}.git`);
 	const graphFile = path.join(outputDir, `${name}.graph.json`);
+	const jsonDir = json && path.join(rootDir, json);
+	const jsonFile = jsonDir && path.join(jsonDir, `${name}.graph.json`);
 	let ready: Promise<void> | undefined;
-	let graph: RepoGraph = { defaultBranch, commits: [], refs: [] };
-	let finalization: FinalizedRepo | undefined;
+	let rawGraph: RawRepoGraph = { defaultBranch, commits: [], refs: [] };
+	let finalized = false;
 
 	const authorEnv: NodeJS.ProcessEnv = {
 		GIT_AUTHOR_NAME: author.name,
@@ -119,7 +162,7 @@ export function createRepo({
 	}
 
 	function ensureReady() {
-		if (finalization) {
+		if (finalized) {
 			throw new Error(`Repository ${name} has already been finalized`);
 		}
 
@@ -137,13 +180,13 @@ export function createRepo({
 			commits.push(await readCommit(oid));
 		}
 
-		graph = {
+		rawGraph = {
 			defaultBranch,
 			commits,
 			refs: await readRefs(),
 		};
 
-		return graph;
+		return rawGraph;
 	}
 
 	async function readCommit(oid: string): Promise<RepoCommit> {
@@ -311,8 +354,8 @@ export function createRepo({
 			return currentCommit();
 		},
 
-		async finalize(): Promise<FinalizedRepo> {
-			if (finalization) return finalization;
+		async finalize(): Promise<void> {
+			if (finalized) return;
 
 			await ensureReady();
 			await refreshGraph();
@@ -322,13 +365,221 @@ export function createRepo({
 			await git(["symbolic-ref", "HEAD", `refs/heads/${defaultBranch}`], {
 				cwd: bareDir,
 			});
-			await fs.writeFile(graphFile, `${JSON.stringify(graph, null, 2)}\n`);
 			await fs.rm(workRoot, { recursive: true, force: true });
 
-			finalization = { bareDir, graphFile, graph };
-			return finalization;
+			if (jsonDir && jsonFile) {
+				const graph = createGraphProjection(rawGraph);
+				fs.mkdir(jsonDir, { recursive: true });
+				await fs.writeFile(jsonFile, JSON.stringify(graph, null, 2) + "\n");
+			}
+
+			finalized = true;
 		},
 	};
+}
+
+function createGraphProjection(data: RawRepoGraph): RepoGraph {
+	const orderedCommits = [...data.commits].reverse();
+	const commitByOid = new Map(
+		data.commits.map((commit) => [commit.oid, commit]),
+	);
+	const refsByOid = groupRefsByOid(data.refs);
+	const mainRef = findMainRef(data.refs, data.defaultBranch);
+	const mainPath = traceFirstParentPath(mainRef?.oid, commitByOid);
+	const laneGroups = createSideLaneGroups(
+		data.refs,
+		mainRef,
+		mainPath,
+		commitByOid,
+	);
+	const laneCount = laneGroups.length + 1;
+	const laneByOid = new Map<string, number>();
+
+	laneGroups.forEach((oids, lane) => {
+		const renderLane = laneGroups.length - lane + 1;
+		for (const oid of oids) laneByOid.set(oid, renderLane);
+	});
+	for (const oid of mainPath) laneByOid.set(oid, 1);
+
+	const layoutCommits = orderedCommits.map((commit, row): LayoutCommit => {
+		const lane = laneByOid.get(commit.oid) ?? 1;
+		return {
+			commit,
+			row: row + 1,
+			lane,
+			isMain: mainPath.has(commit.oid),
+			refs: refsByOid.get(commit.oid) ?? [],
+		};
+	});
+
+	const layoutByOid = new Map(
+		layoutCommits.map((commit) => [commit.commit.oid, commit]),
+	);
+
+	return {
+		defaultBranch: data.defaultBranch,
+		lanes: Math.max(laneCount, 1),
+		rows: layoutCommits.length,
+		commits: layoutCommits.map((item) => ({
+			oid: item.commit.oid,
+			row: item.row,
+			lane: item.lane,
+			isMain: item.isMain,
+			refs: item.refs,
+			author: {
+				name: item.commit.author.name,
+				email: item.commit.author.email,
+			},
+			date: item.commit.author.date,
+			message: item.commit.message,
+		})),
+		edges: createEdges(layoutCommits, layoutByOid),
+		labels: createLabels(layoutCommits),
+	};
+}
+
+function groupRefsByOid(refs: RepoRef[]) {
+	const map = new Map<string, RenderRef[]>();
+	for (const ref of [...refs].sort(compareRefs)) {
+		const group = map.get(ref.oid) ?? [];
+		group.push({ type: ref.type, name: ref.name });
+		map.set(ref.oid, group);
+	}
+	return map;
+}
+
+function findMainRef(refs: RepoRef[], defaultBranch: string) {
+	return (
+		refs.find((ref) => ref.type === "branch" && ref.name === defaultBranch) ??
+		refs.find((ref) => ref.type === "branch" && ref.name === "main") ??
+		refs.find((ref) => ref.type === "branch")
+	);
+}
+
+function createSideLaneGroups(
+	refs: RepoRef[],
+	mainRef: RepoRef | undefined,
+	mainPath: Set<string>,
+	commitByOid: Map<string, RepoCommit>,
+) {
+	const assigned = new Set(mainPath);
+	const laneGroups: string[][] = [];
+	const sideBranches = refs
+		.filter(
+			(ref) => ref.type === "branch" && ref.fullName !== mainRef?.fullName,
+		)
+		.sort(compareRefs);
+
+	for (const ref of sideBranches) {
+		const path = traceSidePath(ref.oid, assigned, commitByOid);
+		if (path.length === 0) continue;
+		laneGroups.push(path);
+		for (const oid of path) assigned.add(oid);
+	}
+
+	for (const commit of commitByOid.values()) {
+		const path = traceSidePath(commit.oid, assigned, commitByOid);
+		if (path.length === 0) continue;
+		laneGroups.push(path);
+		for (const oid of path) assigned.add(oid);
+	}
+
+	return laneGroups;
+}
+
+function traceFirstParentPath(
+	startOid: string | undefined,
+	commitByOid: Map<string, RepoCommit>,
+) {
+	const path = new Set<string>();
+	let oid = startOid;
+
+	while (oid && !path.has(oid)) {
+		const commit = commitByOid.get(oid);
+		if (!commit) break;
+		path.add(oid);
+		oid = commit.parents[0];
+	}
+
+	return path;
+}
+
+function traceSidePath(
+	startOid: string,
+	assigned: Set<string>,
+	commitByOid: Map<string, RepoCommit>,
+) {
+	const path: string[] = [];
+	const seen = new Set<string>();
+	let oid: string | undefined = startOid;
+
+	while (oid && !seen.has(oid) && !assigned.has(oid)) {
+		const commit = commitByOid.get(oid);
+		if (!commit) break;
+		seen.add(oid);
+		path.push(oid);
+		oid = commit.parents[0];
+	}
+
+	return path;
+}
+
+function createEdges(
+	commits: LayoutCommit[],
+	layoutByOid: Map<string, LayoutCommit>,
+) {
+	const edges: RenderEdge[] = [];
+	for (const item of commits) {
+		item.commit.parents.forEach((parentOid, index) => {
+			const parent = layoutByOid.get(parentOid);
+			if (!parent) return;
+			edges.push({
+				fromLane: item.lane,
+				toLane: parent.lane,
+				fromRow: item.row,
+				toRow: parent.row,
+				type: createEdgeType(item, parent, index),
+				isMain: index === 0 && item.isMain && parent.isMain,
+			});
+		});
+	}
+	return edges;
+}
+
+function createEdgeType(
+	from: LayoutCommit,
+	to: LayoutCommit,
+	parentIndex: number,
+): RenderEdge["type"] {
+	if (from.lane === to.lane) {
+		return "branch";
+	}
+
+	if (parentIndex > 0 || from.lane < to.lane) {
+		return "merge";
+	}
+
+	return "fork";
+}
+
+function createLabels(commits: LayoutCommit[]) {
+	return commits.flatMap((commit): RenderLabel[] =>
+		commit.refs.length > 0
+			? [
+					{
+						row: commit.row,
+						refs: commit.refs,
+					},
+				]
+			: [],
+	);
+}
+
+function compareRefs(a: RepoRef, b: RepoRef) {
+	if (a.type !== b.type) return a.type === "branch" ? -1 : 1;
+	if (a.name < b.name) return -1;
+	if (a.name > b.name) return 1;
+	return 0;
 }
 
 function dateEnv(date?: string | Date): NodeJS.ProcessEnv {

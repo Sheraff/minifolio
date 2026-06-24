@@ -1,0 +1,124 @@
+.git-graph {
+	--git-graph-edge: color-mix(in oklch, var(--color) 34%, transparent);
+	--git-graph-edge-main: color-mix(in oklch, var(--color) 52%, transparent);
+	--git-graph-dot: color-mix(in oklch, var(--color) 58%, transparent);
+	--git-graph-dot-main: color-mix(in oklch, var(--color) 78%, transparent);
+
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) repeat(var(--lanes), 1lh);
+	grid-template-rows: repeat(var(--rows), 1lh);
+	column-gap: 0.72lh;
+	row-gap: 0.82lh;
+	contain: strict;
+	padding: 1.2rem 0.9rem;
+	background: none;
+	color: color-mix(in oklch, var(--color) 70%, var(--bg-accent));
+	/*font-size: clamp(0.68rem, 0.88vw, 0.9rem);*/
+	font-size: 16px;
+	line-height: 1.25;
+	pointer-events: none;
+
+	.labels,
+	.edges,
+	.commits {
+		display: grid;
+		grid-template-columns: subgrid;
+		grid-template-rows: subgrid;
+		grid-area: 1 / 1 / -1 / -1;
+	}
+
+	.labels {
+		align-items: center;
+
+		p {
+			display: flex;
+			grid-column: 1 / 2;
+			grid-row: var(--row) / calc(var(--row) + 1);
+			flex-direction: column;
+			align-items: flex-end;
+			gap: 0.08rem;
+			min-inline-size: 0;
+			margin: 0;
+			padding-inline-end: 0.1lh;
+			overflow: hidden;
+			color: color-mix(in oklch, currentColor 70%, transparent);
+			font-size: 0.72em;
+			line-height: 1.05;
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		span {
+			max-inline-size: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+
+			&[data-ref="tag"] {
+				opacity: 0.64;
+			}
+		}
+	}
+
+	.edges {
+		div {
+			box-sizing: content-box;
+			--min-lane: min(var(--from-lane), var(--to-lane));
+			--max-lane: max(var(--from-lane), var(--to-lane));
+			--min-row: min(var(--from-row), var(--to-row));
+			--max-row: max(var(--from-row), var(--to-row));
+			grid-column: calc(var(--lanes) - var(--max-lane) + 2) /
+				calc(var(--lanes) - var(--min-lane) + 3);
+			grid-row: var(--min-row) / calc(var(--max-row) + 1);
+			padding: 0.5lh;
+			padding-left: calc(0.5lh - 1px);
+
+			&::after {
+				content: "";
+				display: block;
+				inline-size: 100%;
+				block-size: 100%;
+				border: 1px solid var(--git-graph-edge);
+				border-right: none;
+			}
+		}
+
+		div.is-main::after {
+			border-color: var(--git-graph-edge-main);
+		}
+
+		div.branch::after {
+			border-block: none;
+		}
+
+		div.fork::after {
+			border-top: none;
+			border-bottom-left-radius: 1lh;
+		}
+
+		div.merge::after {
+			border-bottom: none;
+			border-top-left-radius: 1lh;
+		}
+	}
+
+	.commits {
+		align-items: center;
+		justify-items: center;
+
+		span {
+			grid-column: calc(var(--lanes) - var(--lane) + 2) /
+				calc(var(--lanes) - var(--lane) + 3);
+			grid-row: var(--row) / calc(var(--row) + 1);
+			inline-size: 0.46lh;
+			block-size: 0.46lh;
+			border: 1px solid var(--git-graph-dot);
+			border-radius: 50%;
+			background: var(--bg);
+
+			&.is-main {
+				border-color: var(--git-graph-dot-main);
+				background: color-mix(in oklch, currentColor 11%, var(--bg));
+			}
+		}
+	}
+}

@@ -1,8 +1,8 @@
-import path from "node:path";
 import { createRepo } from "./create-repo.ts";
 
 const repo = createRepo({
-	dir: "dist/git",
+	dest: "dist",
+	json: "src/generated",
 	name: "minifolio",
 	defaultBranch: "main",
 	author: {
@@ -133,11 +133,4 @@ A placeholder project entry for a cloneable, Git-backed portfolio surface.
 	},
 });
 
-const result = await repo.finalize();
-const relative = (file: string) => path.relative(process.cwd(), file);
-
-console.log(`Built ${relative(result.bareDir)}`);
-console.log(`Wrote ${relative(result.graphFile)}`);
-console.log(
-	`Graph includes ${result.graph.commits.length} commits and ${result.graph.refs.length} refs.`,
-);
+await repo.finalize();

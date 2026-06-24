@@ -1,0 +1,193 @@
+{
+  "defaultBranch": "main",
+  "lanes": 3,
+  "rows": 6,
+  "commits": [
+    {
+      "oid": "82741ba09e9e09c179497f0de74628efe2680c71",
+      "row": 1,
+      "lane": 1,
+      "isMain": true,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "main"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-08T14:10:00Z",
+      "message": "List first project placeholders"
+    },
+    {
+      "oid": "8f68f2f737628aaa61d73264b567becf5bcbd393",
+      "row": 2,
+      "lane": 3,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "experiments/sketchbook"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-07T11:20:00Z",
+      "message": "Add experiment sketch notes"
+    },
+    {
+      "oid": "df5100e72a6bb674499d47aa5fcfe6491f68e6a3",
+      "row": 3,
+      "lane": 1,
+      "isMain": true,
+      "refs": [
+        {
+          "type": "tag",
+          "name": "v0.1.0"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-06T16:45:00Z",
+      "message": "Merge about page draft"
+    },
+    {
+      "oid": "27988834b9d054ca961e9ce689bb8d04b6355ac1",
+      "row": 4,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "writing/about"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-04T10:30:00Z",
+      "message": "Draft about page voice"
+    },
+    {
+      "oid": "e6a2b58fb54b4aef42cc09566129277134367dd1",
+      "row": 5,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-05T08:15:00Z",
+      "message": "Update current focus"
+    },
+    {
+      "oid": "d530e120cbac497a6ce9fbb7671f55830f8a23c5",
+      "row": 6,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2026-01-03T09:00:00Z",
+      "message": "Start portfolio notebook"
+    }
+  ],
+  "edges": [
+    {
+      "fromLane": 1,
+      "toLane": 1,
+      "fromRow": 1,
+      "toRow": 3,
+      "type": "branch",
+      "isMain": true
+    },
+    {
+      "fromLane": 3,
+      "toLane": 1,
+      "fromRow": 2,
+      "toRow": 3,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 1,
+      "fromRow": 3,
+      "toRow": 5,
+      "type": "branch",
+      "isMain": true
+    },
+    {
+      "fromLane": 1,
+      "toLane": 2,
+      "fromRow": 3,
+      "toRow": 4,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 1,
+      "fromRow": 4,
+      "toRow": 6,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 1,
+      "fromRow": 5,
+      "toRow": 6,
+      "type": "branch",
+      "isMain": true
+    }
+  ],
+  "labels": [
+    {
+      "row": 1,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "main"
+        }
+      ]
+    },
+    {
+      "row": 2,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "experiments/sketchbook"
+        }
+      ]
+    },
+    {
+      "row": 3,
+      "refs": [
+        {
+          "type": "tag",
+          "name": "v0.1.0"
+        }
+      ]
+    },
+    {
+      "row": 4,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "writing/about"
+        }
+      ]
+    }
+  ]
+}
