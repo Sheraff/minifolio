@@ -1,4 +1,5 @@
 import { publicLog } from "#server/public-logs.ts";
+import { styleText } from "node:util";
 
 let shuttingDown = false;
 export type ShutdownContext = {
@@ -213,7 +214,14 @@ class ShutdownTreeRenderer {
 		isRoot = true,
 	): string[] {
 		const connector = isRoot ? "" : isLast ? "└─ " : "├─ ";
-		const line = `${prefix}${connector}${node.scope.name} [${this.#status(node)}]`;
+		const status = this.#status(node);
+		const struct = styleText("white", `${prefix}${connector}`);
+		const service = styleText(
+			status.startsWith("closed") ? "green" : "red",
+			node.scope.name,
+		);
+		const tag = styleText("dim", `[${status}]`);
+		const line = `${struct}${service} ${tag}`;
 		const childPrefix = isRoot ? "" : prefix + (isLast ? "   " : "│  ");
 		const lines = [line];
 
