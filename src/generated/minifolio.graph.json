@@ -1,10 +1,10 @@
 {
   "defaultBranch": "main",
   "lanes": 3,
-  "rows": 6,
+  "rows": 41,
   "commits": [
     {
-      "oid": "82741ba09e9e09c179497f0de74628efe2680c71",
+      "oid": "1edad785b433e86e94dc6b452a49d24d1f522edd",
       "row": 1,
       "lane": 1,
       "isMain": true,
@@ -22,9 +22,9 @@
       "message": "List first project placeholders"
     },
     {
-      "oid": "8f68f2f737628aaa61d73264b567becf5bcbd393",
+      "oid": "ad84353f6042014a0eafa10ddbe72d48e9728044",
       "row": 2,
-      "lane": 3,
+      "lane": 2,
       "isMain": false,
       "refs": [
         {
@@ -40,7 +40,7 @@
       "message": "Add experiment sketch notes"
     },
     {
-      "oid": "df5100e72a6bb674499d47aa5fcfe6491f68e6a3",
+      "oid": "386361c9604b90cada5631fd57921829a5a0cfc5",
       "row": 3,
       "lane": 1,
       "isMain": true,
@@ -58,7 +58,7 @@
       "message": "Merge about page draft"
     },
     {
-      "oid": "27988834b9d054ca961e9ce689bb8d04b6355ac1",
+      "oid": "4e9268549b5169ec80d1bb5d8136db994ea34e6e",
       "row": 4,
       "lane": 2,
       "isMain": false,
@@ -76,7 +76,7 @@
       "message": "Draft about page voice"
     },
     {
-      "oid": "e6a2b58fb54b4aef42cc09566129277134367dd1",
+      "oid": "41f50968da52a532944c6125009456f889b28f7d",
       "row": 5,
       "lane": 1,
       "isMain": true,
@@ -89,7 +89,7 @@
       "message": "Update current focus"
     },
     {
-      "oid": "d530e120cbac497a6ce9fbb7671f55830f8a23c5",
+      "oid": "cdf241096696b5e77bdf915b0294569acd91fcde",
       "row": 6,
       "lane": 1,
       "isMain": true,
@@ -100,6 +100,496 @@
       },
       "date": "2026-01-03T09:00:00Z",
       "message": "Start portfolio notebook"
+    },
+    {
+      "oid": "a6213dc841a777abcbf1a222f51c0120f11e979d",
+      "row": 7,
+      "lane": 3,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/mit"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-06-15T17:00:00Z",
+      "message": "i want to be a researcher"
+    },
+    {
+      "oid": "d7573693f38e8041e15e653574e81df4841d8c0d",
+      "row": 8,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/usc"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-31T17:00:00Z",
+      "message": "research trip"
+    },
+    {
+      "oid": "865450c57bc853c6a5a644d42a316ce209ea948c",
+      "row": 9,
+      "lane": 3,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-03T17:00:00Z",
+      "message": "add one more to the list"
+    },
+    {
+      "oid": "1517455af147db5a97d0e9d7b5462db405249552",
+      "row": 10,
+      "lane": 3,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-03-27T17:00:00Z",
+      "message": "i'm still a noob but i love it"
+    },
+    {
+      "oid": "58fdf78804666a9ffb2c4fcfd32102b632463f39",
+      "row": 11,
+      "lane": 3,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-02-20T17:00:00Z",
+      "message": "i don't know anything"
+    },
+    {
+      "oid": "ed1ee40b735e162daa2ec66ccaf3479288f3350e",
+      "row": 12,
+      "lane": 3,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-01-12T17:00:00Z",
+      "message": "finally got out of school"
+    },
+    {
+      "oid": "7e80202c9f6834aa793cf17b5d3e8811996eb703",
+      "row": 13,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "open-source/alfred"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-06-02T17:00:00Z",
+      "message": "disk alfred extension"
+    },
+    {
+      "oid": "ad38fbfa7ba26dfe1c2744dde79da0ca6e9c0e33",
+      "row": 14,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-30T17:00:00Z",
+      "message": "evernote list, open, delete, create alfred extension"
+    },
+    {
+      "oid": "9dcbe6e39af5d445bd33c974de1e29bda38f49fa",
+      "row": 15,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-24T17:00:00Z",
+      "message": "notification automation ios for alfred"
+    },
+    {
+      "oid": "2de639206b3b69dc51904c0a412fbf6a18dac486",
+      "row": 16,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-15T17:00:00Z",
+      "message": "google translate alfred extension"
+    },
+    {
+      "oid": "e325a6d5c5644658221f1d930f238a31c9b32d2a",
+      "row": 17,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-05-10T17:00:00Z",
+      "message": "currency exchange rate alfred extension"
+    },
+    {
+      "oid": "fbeb781577e32174c3a996373b48cff1bfe9e35d",
+      "row": 18,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-04-20T17:00:00Z",
+      "message": "open source makes me feel good"
+    },
+    {
+      "oid": "c41a2555be8187f189b91f1609b67bef0d1a6fe3",
+      "row": 19,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2012-04-05T17:00:00Z",
+      "message": "negociated, MIT can count as my final year of school"
+    },
+    {
+      "oid": "2af1100bf28ca8f2c944fab485d2bf5edf4934b7",
+      "row": 20,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2011-09-05T17:00:00Z",
+      "message": "final year"
+    },
+    {
+      "oid": "1265f9de203bf03d103db5c0efcb4b06829af9e0",
+      "row": 21,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2011-08-28T17:00:00Z",
+      "message": "amazing experience, i want more"
+    },
+    {
+      "oid": "c589d53c89984161d2b483ee01350bb14a03a1d2",
+      "row": 22,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/yale"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2011-05-01T17:00:00Z",
+      "message": "Yale!"
+    },
+    {
+      "oid": "02bd0c12282ef1a029e1d224ffd6f98e5eef62fa",
+      "row": 23,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2011-04-18T17:00:00Z",
+      "message": "im done with classes"
+    },
+    {
+      "oid": "9bfff55a5d218df825ee152923393f66d929ab04",
+      "row": 24,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "tech/courses"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-11-27T17:00:00Z",
+      "message": "side project"
+    },
+    {
+      "oid": "5fa67f519cb787c526b9ecc6eee4593fe2e744e4",
+      "row": 25,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-11-27T17:00:00Z",
+      "message": "more programming classes"
+    },
+    {
+      "oid": "f153ed2c14c3ce0127e776a90164872f3532646b",
+      "row": 26,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-02-13T17:00:00Z",
+      "message": "weird languages?"
+    },
+    {
+      "oid": "d80a248f806d045442c04be175f724d4b0f62ca9",
+      "row": 27,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2009-10-28T17:00:00Z",
+      "message": "new languages?"
+    },
+    {
+      "oid": "e379624a815723070378118f45c5497537b2f7bb",
+      "row": 28,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-09-02T17:00:00Z",
+      "message": "second year"
+    },
+    {
+      "oid": "ae264e2b7ddd00fe6b3a8bbb34a5c05fc4f82acb",
+      "row": 29,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-07-15T17:00:00Z",
+      "message": "i love vietnam"
+    },
+    {
+      "oid": "8c2fe54cf14dfe8877c244129917dab4e43acb3c",
+      "row": 30,
+      "lane": 3,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "travel/vietnam"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-07-01T17:00:00Z",
+      "message": "internship"
+    },
+    {
+      "oid": "777e95f70ad07b758dfdfaf3ff7fd522be77e5fd",
+      "row": 31,
+      "lane": 3,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2010-05-15T17:00:00Z",
+      "message": "internship"
+    },
+    {
+      "oid": "82fac48382cd1472fc65aa4d4d380d02b672fcd2",
+      "row": 32,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2009-09-05T17:00:00Z",
+      "message": "i got into engineering school"
+    },
+    {
+      "oid": "0c9b4b7db568c0a57d5eb18a4d1f10be2382764b",
+      "row": 33,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2009-07-02T17:00:00Z",
+      "message": "summer job"
+    },
+    {
+      "oid": "3620533c03afdd97bb0d33ffa1a5c0dfb0091d08",
+      "row": 34,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2009-06-06T16:45:00Z",
+      "message": "Merge matlab tech skills"
+    },
+    {
+      "oid": "2d33f6e2c7af70eb899755d6bbfb57da7c68f9b2",
+      "row": 35,
+      "lane": 2,
+      "isMain": false,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "tech/101"
+        }
+      ],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2009-01-05T17:00:00Z",
+      "message": "coding is fun!"
+    },
+    {
+      "oid": "c99d48d2398143c3d57d817565ea90675f8a1d2b",
+      "row": 36,
+      "lane": 2,
+      "isMain": false,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2008-01-05T17:00:00Z",
+      "message": "coding is fun?"
+    },
+    {
+      "oid": "290d533ff2f17e2502af43c639754dcff514d1ba",
+      "row": 37,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2008-09-03T17:00:00Z",
+      "message": "second year"
+    },
+    {
+      "oid": "1432621a38c23678aa4187d495f08ecd3af81a2e",
+      "row": 38,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2008-07-15T17:00:00Z",
+      "message": "summer job"
+    },
+    {
+      "oid": "ebce6887e555b8b249a2cbce7ed65dea92797617",
+      "row": 39,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2007-09-03T17:00:00Z",
+      "message": "got accepted to classe prepa"
+    },
+    {
+      "oid": "1b198b3ca579cc0325cdf849a1714146dce67f94",
+      "row": 40,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2007-07-03T17:00:00Z",
+      "message": "i guess im going to college"
+    },
+    {
+      "oid": "b9af9b5b5c83ba456b6bd06847b8fcd86bba0cc6",
+      "row": 41,
+      "lane": 1,
+      "isMain": true,
+      "refs": [],
+      "author": {
+        "name": "Minifolio",
+        "email": "minifolio@example.invalid"
+      },
+      "date": "2007-06-03T17:00:00Z",
+      "message": "Start portfolio notebook"
     }
   ],
   "edges": [
@@ -107,12 +597,52 @@
       "fromLane": 1,
       "toLane": 1,
       "fromRow": 1,
-      "toRow": 6,
+      "toRow": 41,
       "type": "branch",
       "isMain": true
     },
     {
       "fromLane": 3,
+      "toLane": 3,
+      "fromRow": 7,
+      "toRow": 12,
+      "type": "branch",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 2,
+      "fromRow": 13,
+      "toRow": 18,
+      "type": "branch",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 2,
+      "fromRow": 24,
+      "toRow": 27,
+      "type": "branch",
+      "isMain": false
+    },
+    {
+      "fromLane": 3,
+      "toLane": 3,
+      "fromRow": 30,
+      "toRow": 31,
+      "type": "branch",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 2,
+      "fromRow": 35,
+      "toRow": 36,
+      "type": "branch",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
       "toLane": 1,
       "fromRow": 2,
       "toRow": 3,
@@ -132,6 +662,102 @@
       "toLane": 1,
       "fromRow": 4,
       "toRow": 6,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 3,
+      "toLane": 2,
+      "fromRow": 7,
+      "toRow": 8,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 3,
+      "fromRow": 8,
+      "toRow": 9,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 3,
+      "toLane": 1,
+      "fromRow": 12,
+      "toRow": 20,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 1,
+      "fromRow": 18,
+      "toRow": 19,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 2,
+      "fromRow": 21,
+      "toRow": 22,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 1,
+      "fromRow": 22,
+      "toRow": 23,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 2,
+      "fromRow": 23,
+      "toRow": 24,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 1,
+      "fromRow": 27,
+      "toRow": 32,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 3,
+      "fromRow": 29,
+      "toRow": 30,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 3,
+      "toLane": 1,
+      "fromRow": 31,
+      "toRow": 32,
+      "type": "fork",
+      "isMain": false
+    },
+    {
+      "fromLane": 1,
+      "toLane": 2,
+      "fromRow": 34,
+      "toRow": 35,
+      "type": "merge",
+      "isMain": false
+    },
+    {
+      "fromLane": 2,
+      "toLane": 1,
+      "fromRow": 36,
+      "toRow": 39,
       "type": "fork",
       "isMain": false
     }
@@ -170,6 +796,69 @@
         {
           "type": "branch",
           "name": "writing/about"
+        }
+      ]
+    },
+    {
+      "row": 7,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/mit"
+        }
+      ]
+    },
+    {
+      "row": 8,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/usc"
+        }
+      ]
+    },
+    {
+      "row": 13,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "open-source/alfred"
+        }
+      ]
+    },
+    {
+      "row": 22,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "university/yale"
+        }
+      ]
+    },
+    {
+      "row": 24,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "tech/courses"
+        }
+      ]
+    },
+    {
+      "row": 30,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "travel/vietnam"
+        }
+      ]
+    },
+    {
+      "row": 35,
+      "refs": [
+        {
+          "type": "branch",
+          "name": "tech/101"
         }
       ]
     }
