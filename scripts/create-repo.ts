@@ -274,6 +274,11 @@ export function createRepo({
 	}
 
 	return {
+		/**
+		 * Writes the provided files, stages the whole worktree, and creates a commit.
+		 * The returned commit is read back from Git, so its oid and parents match the
+		 * actual repository state.
+		 */
 		async commit(options: {
 			message: string;
 			files?: Record<string, string | Uint8Array>;
@@ -293,6 +298,10 @@ export function createRepo({
 			return currentCommit();
 		},
 
+		/**
+		 * Creates a branch ref, optionally from a specific revision, and optionally
+		 * checks it out. When `from` is omitted, Git uses the current `HEAD`.
+		 */
 		async branch(name: string, options: BranchOptions = {}) {
 			await ensureReady();
 			await git(["branch", name, ...(options.from ? [options.from] : [])]);
@@ -304,6 +313,11 @@ export function createRepo({
 			await refreshGraph();
 		},
 
+		/**
+		 * Switches to an existing branch, or creates and switches to it when `create`
+		 * is true. `from` can only be used with `create` and becomes the new branch's
+		 * start point.
+		 */
 		async switchBranch(
 			name: string,
 			options: {
@@ -326,6 +340,10 @@ export function createRepo({
 			await refreshGraph();
 		},
 
+		/**
+		 * Creates a lightweight tag. By default the tag points at `HEAD`; pass `ref`
+		 * to tag another revision, or `force` to move an existing tag.
+		 */
 		async tag(
 			name: string,
 			options: {
@@ -343,6 +361,11 @@ export function createRepo({
 			await refreshGraph();
 		},
 
+		/**
+		 * Merges another ref into the current branch using `--no-ff`, creating an
+		 * explicit merge commit for the portfolio graph. Returns the resulting commit
+		 * as read back from Git.
+		 */
 		async merge(
 			ref: string,
 			options: {
@@ -366,6 +389,11 @@ export function createRepo({
 			return currentCommit();
 		},
 
+		/**
+		 * Finalizes the generated repository: refreshes the graph projection, creates
+		 * the bare clone used by the Git server, writes the optional frontend JSON,
+		 * and removes the temporary working repository. Subsequent calls are no-ops.
+		 */
 		async finalize(): Promise<void> {
 			if (finalized) return;
 
