@@ -57,7 +57,8 @@ export function createRepo({
 		fileURLToPath(new URL("..", import.meta.url)),
 		dir,
 	);
-	const workDir = path.join(outputDir, ".work", name);
+	const workRoot = path.join(outputDir, ".work");
+	const workDir = path.join(workRoot, name);
 	const bareDir = path.join(outputDir, `${name}.git`);
 	const graphFile = path.join(outputDir, `${name}.graph.json`);
 	let ready: Promise<void> | undefined;
@@ -317,11 +318,12 @@ export function createRepo({
 			await refreshGraph();
 			await fs.rm(bareDir, { recursive: true, force: true });
 			await git(["clone", "--bare", workDir, bareDir], { cwd: outputDir });
+			await git(["remote", "remove", "origin"], { cwd: bareDir });
 			await git(["symbolic-ref", "HEAD", `refs/heads/${defaultBranch}`], {
 				cwd: bareDir,
 			});
 			await fs.writeFile(graphFile, `${JSON.stringify(graph, null, 2)}\n`);
-			await fs.rm(workDir, { recursive: true, force: true });
+			await fs.rm(workRoot, { recursive: true, force: true });
 
 			finalization = { bareDir, graphFile, graph };
 			return finalization;
