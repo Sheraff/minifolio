@@ -11,6 +11,7 @@
 	"scripts": {
 		"dev": "node --watch --watch-path=server --watch-path=vite.config.ts --watch-path=index.html --watch-preserve-output --watch-kill-signal=SIGINT server/index.ts --dev",
 		"build": "vite build --app",
+		"git:build": "node scripts/build-sample-portfolio-repo.ts",
 		"og:image": "node scripts/og-image.ts",
 		"og:image:all": "pnpm og:image && pnpm og:image --handle=\"sheraff.dev\" --output=\"og-bsky.png\" && pnpm og:image --handle=\"chaponflo\" --output=\"og-twitter.png\"",
 		"resume:md": "node scripts/resume-markdown.ts --input public/resume.html --output public/resume.md",
