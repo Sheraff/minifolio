@@ -23,6 +23,8 @@ type RepoRef = {
 	oid: string;
 };
 
+type RepoFiles = Record<string, string | Uint8Array>;
+
 type RawRepoGraph = {
 	defaultBranch: string;
 	commits: RepoCommit[];
@@ -132,9 +134,11 @@ export function createRepo({
 		{
 			cwd = workDir,
 			env,
+			allowedExitCodes,
 		}: {
 			cwd?: string;
 			env?: NodeJS.ProcessEnv;
+			allowedExitCodes?: number[];
 		} = {},
 	) {
 		return new Promise<string>((resolve, reject) => {
@@ -148,6 +152,12 @@ export function createRepo({
 				},
 				(error, stdout, stderr) => {
 					if (error) {
+						const exitCode = typeof error.code === "number" ? error.code : undefined;
+						if (exitCode !== undefined && allowedExitCodes?.includes(exitCode)) {
+							resolve(stdout.trimEnd());
+							return;
+						}
+
 						reject(new Error(`${error.message}\n${stderr}`));
 						return;
 					}
@@ -253,12 +263,17 @@ export function createRepo({
 		});
 	}
 
-	async function writeFiles(files: Record<string, string | Uint8Array>) {
+	async function writeFiles(files: RepoFiles) {
+		const written: string[] = [];
+
 		for (const [file, contents] of Object.entries(files)) {
 			const target = resolveRepoFile(workDir, file);
 			await fs.mkdir(path.dirname(target), { recursive: true });
 			await fs.writeFile(target, contents);
+			written.push(file);
 		}
+
+		return written;
 	}
 
 	async function currentCommit() {
@@ -273,6 +288,23 @@ export function createRepo({
 		return commit;
 	}
 
+	async function isMergeInProgress() {
+		try {
+			await git(["rev-parse", "--verify", "MERGE_HEAD"]);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	async function abortMerge() {
+		try {
+			await git(["merge", "--abort"]);
+		} catch {
+			// Preserve the original error if Git cannot abort a partial merge state.
+		}
+	}
+
 	return {
 		/**
 		 * Writes the provided files, stages the whole worktree, and creates a commit.
@@ -281,7 +313,7 @@ export function createRepo({
 		 */
 		async commit(options: {
 			message: string;
-			files?: Record<string, string | Uint8Array>;
+			files?: RepoFiles;
 			date?: string | Date;
 		}) {
 			await ensureReady();
@@ -363,17 +395,56 @@ export function createRepo({
 
 		/**
 		 * Merges another ref into the current branch using `--no-ff`, creating an
-		 * explicit merge commit for the portfolio graph. Returns the resulting commit
-		 * as read back from Git.
+		 * explicit merge commit for the portfolio graph. When `files` are provided,
+		 * the merge is staged with `--no-commit` first, those files are written and
+		 * staged as the conflict resolution, then the merge commit is created.
+		 * Returns the resulting commit as read back from Git.
 		 */
 		async merge(
 			ref: string,
 			options: {
 				message?: string;
 				date?: string | Date;
+				files?: RepoFiles;
 			} = {},
 		) {
 			await ensureReady();
+			const env = { ...authorEnv, ...dateEnv(options.date) };
+
+			if (options.files) {
+				await git(["merge", "--no-ff", "--no-commit", ref], {
+					env,
+					allowedExitCodes: [1],
+				});
+
+				if (!(await isMergeInProgress())) {
+					throw new Error(`Unable to merge ${ref}: no merge is in progress`);
+				}
+
+				const written = await writeFiles(options.files);
+				if (written.length > 0) await git(["add", "--", ...written]);
+
+				const unresolved = splitLines(
+					await git(["diff", "--name-only", "--diff-filter=U"]),
+				);
+				if (unresolved.length > 0) {
+					await abortMerge();
+					throw new Error(
+						`Merge ${ref} still has unresolved paths: ${unresolved.join(", ")}`,
+					);
+				}
+
+				await git(
+					[
+						"commit",
+						...(options.message ? ["--message", options.message] : ["--no-edit"]),
+					],
+					{ env },
+				);
+
+				return currentCommit();
+			}
+
 			await git(
 				[
 					"merge",
@@ -383,7 +454,7 @@ export function createRepo({
 						: ["--no-edit"]),
 					ref,
 				],
-				{ env: { ...authorEnv, ...dateEnv(options.date) } },
+				{ env },
 			);
 
 			return currentCommit();
