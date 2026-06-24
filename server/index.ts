@@ -19,6 +19,9 @@ const parsed = parseArgs({
 		ssh: {
 			type: "string",
 		},
+		git: {
+			type: "string",
+		},
 	},
 });
 
@@ -64,5 +67,18 @@ if (sshPort.success) {
 			console.log(`SSH server listening on :${port}`);
 		});
 		publicLog("[root] ssh server started");
+	}
+}
+
+const gitPort = v.safeParse(portSchema, parsed.values.git);
+if (gitPort.success) {
+	const port = gitPort.output;
+	const { createGitServer } = await import("./git.ts");
+	const server = createGitServer(shutdownRoot);
+	if (server) {
+		server.listen(port, () => {
+			console.log(`Git server listening on :${port}`);
+		});
+		publicLog("[root] git server started");
 	}
 }
