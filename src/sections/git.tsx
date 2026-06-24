@@ -1,5 +1,5 @@
 import { For } from "solid-js";
-import graph from "#/generated/minifolio.graph.json";
+import graph from "#/generated/minifolio.graph.json" with { type: "json" };
 import "./git.css";
 
 export function GitGraph() {
@@ -37,7 +37,7 @@ export function GitGraph() {
 				<For each={graph.commits}>
 					{(commit) => (
 						<span
-							class={commit.isMain ? "is-main" : ""}
+							class={commit.isMain ? "is-main" : undefined}
 							style={`--lane:${commit.lane};--row:${commit.row};`}
 						/>
 					)}

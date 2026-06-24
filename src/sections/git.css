@@ -16,7 +16,6 @@
 	/*font-size: clamp(0.68rem, 0.88vw, 0.9rem);*/
 	font-size: 16px;
 	line-height: 1.25;
-	pointer-events: none;
 
 	.labels,
 	.edges,
