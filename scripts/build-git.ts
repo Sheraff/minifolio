@@ -724,9 +724,9 @@ await repo.merge("university/usc", {
 
 await repo.switchBranch("main");
 
-await repo.commit({
-	message: "merge personal and professional projects",
-	date: "2012-07-24T17:00:00Z",
+await repo.merge("university/mit", {
+	date: "2012-08-21T17:00:00Z",
+	message: "im going back as soon as i can",
 	files: {
 		"skills/tech.md": `# Tech
 
@@ -762,9 +762,54 @@ Matlab
 	},
 });
 
-await repo.merge("university/mit", {
-	date: "2012-08-21T17:00:00Z",
-	message: "im going back as soon as i can",
+await repo.switchBranch("open-source/alfred");
+
+await repo.commit({
+	date: "2012-09-12T17:00:00Z",
+	message: "into the dark arts",
+	files: {
+		"projects/alfred.md": `# Alfred
+
+[Alfred](https://www.alfredapp.com/) is a launcher for macos
+that can use 3rd party open source extensions
+
+Extensions:
+- urban dictionary (to help me learn american slang)
+- Currency Converter
+- Google Translate
+- Push Dialer — send notifications to OSX / iOS
+- Evernote
+- Disk Space — how much free disk space do i have
+- PirateBay — search torrents
+`,
+	},
+});
+
+// - Tastekid
+// - todo app
+// - tv shows
+// - adium
+// - letournedisque
+await repo.commit({
+	date: "2012-09-12T17:00:00Z",
+	message: "more torrents",
+	files: {
+		"projects/alfred.md": `# Alfred
+
+[Alfred](https://www.alfredapp.com/) is a launcher for macos
+that can use 3rd party open source extensions
+
+Extensions:
+- urban dictionary (to help me learn american slang)
+- Currency Converter
+- Google Translate
+- Push Dialer — send notifications to OSX / iOS
+- Evernote
+- Disk Space — how much free disk space do i have
+- PirateBay — search torrents
+- Transmission — control Transmission torrent application from alfred
+`,
+	},
 });
 
 await repo.finalize();
