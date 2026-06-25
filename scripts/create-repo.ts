@@ -490,10 +490,10 @@ export function createRepo({
 }
 
 function createGraphProjection(data: RawRepoGraph): RepoGraph {
-	const orderedCommits = [...data.commits].reverse();
 	const commitByOid = new Map(
 		data.commits.map((commit) => [commit.oid, commit]),
 	);
+	const orderedCommits = orderCommitsForGraph(data.commits, commitByOid);
 	const refsByOid = groupRefsByOid(data.refs);
 	const mainRef = findMainRef(data.refs, data.defaultBranch);
 	const mainPath = traceFirstParentPath(mainRef?.oid, commitByOid);
@@ -560,6 +560,53 @@ function createGraphProjection(data: RawRepoGraph): RepoGraph {
 		edges: createEdges(layoutCommits, layoutByOid),
 		labels: createLabels(layoutCommits),
 	};
+}
+
+function orderCommitsForGraph(
+	commits: RepoCommit[],
+	commitByOid: Map<string, RepoCommit>,
+) {
+	const originalIndex = new Map(
+		commits.map((commit, index) => [commit.oid, index]),
+	);
+	const dateByOid = new Map(
+		commits.map((commit) => [commit.oid, Date.parse(commit.author.date) || 0]),
+	);
+
+	return [...commits].sort((left, right) => {
+		const dateDelta = (dateByOid.get(right.oid) ?? 0) - (dateByOid.get(left.oid) ?? 0);
+		if (dateDelta !== 0) return dateDelta;
+
+		if (isAncestor(left.oid, right.oid, commitByOid)) return 1;
+		if (isAncestor(right.oid, left.oid, commitByOid)) return -1;
+
+		return (originalIndex.get(right.oid) ?? 0) - (originalIndex.get(left.oid) ?? 0);
+	});
+}
+
+function isAncestor(
+	ancestorOid: string,
+	commitOid: string,
+	commitByOid: Map<string, RepoCommit>,
+) {
+	const seen = new Set<string>();
+	const pending = [commitOid];
+
+	while (pending.length > 0) {
+		const oid = pending.pop();
+		if (!oid || seen.has(oid)) continue;
+		seen.add(oid);
+
+		const commit = commitByOid.get(oid);
+		if (!commit) continue;
+
+		for (const parentOid of commit.parents) {
+			if (parentOid === ancestorOid) return true;
+			pending.push(parentOid);
+		}
+	}
+
+	return false;
 }
 
 function groupRefsByOid(refs: RepoRef[]) {
