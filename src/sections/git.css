@@ -1,8 +1,8 @@
 .git-graph {
-	--git-graph-edge: oklch(from var(--bg) 30% 0.1 h);
-	--git-graph-edge-main: oklch(from var(--bg) 40% 0.1 h);
-	--git-graph-dot: oklch(from var(--bg) 30% 0.1 h);
-	--git-graph-dot-main: oklch(from var(--bg) 40% 0.1 h);
+	--git-graph-edge: oklch(from var(--bg) 20% 0.15 h);
+	--git-graph-edge-main: oklch(from var(--bg) 33% 0.1 h);
+	--git-graph-dot: oklch(from var(--bg) 25% 0.15 h);
+	--git-graph-dot-main: oklch(from var(--bg) 33% 0.1 h);
 
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) repeat(var(--lanes), 1lh);
@@ -11,8 +11,7 @@
 	/*row-gap: 0.5lh;*/
 	contain: strict;
 	padding: 1rem;
-	background: none;
-	color: oklch(from var(--bg) 40% 0.15 h);
+	color: oklch(from var(--bg) 33% 0.1 h);
 	/*font-size: clamp(0.68rem, 0.88vw, 0.9rem);*/
 	font-size: 16px;
 	line-height: 1.1;
@@ -52,7 +51,7 @@
 			text-overflow: ellipsis;
 
 			&[data-ref="tag"] {
-				opacity: 0.64;
+				opacity: 0.6;
 			}
 		}
 	}
