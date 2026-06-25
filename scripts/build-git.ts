@@ -785,11 +785,6 @@ Extensions:
 	},
 });
 
-// - Tastekid
-// - todo app
-// - tv shows
-// - adium
-// - letournedisque
 await repo.commit({
 	date: "2012-09-12T17:00:00Z",
 	message: "more torrents",
@@ -811,5 +806,70 @@ Extensions:
 `,
 	},
 });
+
+/**
+
+november 2012 to mai 2013 => carnegie mellon university, research scholar, Reliable Autonomous Systems Lab, w/ Reid Simmons
+- python
+- bash
+
+in parallel, more alfred extensions
+- misc other extensions (maybe we just don't add those, they're not interesting, or in a single commit, definitely not 1 by 1)
+  - Tastekid
+  - todo app
+  - adium
+  - letournedisque
+- tv shows  => add node.js skill
+
+mai 2013 to august 2013 => job: hiking guide in nicaragua
+august 2013 to oct 2013 => job: sailor in panama
+march 2014 to july 2014 => multiple jobs in cambodia
+- web dev for scuba diving shop (php, css, javascript)
+- barrista for a resort
+
+personal projects in 2014
+- many web experiments, a lot of JS and CSS, playing around, no real product
+
+september 2014 - september 2015 => job: research assistant CNRS — LSCP, w/ Brent Strickland
+tech: R, javascript
+skills: everything research (statistics, experimental design, litterature review) in all domains of the lab (psychology, neuro, primato, linguistics, ...)
+
+personal projects in 2015:
+- whiteboard-comics.com animated SVGs, first real website i made, that lasted until 2020
+
+september 2015 - february 2018 => job: doctoral student in epistemology — Jean Nicod Institute, w/ Emmanuel Chemla
+same tech, same skills as research assistant
+
+january 2019 - april 2022 => job: frontend dev at Mazarine (an agency)
+tech: everything frontend (magento, vanilla, nextjs, vue, svelte, react, css, accessibility)
+dozens of websites
+main project: louvre.fr
+
+sept 2021 => open-source: land a PR in Next.js, i feel amazing about it
+
+2022 - 2026 => open-source: a bunch of Raycast extensions (we need to look it up i don't remember exactly which extensions i contributed to)
+
+may 2022 - july 2026 => job: staff frontend dev at Matera (a saas)
+tech: react, typescript, vite, eslint, ... everything that is currently on my resume
+
+may 2023 - may 2024 => open-source: core contributor to tRPC, mainly on out-of-order streaming of batched requests
+
+january 2025 => open-source: become contributor to tanstack
+  - nov 2025 => land big route matching rewrite in tanstack/router
+  - march 2026 => land big reactivity refactor to signals in tanstack/router
+  - may 2026 => big SSR performance improvement in tanstack/start
+
+2023 => personal project: soft-serve-tunes, my personal music app that i have used every day since
+tech:
+- hosted on raspberry pi
+- prisma / nextjs / trpc
+- postgre database
+- PWA, service worker, web sockets
+
+2024 => personal projet: vite-labs, many experiments with algorithms, 2d canvas, sharedarraybuffer, web workers, parallelism, web gpu, performance
+
+2026 => personal project: minifolio (this site)
+
+ */
 
 await repo.finalize();
