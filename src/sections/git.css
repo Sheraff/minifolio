@@ -6,7 +6,7 @@
 
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) repeat(var(--lanes), 1lh);
-	grid-template-rows: repeat(var(--rows), 1fr);
+	grid-template-rows: repeat(var(--rows), 1.65lh);
 	column-gap: 0.6lh;
 	/*row-gap: 0.5lh;*/
 	contain: strict;
