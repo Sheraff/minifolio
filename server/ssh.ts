@@ -21,6 +21,14 @@ const SESSION_TIMEOUT_MS = 3_000;
 const SSH_SHELL_IDLE_TIMEOUT_MS = 2 * 60_000;
 const SSH_SHELL_MAX_SESSION_AGE_MS = 15 * 60_000;
 const UNSUPPORTED_SESSION_CLOSE_DELAY_MS = 1_000;
+const SSH_JAIL_WINDOW_MS = 5 * 60_000;
+const SSH_JAIL_FAILURE_LIMIT = 6;
+const SSH_JAIL_BASE_MS = 10 * 60_000;
+const SSH_JAIL_MAX_MS = 60 * 60_000;
+const SSH_JAIL_CLEANUP_INTERVAL_MS = 10 * 60_000;
+const SSH_JAIL_REJECT_LOG_INTERVAL_MS = 60_000;
+const SSH_CLIENT_ERROR_FAILURE_SCORE = 2;
+const SSH_CONNECTION_LIMIT_FAILURE_SCORE = 2;
 const HOST_KEY_PATH = ".ssh_host_ed25519_key";
 const TERMINAL_FILES_ROOT = "fs";
 const CLIENT_GIT_LOG_PATH = "dist/client/git-log.txt";
@@ -39,12 +47,32 @@ type ReadlineTerminalStream = ssh.ServerChannel & {
 	rows?: number;
 };
 
+type SshJailEntry = {
+	failures: number;
+	windowStartedAt: number;
+	lastFailureAt: number;
+	jailedUntil: number;
+	jailCount: number;
+	lastJailRejectLogAt: number;
+};
+
 export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 	const hostKey = readHostKey(isDev);
 	const terminalFiles = readTerminalFiles(TERMINAL_FILES_ROOT);
+
 	const connectionsByIp = new Map<string, number>();
+
+	const jailByIp = new Map<string, SshJailEntry>();
+	const jailCleanup = setInterval(
+		() => pruneSshJail(jailByIp),
+		SSH_JAIL_CLEANUP_INTERVAL_MS,
+	).unref();
+
 	const serverScope = parentScope.child("ssh server", {
-		close: () => void server.close(),
+		close: () => {
+			clearInterval(jailCleanup);
+			void server.close();
+		},
 	});
 
 	const server = new ssh.Server(
@@ -61,7 +89,31 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			keepaliveCountMax: 10,
 		},
 		(client, info) => {
+			let acceptedAuth = false;
+			let connectionFailureRecorded = false;
+			const noteConnectionFailure = (reason: string, score = 1) => {
+				if (serverScope.closing) return;
+				connectionFailureRecorded = true;
+				recordSshFailure(jailByIp, info.ip, reason, score);
+			};
+
+			client.on("error", (error) => {
+				publicLog(`[WARN] ssh connection error`);
+				console.warn("[ssh]", formatSshError(error));
+				noteConnectionFailure(
+					"client error",
+					SSH_CLIENT_ERROR_FAILURE_SCORE,
+				);
+			});
+
 			if (serverScope.closing) {
+				client.end();
+				return;
+			}
+
+			const activeJail = getActiveSshJail(jailByIp, info.ip);
+			if (activeJail) {
+				logSshJailRejection(info.ip, activeJail);
 				client.end();
 				return;
 			}
@@ -70,6 +122,10 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			if (ipConnections >= MAX_PER_IP_CONNECTIONS) {
 				publicLog(`[WARN] too many ssh connections`);
 				console.log(`[ssh] ip rejected, too many connections ${info.ip}`);
+				noteConnectionFailure(
+					"too many concurrent connections",
+					SSH_CONNECTION_LIMIT_FAILURE_SCORE,
+				);
 				client.end();
 				return;
 			}
@@ -90,16 +146,14 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 			const authTimeout = setTimeout(() => client.end(), AUTH_TIMEOUT_MS);
 			authTimeout.unref();
 
-			client.on("error", (error) => {
-				publicLog(`[WARN] ssh connection error`);
-				console.warn("[ssh]", formatSshError(error));
-			});
-
 			client.on("close", () => {
 				if (closed) return;
 				closed = true;
 				clientScope.done();
 				clearTimeout(authTimeout);
+				if (!acceptedAuth && !connectionFailureRecorded) {
+					noteConnectionFailure("pre-auth disconnect");
+				}
 				const ipConnections = connectionsByIp.get(info.ip);
 				if (!ipConnections || ipConnections === 1) {
 					connectionsByIp.delete(info.ip);
@@ -112,12 +166,19 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 				username = ctx.username;
 
 				// OpenSSH usually tries "none" first. Accepting it gives a passwordless toy login.
-				if (ctx.method === "none") return ctx.accept();
+				if (ctx.method === "none") {
+					acceptedAuth = true;
+					return ctx.accept();
+				}
 
 				// Optional fallback if a client insists on prompting.
-				if (ctx.method === "password") return ctx.accept();
+				if (ctx.method === "password") {
+					acceptedAuth = true;
+					return ctx.accept();
+				}
 
 				publicLog(`[ssh] rejected ${ctx.method} authentication`);
+				noteConnectionFailure(`rejected ${ctx.method} authentication`);
 				ctx.reject(["none", "password"]);
 			});
 
@@ -134,6 +195,7 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 						publicLog("[ssh] session terminated");
 					} else {
 						publicLog("[ssh] probe");
+						noteConnectionFailure("probe");
 					}
 					clearTimeout(sessionTimeout);
 				});
@@ -218,9 +280,90 @@ export function createSshServer(isDev: boolean, parentScope: ShutdownScope) {
 		publicLog(`[WARN] ssh server error`);
 		console.warn("[ssh]", formatSshError(error));
 	});
-	server.once("close", () => serverScope.done());
+	server.once("close", () => {
+		clearInterval(jailCleanup);
+		serverScope.done();
+	});
 
 	return server;
+}
+
+function getActiveSshJail(jailByIp: Map<string, SshJailEntry>, ip: string) {
+	const entry = jailByIp.get(ip);
+	if (!entry) return;
+	if (entry.jailedUntil > Date.now()) return entry;
+}
+
+function recordSshFailure(
+	jailByIp: Map<string, SshJailEntry>,
+	ip: string,
+	reason: string,
+	score = 1,
+) {
+	const now = Date.now();
+	const current = jailByIp.get(ip);
+	const inWindow =
+		current && now - current.windowStartedAt <= SSH_JAIL_WINDOW_MS;
+	const entry: SshJailEntry = inWindow
+		? current
+		: {
+				failures: 0,
+				windowStartedAt: now,
+				lastFailureAt: now,
+				jailedUntil: current?.jailedUntil ?? 0,
+				jailCount: current?.jailCount ?? 0,
+				lastJailRejectLogAt: current?.lastJailRejectLogAt ?? 0,
+			};
+
+	entry.lastFailureAt = now;
+	if (entry.jailedUntil > now) {
+		jailByIp.set(ip, entry);
+		return;
+	}
+
+	entry.failures += score;
+	if (entry.failures >= SSH_JAIL_FAILURE_LIMIT) {
+		entry.jailCount += 1;
+		const duration = Math.min(
+			SSH_JAIL_BASE_MS * 2 ** (entry.jailCount - 1),
+			SSH_JAIL_MAX_MS,
+		);
+		entry.failures = 0;
+		entry.windowStartedAt = now;
+		entry.jailedUntil = now + duration;
+		entry.lastJailRejectLogAt = now;
+		publicLog(`[WARN] ssh connection cooldown`);
+		console.warn(
+			`[ssh] ip jailed ${ip} for ${formatDuration(duration)} after ${reason}`,
+		);
+	}
+
+	jailByIp.set(ip, entry);
+}
+
+function logSshJailRejection(ip: string, entry: SshJailEntry) {
+	const now = Date.now();
+	if (now - entry.lastJailRejectLogAt < SSH_JAIL_REJECT_LOG_INTERVAL_MS)
+		return;
+	entry.lastJailRejectLogAt = now;
+	publicLog(`[WARN] ssh connection cooldown`);
+	console.log(
+		`[ssh] ip rejected, cooldown ${ip} ${formatDuration(entry.jailedUntil - now)}`,
+	);
+}
+
+function pruneSshJail(jailByIp: Map<string, SshJailEntry>) {
+	const now = Date.now();
+	for (const [ip, entry] of jailByIp) {
+		const quietFor = now - entry.lastFailureAt;
+		if (entry.jailedUntil <= now && quietFor > SSH_JAIL_WINDOW_MS) {
+			jailByIp.delete(ip);
+		}
+	}
+}
+
+function formatDuration(ms: number) {
+	return `${Math.max(1, Math.ceil(ms / 1000))}s`;
 }
 
 function closeSshShell(stream: ssh.ServerChannel) {
