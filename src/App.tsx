@@ -6,6 +6,7 @@ import { Identity } from "#/sections/identity";
 import { Head } from "#/sections/head";
 import { Links } from "#/sections/links";
 import { Footer } from "#/sections/footer";
+import { GitGraph } from "#/sections/git";
 import { createSignal, lazy, Show, Suspense } from "solid-js";
 import { NoHydration } from "solid-js/web";
 
@@ -48,10 +49,10 @@ function App() {
 					<Labs />
 				</main>
 			</div>
-			<Suspense>
+			<Suspense fallback={<aside />}>
 				<Logs />
 			</Suspense>
-			<aside />
+			<GitGraph />
 			<NoHydration>
 				<hr data-big />
 				<Footer />
