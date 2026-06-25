@@ -11,8 +11,10 @@ const ERROR_CLOSE_TIMEOUT_MS = 1_000;
 const MAX_FIRST_PACKET_BYTES = 4_096;
 const MAX_STDERR_LOG_BYTES = 2_048;
 
+const MINIFOLIO_REPO_PATH = resolve("dist/minifolio.git");
 const REPOSITORIES = new Map([
-	["/minifolio.git", resolve("dist/minifolio.git")],
+	["/", MINIFOLIO_REPO_PATH],
+	["/minifolio.git", MINIFOLIO_REPO_PATH],
 ]);
 
 type GitRequest = {
@@ -219,7 +221,7 @@ function parseGitRequest(packet: Buffer): ParsedGitRequest {
 	}
 
 	const command = payload.toString("utf8", 0, commandEnd);
-	const commandMatch = /^([a-z0-9-]+) (\/[^ ]+)$/.exec(command);
+	const commandMatch = /^([a-z0-9-]+) (\/[^ ]*)$/.exec(command);
 	if (!commandMatch) {
 		return {
 			success: false,
