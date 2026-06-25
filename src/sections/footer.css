@@ -1,12 +1,64 @@
 .footer {
 	font-size: smaller;
-	text-align: center;
-	grid-column: 1 / 4;
-	padding: 1em;
+	grid-column: 2 / 3;
+	display: grid;
+	grid-template-columns: subgrid;
+	padding: 0;
 	min-height: 20svh;
+	gap: 2em;
+	padding: 2em 0 5em;
+
+	nav {
+		p {
+			margin: 0 0 0.5lh;
+			opacity: 0.75;
+		}
+
+		dl {
+			display: grid;
+			grid-auto-rows: 1fr;
+			grid-template-columns: auto 1fr;
+			row-gap: 0.25lh;
+			column-gap: 1lh;
+		}
+
+		dd {
+			margin: 0;
+		}
+
+		dt {
+			color: oklch(from var(--theme) 62% 0.1 h);
+			font-weight: 700;
+		}
+
+		code {
+			font: inherit;
+			color: oklch(from var(--theme) 78% 0.18 h);
+			text-shadow: var(--text-glow);
+		}
+
+		kbd {
+			font: inherit;
+			font-size: 1.3em;
+			line-height: 1;
+			padding: 0 8px;
+			border: var(--border);
+			border-radius: 4px;
+			background-color: black;
+		}
+	}
+
+	.footer-credits {
+		margin: 0;
+		opacity: 0.75;
+	}
 
 	a {
 		color: currentColor;
 		text-decoration: none;
+	}
+
+	:where(a, code) {
+		overflow-wrap: anywhere;
 	}
 }
