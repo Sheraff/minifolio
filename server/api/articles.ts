@@ -1,4 +1,5 @@
 import { publicLog } from '#server/public-logs.ts'
+import { createCachedFetcher } from '#server/utils/cache.ts'
 import { XMLParser } from 'fast-xml-parser'
 import * as v from 'valibot'
 
@@ -95,46 +96,17 @@ const rssFeedSchema = v.object({
 	})),
 })
 
-let tanstackArticlesCache:
-	| {
-		data: TanstackArticlesResponse
-		expiresAt: number
-	}
-	| undefined
-
-let tanstackArticlesPromise: Promise<TanstackArticlesResponse> | undefined
-let refreshTimeout: NodeJS.Timeout | undefined
-
-
-async function loadTanstackArticles(): Promise<TanstackArticlesResponse> {
-	if (tanstackArticlesCache && tanstackArticlesCache.expiresAt > Date.now()) {
-		return tanstackArticlesCache.data
-	}
-
-	if (tanstackArticlesPromise) {
-		return tanstackArticlesPromise
-	}
-
-	tanstackArticlesPromise = fetchTanstackArticlesFromRss()
-
-	try {
-		const data = await tanstackArticlesPromise
-		const prevCount = tanstackArticlesCache?.data.articles.length
+const loadTanstackArticles = createCachedFetcher<TanstackArticlesResponse>({
+	label: 'article RSS',
+	ttlMs: ONE_HOUR_MS,
+	fetch: fetchTanstackArticlesFromRss,
+	onUpdate(data, previous) {
+		const prevCount = previous?.articles.length
 		if (prevCount !== undefined && data.articles.length > prevCount) {
 			publicLog("[data] new article")
 		}
-		tanstackArticlesCache = {
-			data,
-			expiresAt: Date.now() + ONE_HOUR_MS,
-		}
-		if (refreshTimeout) clearTimeout(refreshTimeout)
-		refreshTimeout = setTimeout(loadTanstackArticles, ONE_HOUR_MS + 1)
-		refreshTimeout.unref()
-		return data
-	} finally {
-		tanstackArticlesPromise = undefined
-	}
-}
+	},
+})
 
 async function fetchTanstackArticlesFromRss(): Promise<TanstackArticlesResponse> {
 	publicLog("[data] fetching article RSS")

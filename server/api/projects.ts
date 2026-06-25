@@ -1,4 +1,5 @@
 import { publicLog } from "#server/public-logs.ts"
+import { createCachedFetcher } from '#server/utils/cache.ts'
 import * as v from 'valibot'
 
 const projectsUrl = 'https://sheraff.github.io/vite-labs/projects.json'
@@ -47,45 +48,17 @@ const labProjectsResponseSchema = v.pipe(
   v.transform((projects) => projects.filter((project): project is LabProject => project !== undefined)),
 )
 
-let projectsCache:
-  | {
-    data: LabProject[]
-    expiresAt: number
-  }
-  | undefined
-
-let projectsPromise: Promise<LabProject[]> | undefined
-let refreshTimeout: NodeJS.Timeout | undefined
-
-async function loadLabProjects(): Promise<LabProject[]> {
-  if (projectsCache && projectsCache.expiresAt > Date.now()) {
-    return projectsCache.data
-  }
-
-  if (projectsPromise) {
-    return projectsPromise
-  }
-
-  projectsPromise = fetchLabProjectsFromApi()
-
-  try {
-    const data = await projectsPromise
-    const prevCount = projectsCache?.data.length
+const loadLabProjects = createCachedFetcher<LabProject[]>({
+  label: 'code experiments',
+  ttlMs: ONE_HOUR_MS,
+  fetch: fetchLabProjectsFromApi,
+  onUpdate(data, previous) {
+    const prevCount = previous?.length
     if (prevCount !== undefined && prevCount < data.length) {
       publicLog("[data] new code experiment")
     }
-    projectsCache = {
-      data,
-      expiresAt: Date.now() + ONE_HOUR_MS,
-    }
-    if (refreshTimeout) clearTimeout(refreshTimeout)
-    refreshTimeout = setTimeout(loadLabProjects, ONE_HOUR_MS + 1)
-    refreshTimeout.unref()
-    return data
-  } finally {
-    projectsPromise = undefined
-  }
-}
+  },
+})
 
 async function fetchLabProjectsFromApi(): Promise<LabProject[]> {
   publicLog("[data] fetching code experiments")

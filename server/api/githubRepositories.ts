@@ -6,6 +6,7 @@ import {
 	ONE_DAY_MS,
 } from './githubApi.ts'
 import { publicLog } from '#server/public-logs.ts'
+import { createCachedFetcher } from '#server/utils/cache.ts'
 
 const contributionYearsQuery = `
 	query ContributionYears($login: String!) {
@@ -229,41 +230,11 @@ const githubContributedRepositoriesResponseSchema = v.object({
 	}))),
 })
 
-let contributedRepositoriesCache:
-	| {
-		data: ContributedRepositoriesResponse
-		expiresAt: number
-	}
-	| undefined
-
-let contributedRepositoriesPromise: Promise<ContributedRepositoriesResponse> | undefined
-let refreshTimeout: NodeJS.Timeout | undefined
-
-async function loadContributedRepositories(): Promise<ContributedRepositoriesResponse> {
-	if (contributedRepositoriesCache && contributedRepositoriesCache.expiresAt > Date.now()) {
-		return contributedRepositoriesCache.data
-	}
-
-	if (contributedRepositoriesPromise) {
-		return contributedRepositoriesPromise
-	}
-
-	contributedRepositoriesPromise = fetchContributedRepositoriesFromApi()
-
-	try {
-		const data = await contributedRepositoriesPromise
-		contributedRepositoriesCache = {
-			data,
-			expiresAt: Date.now() + ONE_DAY_MS,
-		}
-		if (refreshTimeout) clearTimeout(refreshTimeout)
-		refreshTimeout = setTimeout(loadContributedRepositories, ONE_DAY_MS + 1)
-		refreshTimeout.unref()
-		return data
-	} finally {
-		contributedRepositoriesPromise = undefined
-	}
-}
+const loadContributedRepositories = createCachedFetcher<ContributedRepositoriesResponse>({
+	label: 'github contributions',
+	ttlMs: ONE_DAY_MS,
+	fetch: fetchContributedRepositoriesFromApi,
+})
 
 async function fetchContributionYearsFromApi(): Promise<number[]> {
 	const json = v.parse(

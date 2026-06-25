@@ -1,6 +1,7 @@
 import * as v from 'valibot'
 import { fetchGitHubGraphql, GITHUB_LOGIN, ONE_DAY_MS } from './githubApi.ts'
 import { publicLog } from '#server/public-logs.ts'
+import { createCachedFetcher } from '#server/utils/cache.ts'
 
 const CONTRIBUTION_LEVELS = {
 	NONE: 0,
@@ -68,41 +69,11 @@ const githubContributionsResponseSchema = v.object({
 	}))),
 })
 
-let contributionsCache:
-	| {
-		data: ContributionsResponse
-		expiresAt: number
-	}
-	| undefined
-
-let contributionsPromise: Promise<ContributionsResponse> | undefined
-let refreshTimeout: NodeJS.Timeout | undefined
-
-async function loadGitHubContributions(): Promise<ContributionsResponse> {
-	if (contributionsCache && contributionsCache.expiresAt > Date.now()) {
-		return contributionsCache.data
-	}
-
-	if (contributionsPromise) {
-		return contributionsPromise
-	}
-
-	contributionsPromise = fetchGitHubContributionsFromApi()
-
-	try {
-		const data = await contributionsPromise
-		contributionsCache = {
-			data,
-			expiresAt: Date.now() + ONE_DAY_MS,
-		}
-		if (refreshTimeout) clearTimeout(refreshTimeout)
-		refreshTimeout = setTimeout(loadGitHubContributions, ONE_DAY_MS + 1)
-		refreshTimeout.unref()
-		return data
-	} finally {
-		contributionsPromise = undefined
-	}
-}
+const loadGitHubContributions = createCachedFetcher<ContributionsResponse>({
+	label: 'github activity',
+	ttlMs: ONE_DAY_MS,
+	fetch: fetchGitHubContributionsFromApi,
+})
 
 async function fetchGitHubContributionsFromApi(): Promise<ContributionsResponse> {
 	publicLog("[data] fetching github activity")
