@@ -48,6 +48,7 @@ type RenderCommit = {
 };
 
 type RenderEdge = {
+	branchId: number;
 	fromLane: number;
 	toLane: number;
 	fromRow: number;
@@ -540,10 +541,8 @@ function createGraphProjection(data: RawRepoGraph): RepoGraph {
 	const layoutByOid = new Map(
 		layoutCommits.map((commit) => [commit.commit.oid, commit]),
 	);
-	const laneCountsByRow = createLaneCountsByRow(
-		layoutCommits.length,
-		sideSegments,
-	);
+	const edges = createEdges(layoutCommits, layoutByOid);
+	const laneCountsByRow = createLaneCountsByRow(layoutCommits.length, edges);
 
 	return {
 		defaultBranch: data.defaultBranch,
@@ -562,7 +561,7 @@ function createGraphProjection(data: RawRepoGraph): RepoGraph {
 			date: item.commit.author.date,
 			message: item.commit.message,
 		})),
-		edges: createEdges(layoutCommits, layoutByOid),
+		edges,
 		labels: createLabels(layoutCommits, laneCountsByRow),
 	};
 }
@@ -719,7 +718,7 @@ function packSideSegments(segments: SideSegment[]): PackedSideSegment[] {
 
 function createLaneCountsByRow(
 	rows: number,
-	segments: PackedSideSegment[],
+	edges: RenderEdge[],
 ) {
 	const laneCountsByRow = new Map<number, number>();
 
@@ -727,11 +726,15 @@ function createLaneCountsByRow(
 		laneCountsByRow.set(row, 1);
 	}
 
-	for (const segment of segments) {
-		for (let row = segment.minRow; row <= segment.maxRow; row++) {
+	for (const edge of edges) {
+		const laneCount = Math.max(edge.fromLane, edge.toLane);
+		const minRow = Math.min(edge.fromRow, edge.toRow);
+		const maxRow = Math.max(edge.fromRow, edge.toRow);
+
+		for (let row = minRow; row <= maxRow; row++) {
 			laneCountsByRow.set(
 				row,
-				Math.max(laneCountsByRow.get(row) ?? 1, segment.lane),
+				Math.max(laneCountsByRow.get(row) ?? 1, laneCount),
 			);
 		}
 	}
@@ -800,6 +803,7 @@ function createEdges(
 		const rows = branchCommits.map((item) => item.row);
 		const lane = branchCommits[0].lane;
 		edges.push({
+			branchId: createBranchId(branchCommits[0]),
 			fromLane: lane,
 			toLane: lane,
 			fromRow: Math.min(...rows),
@@ -819,13 +823,14 @@ function createEdges(
 			) {
 				return;
 			}
-
+			const type = createEdgeType(item, parent, index);
 			edges.push({
+				branchId: createEdgeBranchId(item, parent, index),
 				fromLane: item.lane,
 				toLane: parent.lane,
 				fromRow: item.row,
-				toRow: parent.row,
-				type: createEdgeType(item, parent, index),
+				toRow: createEdgeToRow(item, parent, type, commitsByBranch),
+				type,
 				isMain: index === 0 && item.isMain && parent.isMain,
 			});
 		});
@@ -837,6 +842,36 @@ function createBranchGroupKey(commit: LayoutCommit) {
 	if (commit.isMain) return "main";
 	if (commit.segmentId !== undefined) return `side:${commit.segmentId}`;
 	return `commit:${commit.commit.oid}`;
+}
+
+function createBranchId(commit: LayoutCommit) {
+	if (commit.isMain) return 0;
+	if (commit.segmentId !== undefined) return commit.segmentId;
+	return commit.row;
+}
+
+function createEdgeBranchId(
+	from: LayoutCommit,
+	to: LayoutCommit,
+	parentIndex: number,
+) {
+	return parentIndex > 0 ? createBranchId(to) : createBranchId(from);
+}
+
+function createEdgeToRow(
+	from: LayoutCommit,
+	to: LayoutCommit,
+	type: RenderEdge["type"],
+	commitsByBranch: Map<string, LayoutCommit[]>,
+) {
+	if (type !== "fork" || to.row > from.row) return to.row;
+
+	const parentBranch = commitsByBranch.get(createBranchGroupKey(to)) ?? [];
+	const nextParentCommit = parentBranch
+		.filter((commit) => commit.row > from.row)
+		.sort((a, b) => a.row - b.row)[0];
+
+	return nextParentCommit?.row ?? to.row;
 }
 
 function createEdgeType(
