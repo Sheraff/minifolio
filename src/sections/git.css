@@ -6,16 +6,16 @@
 
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) repeat(var(--lanes), 1lh);
-	grid-template-rows: repeat(var(--rows), 1lh);
-	column-gap: 0.72lh;
-	row-gap: 0.82lh;
+	grid-template-rows: repeat(var(--rows), 1fr);
+	column-gap: 0.6lh;
+	/*row-gap: 0.5lh;*/
 	contain: strict;
-	padding: 1.2rem 0.9rem;
+	padding: 1rem;
 	background: none;
 	color: oklch(from var(--bg) 40% 0.15 h);
 	/*font-size: clamp(0.68rem, 0.88vw, 0.9rem);*/
 	font-size: 16px;
-	line-height: 1.25;
+	line-height: 1.1;
 
 	.labels,
 	.edges,
@@ -67,14 +67,15 @@
 			grid-column: calc(var(--lanes) - var(--max-lane) + 2) /
 				calc(var(--lanes) - var(--min-lane) + 3);
 			grid-row: var(--min-row) / calc(var(--max-row) + 1);
-			padding: 0.5lh;
-			padding-left: calc(0.5lh - 1px);
+			padding: 10px;
+			padding-left: 8px;
 
 			&::after {
 				content: "";
 				display: block;
 				width: 100%;
-				height: 100%;
+				height: calc(100% - 10px);
+				margin-top: 5px;
 				border: 1px solid var(--git-graph-edge);
 				border-right: none;
 			}
@@ -107,8 +108,8 @@
 			grid-column: calc(var(--lanes) - var(--lane) + 2) /
 				calc(var(--lanes) - var(--lane) + 3);
 			grid-row: var(--row) / calc(var(--row) + 1);
-			width: 0.46lh;
-			height: 0.46lh;
+			width: 10px;
+			height: 10px;
 			border: 1px solid var(--git-graph-dot);
 			border-radius: 50%;
 			background: var(--bg);
