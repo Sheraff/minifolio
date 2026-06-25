@@ -58,6 +58,7 @@ type RenderEdge = {
 
 type RenderLabel = {
 	row: number;
+	lanes: number;
 	refs: RenderRef[];
 };
 
@@ -539,6 +540,10 @@ function createGraphProjection(data: RawRepoGraph): RepoGraph {
 	const layoutByOid = new Map(
 		layoutCommits.map((commit) => [commit.commit.oid, commit]),
 	);
+	const laneCountsByRow = createLaneCountsByRow(
+		layoutCommits.length,
+		sideSegments,
+	);
 
 	return {
 		defaultBranch: data.defaultBranch,
@@ -558,7 +563,7 @@ function createGraphProjection(data: RawRepoGraph): RepoGraph {
 			message: item.commit.message,
 		})),
 		edges: createEdges(layoutCommits, layoutByOid),
-		labels: createLabels(layoutCommits),
+		labels: createLabels(layoutCommits, laneCountsByRow),
 	};
 }
 
@@ -712,6 +717,28 @@ function packSideSegments(segments: SideSegment[]): PackedSideSegment[] {
 	});
 }
 
+function createLaneCountsByRow(
+	rows: number,
+	segments: PackedSideSegment[],
+) {
+	const laneCountsByRow = new Map<number, number>();
+
+	for (let row = 1; row <= rows; row++) {
+		laneCountsByRow.set(row, 1);
+	}
+
+	for (const segment of segments) {
+		for (let row = segment.minRow; row <= segment.maxRow; row++) {
+			laneCountsByRow.set(
+				row,
+				Math.max(laneCountsByRow.get(row) ?? 1, segment.lane),
+			);
+		}
+	}
+
+	return laneCountsByRow;
+}
+
 function compareSideSegments(a: SideSegment, b: SideSegment) {
 	return a.minRow - b.minRow || a.maxRow - b.maxRow || a.id - b.id;
 }
@@ -828,12 +855,16 @@ function createEdgeType(
 	return "fork";
 }
 
-function createLabels(commits: LayoutCommit[]) {
+function createLabels(
+	commits: LayoutCommit[],
+	laneCountsByRow: Map<number, number>,
+) {
 	return commits.flatMap((commit): RenderLabel[] =>
 		commit.refs.length > 0
 			? [
 					{
 						row: commit.row,
+						lanes: laneCountsByRow.get(commit.row) ?? 1,
 						refs: commit.refs,
 					},
 				]

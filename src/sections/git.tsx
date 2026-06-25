@@ -14,7 +14,7 @@ export function GitGraph() {
 			<div class="labels">
 				<For each={graph.labels}>
 					{(label) => (
-						<p style={`--row:${label.row};`}>
+						<p style={`--row:${label.row};--lane:${label.lanes};`}>
 							<For each={label.refs}>
 								{(ref) => <span data-ref={ref.type}>{ref.name}</span>}
 							</For>

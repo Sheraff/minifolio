@@ -1974,6 +1974,7 @@
   "labels": [
     {
       "row": 1,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -1987,6 +1988,7 @@
     },
     {
       "row": 2,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -1996,6 +1998,7 @@
     },
     {
       "row": 4,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2005,6 +2008,7 @@
     },
     {
       "row": 7,
+      "lanes": 4,
       "refs": [
         {
           "type": "branch",
@@ -2014,6 +2018,7 @@
     },
     {
       "row": 8,
+      "lanes": 4,
       "refs": [
         {
           "type": "branch",
@@ -2023,6 +2028,7 @@
     },
     {
       "row": 14,
+      "lanes": 4,
       "refs": [
         {
           "type": "branch",
@@ -2032,6 +2038,7 @@
     },
     {
       "row": 16,
+      "lanes": 6,
       "refs": [
         {
           "type": "branch",
@@ -2041,6 +2048,7 @@
     },
     {
       "row": 20,
+      "lanes": 6,
       "refs": [
         {
           "type": "branch",
@@ -2050,6 +2058,7 @@
     },
     {
       "row": 31,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2059,6 +2068,7 @@
     },
     {
       "row": 33,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2068,6 +2078,7 @@
     },
     {
       "row": 39,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2077,6 +2088,7 @@
     },
     {
       "row": 44,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2086,6 +2098,7 @@
     },
     {
       "row": 46,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2095,6 +2108,7 @@
     },
     {
       "row": 49,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2104,6 +2118,7 @@
     },
     {
       "row": 53,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2113,6 +2128,7 @@
     },
     {
       "row": 57,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2122,6 +2138,7 @@
     },
     {
       "row": 59,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2131,6 +2148,7 @@
     },
     {
       "row": 65,
+      "lanes": 4,
       "refs": [
         {
           "type": "branch",
@@ -2140,6 +2158,7 @@
     },
     {
       "row": 68,
+      "lanes": 5,
       "refs": [
         {
           "type": "branch",
@@ -2149,6 +2168,7 @@
     },
     {
       "row": 70,
+      "lanes": 5,
       "refs": [
         {
           "type": "branch",
@@ -2158,6 +2178,7 @@
     },
     {
       "row": 82,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2167,6 +2188,7 @@
     },
     {
       "row": 84,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
@@ -2176,6 +2198,7 @@
     },
     {
       "row": 88,
+      "lanes": 3,
       "refs": [
         {
           "type": "branch",
@@ -2185,6 +2208,7 @@
     },
     {
       "row": 95,
+      "lanes": 2,
       "refs": [
         {
           "type": "branch",
