@@ -127,6 +127,46 @@ describe('autocomplete', () => {
 	})
 })
 
+describe('help command', () => {
+	it('shows a curated guide by default', async () => {
+		const output = await runTerminalCommand('help')
+
+		expect(output).toContain('minifolio terminal')
+		expect(output).toContain('Start here:')
+		expect(output).toContain('portfolio          read the short intro')
+		expect(output).toContain('help all           list every available command')
+		expect(output).not.toContain('minifolio-help')
+	})
+
+	it('keeps the exhaustive command list behind help all', async () => {
+		const output = await runTerminalCommand('help all')
+
+		expect(output).toContain('Available commands:')
+		expect(output).toContain('portfolio')
+		expect(output).toContain('grep')
+		expect(output).not.toContain('minifolio-help')
+	})
+
+	it('shows focused help for app-specific commands', async () => {
+		const output = await runTerminalCommand('help git')
+
+		expect(output).toContain('git - explore the generated portfolio repository')
+		expect(output).toContain('git remote -v')
+	})
+
+	it('delegates focused help for built-in commands', async () => {
+		const output = await runTerminalCommand('help ls')
+
+		expect(output).toContain('ls - list directory contents')
+		expect(output).toContain('Usage: ls')
+	})
+})
+
+async function runTerminalCommand(command: string) {
+	const session = createTerminalSession({ files: {} })
+	return (await executeTerminalCommand(session, command))?.output
+}
+
 function createState(cwd = '/home/sheraff'): TerminalAutocompleteState {
 	return {
 		cwd,

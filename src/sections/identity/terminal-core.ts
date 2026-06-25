@@ -91,6 +91,153 @@ const GIT_REMOTE_URL = 'https://github.com/Sheraff/minifolio.git'
 const DEV_GIT_LOG = 'git log is generated at build time and is available in production builds.\n'
 const COMMAND_COMPLETION_COMMANDS = new Set(['which', 'man'])
 const DIRECTORY_COMPLETION_COMMANDS = new Set(['cd', 'pushd'])
+const DEFAULT_HELP = [
+	'minifolio terminal',
+	'',
+	'Start here:',
+	'  portfolio          read the short intro',
+	'  ls                 browse the virtual home directory',
+	'  tree               see available files',
+	'  cat contact.txt    see contact details',
+	'  cat stack.txt      see current stack',
+	'  git log            read the generated portfolio history',
+	'  mask               read the mask note',
+	'',
+	'Navigation:',
+	'  pwd, ls, cd, tree',
+	'',
+	'Useful tools:',
+	'  cat, grep, rg, sed, awk, jq, curl, history, clear',
+	'',
+	'More:',
+	'  help <command>     show help for a specific command',
+	'  help all           list every available command',
+	'  <command> --help   detailed command usage',
+].join('\n')
+
+const HELP_COMMAND_HELP = [
+	'help - show terminal guidance',
+	'',
+	'Usage:',
+	'  help',
+	'  help <command>',
+	'  help all',
+	'',
+	'Examples:',
+	'  help git',
+	'  help ls',
+	'  help all',
+].join('\n')
+
+const CUSTOM_COMMAND_HELP: Record<string, string> = {
+	help: HELP_COMMAND_HELP,
+	portfolio: [
+		'portfolio - print the short portfolio intro',
+		'',
+		'Usage:',
+		'  portfolio',
+	].join('\n'),
+	mask: [
+		'mask - print the mask note',
+		'',
+		'Usage:',
+		'  mask',
+	].join('\n'),
+	ll: [
+		'll - list files with details',
+		'',
+		'Usage:',
+		'  ll [path]',
+		'',
+		'Equivalent to: ls -la [path]',
+	].join('\n'),
+	clear: [
+		'clear - clear the terminal screen',
+		'',
+		'Usage:',
+		'  clear',
+	].join('\n'),
+	whoami: [
+		'whoami - print the current terminal user',
+		'',
+		'Usage:',
+		'  whoami',
+	].join('\n'),
+	hostname: [
+		'hostname - print the terminal host name',
+		'',
+		'Usage:',
+		'  hostname',
+		'  hostname -f',
+	].join('\n'),
+	git: [
+		'git - explore the generated portfolio repository',
+		'',
+		'Usage:',
+		'  git status',
+		'  git log',
+		'  git branch',
+		'  git remote -v',
+		'  git config --get user.name',
+	].join('\n'),
+	uname: [
+		'uname - print the tiny system name',
+		'',
+		'Usage:',
+		'  uname',
+		'  uname -a',
+	].join('\n'),
+	id: [
+		'id - print the current terminal identity',
+		'',
+		'Usage:',
+		'  id',
+	].join('\n'),
+	history: [
+		'history - print commands entered in this terminal session',
+		'',
+		'Usage:',
+		'  history',
+	].join('\n'),
+	man: [
+		'man - ask for a manual page',
+		'',
+		'Usage:',
+		'  man <command>',
+		'',
+		'This tiny terminal does not ship full manual pages. Use help <command> instead.',
+	].join('\n'),
+	sudo: [
+		'sudo - try to run a command as another user',
+		'',
+		'Usage:',
+		'  sudo <command>',
+		'',
+		'This is a portfolio terminal, so sudo only says no.',
+	].join('\n'),
+	wget: [
+		'wget - unavailable network fetcher',
+		'',
+		'Usage:',
+		'  wget <url>',
+		'',
+		'Use curl for allowed minifolio API URLs.',
+	].join('\n'),
+	ssh: [
+		'ssh - unavailable network client',
+		'',
+		'Usage:',
+		'  ssh <host>',
+		'',
+		'The browser terminal cannot open SSH connections.',
+	].join('\n'),
+	exit: [
+		'exit - leave or dismiss the terminal session',
+		'',
+		'Usage:',
+		'  exit',
+	].join('\n'),
+}
 
 export function createTerminalSession(options: TerminalSessionOptions): TerminalSession {
 	const history: string[] = []
@@ -182,7 +329,7 @@ function createCustomCommands(history: string[], signals: TerminalSignals, optio
 			signals.clearGeneration++
 			return { stdout: '', stderr: '', exitCode: 0, stdoutKind: 'text' }
 		}),
-		command('minifolio-help', async (_args, ctx) => stdoutLine(formatHelp(ctx))),
+		command('minifolio-help', resolveHelp),
 		command('whoami', async (_args, ctx) => stdoutLine(getUser(ctx))),
 		command('hostname', async args => {
 			if (args.length === 0) return stdoutLine('minifolio')
@@ -225,7 +372,21 @@ async function execFromContext(ctx: CommandContext, command: string): Promise<Ex
 	return ctx.exec(command, { cwd: ctx.cwd, env: Object.fromEntries(ctx.env) })
 }
 
-function formatHelp(ctx: CommandContext) {
+async function resolveHelp(args: string[], ctx: CommandContext): Promise<ExecResult> {
+	const topic = args[0]
+
+	if (!topic) return stdoutLine(DEFAULT_HELP)
+	if (topic === '-h' || topic === '--help') return stdoutLine(HELP_COMMAND_HELP)
+	if (topic === 'all') return stdoutLine(formatCommandList(ctx))
+
+	const customHelp = CUSTOM_COMMAND_HELP[topic]
+	if (customHelp) return stdoutLine(customHelp)
+
+	if (!ctx.exec) return { stdout: '', stderr: 'help: shell execution is unavailable\n', exitCode: 1, stdoutKind: 'text' }
+	return ctx.exec(`${quoteArg(topic)} --help`, { cwd: ctx.cwd, env: Object.fromEntries(ctx.env) })
+}
+
+function formatCommandList(ctx: CommandContext) {
 	const customCommands = new Set<string>(CUSTOM_COMMAND_NAMES)
 	const internalCommands = new Set<string>(INTERNAL_CUSTOM_COMMAND_NAMES)
 	const nativeCommands = ctx.getRegisteredCommands?.() ?? []
@@ -234,7 +395,7 @@ function formatHelp(ctx: CommandContext) {
 		...nativeCommands.filter(command => !customCommands.has(command) && !internalCommands.has(command)),
 	])].sort((left, right) => left.localeCompare(right))
 
-	return formatColumns(commands)
+	return `Available commands:\n\n${formatColumns(commands)}\n\nUse 'help <command>' or '<command> --help' for details.`
 }
 
 function formatColumns(items: string[]) {
