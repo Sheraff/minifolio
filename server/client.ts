@@ -76,15 +76,15 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 	const clientStatic = serveStatic({ root: clientDistDir });
 	
 	const IMMUTABLE_ASSET_RE = /^\/assets\/.+\.(?:js|css)$/
-	function cacheClientAsset(requestPath: string, response: Response) {
-		if (IMMUTABLE_ASSET_RE.test(requestPath)) {
+	function cacheClientAsset(requestPath: string, response: Response | void) {
+		if (IMMUTABLE_ASSET_RE.test(requestPath) && response?.headers) {
 			response.headers.set("Cache-Control", "public, max-age=31536000, immutable")
 		}
 	}
 
 	app.use("*", async (c, next) => {
 		const response = await clientStatic(c, next)
-		if (response) cacheClientAsset(c.req.path, response)
+		cacheClientAsset(c.req.path, response)
 		return response
 	});
 
