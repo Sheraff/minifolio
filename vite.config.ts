@@ -26,6 +26,18 @@ export default defineConfig({
         emptyOutDir: true,
         modulePreload: { polyfill: false },
         chunkImportMap: true,
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                {
+                  name: 'solid',
+                  test: /node_modules[\\/]solid-js[\\/]/,
+                },
+              ],
+            },
+          },
+        },
       },
       optimizeDeps: {
         rolldownOptions: {

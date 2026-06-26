@@ -8,8 +8,6 @@ import { publicLog } from "./public-logs.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 import type { Server } from "node:http";
 
-const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
-
 export function ogImage(imageDir: string) {
 	return serveStatic({
 		root: imageDir,
@@ -46,6 +44,8 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 			prerenderScope.done()
 		},
 	})
+
+	const REGEN_DELAY = 6 * 60 * 60 * 1000 // 6 hours
 	const _getHtml = async () => {
 		if (!html || Date.now() - lastGen > REGEN_DELAY) {
 			lastGen = Date.now()
@@ -73,7 +73,20 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 
 	app.get("/og.png", ogImage(clientDistDir))
 
-	app.use("*", serveStatic({ root: clientDistDir }));
+	const clientStatic = serveStatic({ root: clientDistDir });
+	
+	const IMMUTABLE_ASSET_RE = /^\/assets\/.+\.(?:js|css)$/
+	function cacheClientAsset(requestPath: string, response: Response) {
+		if (IMMUTABLE_ASSET_RE.test(requestPath)) {
+			response.headers.set("Cache-Control", "public, max-age=31536000, immutable")
+		}
+	}
+
+	app.use("*", async (c, next) => {
+		const response = await clientStatic(c, next)
+		if (response) cacheClientAsset(c.req.path, response)
+		return response
+	});
 
 	app.get("*", async (c) => {
 		if (c.req.path.includes(".")) {
