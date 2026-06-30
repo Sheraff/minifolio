@@ -8,6 +8,8 @@ import type { ShutdownScope } from "./utils/shutdown.ts";
 
 const MAX_CONCURRENT = 10;
 const INITIAL_REQUEST_TIMEOUT_MS = 5_000;
+const UPLOAD_PACK_IDLE_TIMEOUT_MS = 30_000;
+const UPLOAD_PACK_MAX_AGE_MS = 5 * 60_000;
 const ERROR_CLOSE_TIMEOUT_MS = 1_000;
 const MAX_FIRST_PACKET_BYTES = 4_096;
 const MAX_STDERR_LOG_BYTES = 2_048;
@@ -200,11 +202,57 @@ function handleGitSocket(socket: Socket, serverScope: ShutdownScope) {
 			if (!socket.destroyed && !socket.writableEnded) socket.end();
 		});
 
+		enforceUploadPackTimeouts(socket, uploadPack);
 		if (pendingInput.length > 0) uploadPack.stdin.write(pendingInput);
 		socket.pipe(uploadPack.stdin);
 		uploadPack.stdout.pipe(socket);
 		socket.resume();
 	}
+}
+
+function enforceUploadPackTimeouts(
+	socket: Socket,
+	uploadPack: ChildProcessWithoutNullStreams,
+) {
+	let idleTimeout: NodeJS.Timeout | undefined;
+	let expired = false;
+	let cleanedUp = false;
+
+	const maxAgeTimeout = setTimeout(() => {
+		expire("session timeout");
+	}, UPLOAD_PACK_MAX_AGE_MS).unref();
+
+	function resetIdleTimeout() {
+		if (cleanedUp) return;
+		if (idleTimeout) clearTimeout(idleTimeout);
+		idleTimeout = setTimeout(() => {
+			expire("idle timeout");
+		}, UPLOAD_PACK_IDLE_TIMEOUT_MS).unref();
+	}
+
+	function expire(reason: string) {
+		if (expired) return;
+		expired = true;
+		cleanup();
+		publicLog(`[WARN] git upload-pack ${reason}`);
+		uploadPack.kill("SIGTERM");
+		if (!socket.destroyed) socket.destroy();
+	}
+
+	function cleanup() {
+		if (cleanedUp) return;
+		cleanedUp = true;
+		clearTimeout(maxAgeTimeout);
+		if (idleTimeout) clearTimeout(idleTimeout);
+		socket.off("data", resetIdleTimeout);
+		uploadPack.stdout.off("data", resetIdleTimeout);
+	}
+
+	socket.on("data", resetIdleTimeout);
+	uploadPack.stdout.on("data", resetIdleTimeout);
+	resetIdleTimeout();
+	socket.once("close", cleanup);
+	uploadPack.once("close", cleanup);
 }
 
 function parseGitRequest(packet: Buffer): ParsedGitRequest {
