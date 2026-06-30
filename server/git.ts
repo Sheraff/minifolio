@@ -1,7 +1,8 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
-import { statSync } from "node:fs";
+import { mkdtempSync, statSync } from "node:fs";
 import { createServer, type Socket } from "node:net";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { publicLog } from "./public-logs.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 
@@ -12,6 +13,8 @@ const MAX_FIRST_PACKET_BYTES = 4_096;
 const MAX_STDERR_LOG_BYTES = 2_048;
 
 const MINIFOLIO_REPO_PATH = resolve("dist/minifolio.git");
+const SAFE_GIT_HOME = mkdtempSync(join(tmpdir(), "minifolio-git-home-"));
+const SAFE_GIT_LOCALE_KEYS = ["LANG", "LC_ALL", "LC_CTYPE"] as const;
 const REPOSITORIES = new Map([
 	["/", MINIFOLIO_REPO_PATH],
 	["/minifolio.git", MINIFOLIO_REPO_PATH],
@@ -140,12 +143,7 @@ function handleGitSocket(socket: Socket, serverScope: ShutdownScope) {
 			return;
 		}
 
-		const env = { ...process.env };
-		if (request.gitProtocol) {
-			env.GIT_PROTOCOL = request.gitProtocol;
-		} else {
-			delete env.GIT_PROTOCOL;
-		}
+		const env = createUploadPackEnv(request.gitProtocol);
 
 		try {
 			uploadPack = spawn(
@@ -308,6 +306,23 @@ function splitNulFields(buffer: Buffer) {
 
 function isSafeProtocolField(field: string) {
 	return /^[A-Za-z0-9][A-Za-z0-9-]*=[A-Za-z0-9./_-]+$/.test(field);
+}
+
+function createUploadPackEnv(gitProtocol: string | undefined) {
+	const env: NodeJS.ProcessEnv = {
+		GIT_CONFIG_NOSYSTEM: "1",
+		HOME: SAFE_GIT_HOME,
+		PATH: "/usr/bin:/bin",
+	};
+
+	for (const key of SAFE_GIT_LOCALE_KEYS) {
+		const value = process.env[key];
+		if (value) env[key] = value;
+	}
+
+	if (gitProtocol) env.GIT_PROTOCOL = gitProtocol;
+
+	return env;
 }
 
 function bareRepoExists(repoPath: string) {
