@@ -8,6 +8,7 @@ import { simpleBotAgent } from './utils/simple-ua.ts'
 
 const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
+const siteHost = new URL(siteUrl).hostname
 const labsUrl = 'https://sheraff.github.io'
 const githubUrl = 'https://github.com/sheraff'
 const blueskyUrl = 'https://bsky.app/profile/sheraff.dev'
@@ -69,6 +70,11 @@ function buildIntroSection() {
     `- ${siteUrl}/api/github/repositories`,
     `- ${siteUrl}/api/articles/tanstack`,
     `- ${siteUrl}/api/projects`,
+    '',
+    '## Protocol access',
+    `- SSH: use \`ssh name@${siteHost}\` to open the interactive terminal.`,
+    `- Git: use \`git clone git://${siteHost}/\` to clone this site repository.`,
+    `- Finger: use \`finger @${siteHost}\` to list users.`,
   ].join('\n') + '\n'
 }
 
