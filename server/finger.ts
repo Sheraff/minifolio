@@ -100,12 +100,24 @@ export function createFingerServer(parentScope: ShutdownScope) {
 			publicLog(`[finger] unknown user request`);
 		})
 
-		socket.on('error', (e) => {
+		socket.on('error', (error) => {
+			if (isExpectedSocketError(error)) return
 			publicLog(`[WARN] finger socket error`);
-			console.error('Socket error:', e)
+			console.error('Socket error:', error)
 		})
 	})
 	server.maxConnections = 5
 	server.once('close', () => scope.done())
 	return server
+}
+
+const expectedErrors = new Set(['ECONNRESET', 'EPIPE'])
+
+function isExpectedSocketError(error: unknown) {
+	return (
+		error instanceof Error &&
+		expectedErrors.has(
+			String((error as NodeJS.ErrnoException).code),
+		)
+	)
 }
