@@ -8,6 +8,8 @@ import {
 import { publicLog } from '#server/public-logs.ts'
 import { createCachedFetcher } from '#server/utils/cache.ts'
 
+const CONTRIBUTION_QUERY_BATCH_SIZE = 4
+
 const contributionYearsQuery = `
 	query ContributionYears($login: String!) {
 		user(login: $login) {
@@ -261,13 +263,13 @@ async function fetchContributionYearsFromApi(): Promise<number[]> {
 	return contributionYears
 }
 
-async function fetchContributedRepositoriesSliceFromApi(year: number) {
+async function fetchContributedRepositoriesSliceFromApi(from: string, to: string) {
 	const json = v.parse(
 		githubContributedRepositoriesResponseSchema,
 		await fetchGitHubGraphql(contributedRepositoriesQuery, {
 			login: GITHUB_LOGIN,
-			from: `${year}-01-01T00:00:00Z`,
-			to: `${year}-12-31T23:59:59Z`,
+			from,
+			to,
 		}),
 	)
 
@@ -291,9 +293,24 @@ async function fetchContributedRepositoriesSliceFromApi(year: number) {
 async function fetchContributedRepositoriesFromApi(): Promise<ContributedRepositoriesResponse> {
 	publicLog("[data] fetching github contributions")
 	const years = await fetchContributionYearsFromApi()
-	const contributionSlices = await Promise.all(
-		years.map((year) => fetchContributedRepositoriesSliceFromApi(year)),
-	)
+	const ranges = years.flatMap((year) => [
+		{
+			from: `${year}-01-01T00:00:00Z`,
+			to: `${year}-06-30T23:59:59Z`,
+		},
+		{
+			from: `${year}-07-01T00:00:00Z`,
+			to: `${year}-12-31T23:59:59Z`,
+		},
+	])
+	const contributionSlices: Awaited<ReturnType<typeof fetchContributedRepositoriesSliceFromApi>>[] = []
+
+	for (let index = 0; index < ranges.length; index += CONTRIBUTION_QUERY_BATCH_SIZE) {
+		const batch = ranges.slice(index, index + CONTRIBUTION_QUERY_BATCH_SIZE)
+		contributionSlices.push(...await Promise.all(
+			batch.map((range) => fetchContributedRepositoriesSliceFromApi(range.from, range.to)),
+		))
+	}
 	const repositories = new Map<string, ContributedRepositoryMapValue>()
 
 	for (const contributionSlice of contributionSlices) {
