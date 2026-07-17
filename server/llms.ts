@@ -1,10 +1,13 @@
 import { Hono } from 'hono'
 import { fetchTanstackArticles } from './api/articles.ts'
-import { fetchGitHubContributions } from './api/github.ts'
-import { fetchContributedRepositories } from './api/githubRepositories.ts'
 import { fetchLabProjects, type LabProject } from './api/projects.ts'
 import { publicLog } from './public-logs.ts'
 import { simpleBotAgent } from './utils/simple-ua.ts'
+import type {
+  GitHubContributionsResponse,
+  GitHubRepositoriesResponse,
+  GitHubService,
+} from './github/types.ts'
 
 const encoder = new TextEncoder()
 const siteUrl = 'https://florianpellet.com'
@@ -13,8 +16,6 @@ const labsUrl = 'https://sheraff.github.io'
 const githubUrl = 'https://github.com/sheraff'
 const blueskyUrl = 'https://bsky.app/profile/sheraff.dev'
 
-type GitHubContributions = Awaited<ReturnType<typeof fetchGitHubContributions>>
-type ContributedRepositories = Awaited<ReturnType<typeof fetchContributedRepositories>>
 type TanstackArticles = Awaited<ReturnType<typeof fetchTanstackArticles>>
 
 function normalizeText(value: string) {
@@ -78,11 +79,11 @@ function buildIntroSection() {
   ].join('\n') + '\n'
 }
 
-function buildContributionsSection(contributions: GitHubContributions) {
+function buildContributionsSection(contributions: GitHubContributionsResponse) {
   return `\n## GitHub activity\n- Contributions in the last year: ${contributions.total.lastYear}\n`
 }
 
-function buildRepositoriesSection(repositories: ContributedRepositories['repositories']) {
+function buildRepositoriesSection(repositories: GitHubRepositoriesResponse['repositories']) {
   const items = repositories
     .filter((repository) => repository.lastPullRequest)
     .slice(0, 16)
@@ -143,14 +144,14 @@ function createSectionPromise<T>(
     })
 }
 
-async function streamLlmsTxt() {
+async function streamLlmsTxt(github: GitHubService) {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       controller.enqueue(encoder.encode(buildIntroSection()))
 
       const pending = new Map<string, Promise<SectionResult>>([
-        ['contributions', createSectionPromise('contributions', fetchGitHubContributions(), buildContributionsSection)],
-        ['repositories', createSectionPromise('repositories', fetchContributedRepositories(), ({ repositories }) => buildRepositoriesSection(repositories))],
+        ['contributions', createSectionPromise('contributions', github.getContributions(), buildContributionsSection)],
+        ['repositories', createSectionPromise('repositories', github.getRepositories(), ({ repositories }) => buildRepositoriesSection(repositories))],
         ['articles', createSectionPromise('articles', fetchTanstackArticles(), ({ articles }) => buildArticlesSection(articles))],
         ['projects', createSectionPromise('projects', fetchLabProjects(), buildProjectsSection)],
       ])
@@ -174,14 +175,14 @@ async function streamLlmsTxt() {
   return stream
 }
 
-export function llms() {
+export function llms(github: GitHubService) {
   const app = new Hono()
   app.get('/llms.txt', async (c) => {
     publicLog(`[llm] crawling from ${simpleBotAgent(c.req.header('User-Agent'))}`)
     c.header('Cache-Control', 'public, max-age=3600')
     c.header('Content-Type', 'text/plain; charset=UTF-8')
 
-    return new Response(await streamLlmsTxt(), {
+    return new Response(await streamLlmsTxt(github), {
       headers: c.res.headers,
       status: 200,
     })

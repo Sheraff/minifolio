@@ -18,11 +18,14 @@
 		"resume:pdf": "google-chrome --headless=new --disable-gpu --no-sandbox --print-to-pdf=\"$PWD/public/resume.pdf\" \"file://$PWD/public/resume.html\"",
 		"start": "node dist/server/server.js",
 		"check": "tsc -b --noEmit",
-		"test": "vitest run"
+		"test": "vitest run",
+		"db:generate": "drizzle-kit generate",
+		"db:check": "drizzle-kit check"
 	},
 	"dependencies": {
 		"@hono/node-server": "2.0.6",
 		"@hono/standard-validator": "0.2.2",
+		"drizzle-orm": "1.0.0-rc.4",
 		"fast-xml-parser": "5.9.3",
 		"hono": "4.12.27",
 		"just-bash": "3.0.2",
@@ -33,6 +36,7 @@
 	"devDependencies": {
 		"@types/node": "25.9.3",
 		"@types/ssh2": "1.15.5",
+		"drizzle-kit": "1.0.0-rc.4",
 		"parse5": "8.0.1",
 		"typescript": "6.0.3",
 		"vite": "8.1.0",

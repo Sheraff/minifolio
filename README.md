@@ -19,6 +19,7 @@ Personal website and portfolio for Florian Pellet, aka [@sheraff](https://github
 - SolidJS with SSR/hydration
 - Vite multi-environment build for client and server bundles
 - Hono on Node for HTTP routing
+- SQLite with Drizzle ORM for persisted GitHub data
 - TypeScript, Valibot, `just-bash`, `ssh2`
 - pnpm for package management
 
@@ -81,6 +82,13 @@ pnpm start --port=3000 --ssh=22 --finger=79 --git=9418
 
 Production SSH requires `.ssh_host_ed25519_key` in the project root. Development mode generates an ephemeral key if that file is missing.
 
+GitHub snapshots and query windows are stored in SQLite. The default database is
+`$XDG_STATE_HOME/minifolio/development.sqlite` in development and
+`$XDG_STATE_HOME/minifolio/production.sqlite` in production, falling back to
+`~/.local/state`. Set `MINIFOLIO_DATABASE_PATH` to override it. Production
+startup runs the migrations in `drizzle/`, so deployments must include that
+directory alongside `dist/`.
+
 ## HTTP Routes
 
 - `/` serves the portfolio app.
@@ -97,7 +105,7 @@ Production SSH requires `.ssh_host_ed25519_key` in the project root. Development
 - `/api/projects` returns lab project metadata from `https://sheraff.github.io/vite-labs/projects.json`.
 - `/api/brew?drink=tea` returns `Steeping.`; `/api/brew?drink=coffee` returns HTTP `418`.
 
-API responses are schema-validated and cached in memory. GitHub data refreshes daily; TanStack articles and lab projects refresh hourly.
+API responses are schema-validated. GitHub data is persisted in SQLite and refreshes daily; TanStack articles and lab projects are cached in memory and refresh hourly.
 
 ## Non-HTTP Entrypoints
 
@@ -119,14 +127,17 @@ API responses are schema-validated and cached in memory. GitHub data refreshes d
 ```bash
 pnpm check
 pnpm test
+pnpm db:check
 ```
 
-Tests currently cover the browser/SSH terminal core, including autocomplete, identity commands, git command behavior, and path completion.
+Tests cover the browser/SSH terminal core, GitHub response transformations,
+rate-limit handling, adaptive query splitting, and SQLite snapshot persistence.
 
 ## Project Layout
 
 - `src/` contains the Solid app, sections, terminal core, styles, OpenGraph renderer, and generated git graph JSON.
 - `server/` contains the Hono web server, APIs, public log streaming, prerender runtime, SSH server, finger server, and git protocol server.
+- `drizzle/` contains the SQLite migration history used at server startup.
 - `fs/` is the virtual filesystem exposed inside the browser and SSH terminals.
 - `public/` contains static assets, resume exports, OpenGraph images, `humans.txt`, `robots.txt`, and `security.txt`.
 - `scripts/` contains generators for the git timeline/repository, OpenGraph screenshots, resume Markdown, CSS inlining, prerender manifests, and git log assets.

@@ -1,9 +1,8 @@
 import { Context, Hono } from "hono";
 import { fetchTanstackArticles } from "./articles.ts";
-import { fetchGitHubContributions } from "./github.ts";
-import { fetchContributedRepositories } from "./githubRepositories.ts";
 import { fetchLabProjects } from "./projects.ts";
 import { publicLog } from "#server/public-logs.ts";
+import type { GitHubService } from "../github/types.ts";
 
 async function respond(
 	c: Context,
@@ -26,7 +25,7 @@ async function respond(
 	}
 }
 
-export function api() {
+export function api(github: GitHubService) {
 	const app = new Hono();
 
 	app.get("/health", (c) => c.json({ ok: true }));
@@ -37,14 +36,14 @@ export function api() {
 	app.get("/github/contributions", async (c) =>
 		respond(
 			c,
-			fetchGitHubContributions,
+			github.getContributions,
 			"Unable to load GitHub contributions",
 		),
 	);
 	app.get("/github/repositories", async (c) =>
 		respond(
 			c,
-			fetchContributedRepositories,
+			github.getRepositories,
 			"Unable to load contributed GitHub repositories",
 		),
 	);

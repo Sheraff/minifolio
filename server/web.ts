@@ -8,12 +8,16 @@ import { publicLogBroadcast } from "./public-logs.ts";
 import { uptime } from "./uptime.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 import type { Server } from "node:http";
+import type { Database } from "./database/index.ts";
+import { createGitHubService } from "./github/service.ts";
 
 export async function createWebServer(
 	isDev: boolean,
 	serverDir: string,
+	db: Database,
 	parentScope: ShutdownScope,
 ) {
+	const github = createGitHubService(db, parentScope);
 	const app = new Hono<{ Bindings: HttpBindings }>();
 
 	app.use("*", async (c, next) => {
@@ -52,7 +56,7 @@ export async function createWebServer(
 
 	// `server` type depends on whether you pass in `createServer` from 'node:http2'
 	const server = createAdaptorServer({ fetch: app.fetch }) as Server;
-	const scope = parentScope.child("http server", {
+	const scope = github.shutdownScope.child("http server", {
 		close: (ctx) => {
 			server.close();
 			server.closeIdleConnections();
@@ -62,16 +66,16 @@ export async function createWebServer(
 	});
 	server.once("close", () => scope.done());
 
-	app.route("/", llms());
+	app.route("/", llms(github));
 	app.route("/uptime", uptime());
 	app.route("/api/brew", teapot());
-	app.route("/api", api());
+	app.route("/api", api(github));
 	app.route("/events", publicLogBroadcast(scope));
 
 	if (isDev) {
 		app.use("*", await devClient(server, scope));
 	} else {
-		app.route("/", client(serverDir, scope));
+		app.route("/", client(serverDir, scope, github));
 	}
 
 	return server;

@@ -1,6 +1,8 @@
 import * as v from "valibot";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
+import path from "node:path";
 import { publicLog } from "./public-logs.ts";
 import { registerShutdownManager } from "./utils/shutdown.ts";
 
@@ -33,9 +35,25 @@ const shutdownRoot = registerShutdownManager();
 const webPort = v.safeParse(portSchema, parsed.values.port ?? process.env.PORT);
 if (webPort.success) {
 	const port = webPort.output;
+	const { createDatabase } = await import("./database/index.ts");
 	const { createWebServer } = await import("./web.ts");
 	const serverDir = fileURLToPath(new URL(".", import.meta.url));
-	const server = await createWebServer(isDev, serverDir, shutdownRoot);
+	const stateRoot = process.env.XDG_STATE_HOME ?? path.join(homedir(), ".local", "state");
+	const databasePath = process.env.MINIFOLIO_DATABASE_PATH ?? path.join(
+		stateRoot,
+		"minifolio",
+		isDev ? "development.sqlite" : "production.sqlite",
+	);
+	const migrationsFolder = path.resolve(serverDir, isDev ? "../drizzle" : "../../drizzle");
+	const database = createDatabase(databasePath, migrationsFolder);
+	const databaseScope = shutdownRoot.child("database", {
+		close: async ({ childrenClosed }) => {
+			await childrenClosed;
+			database.close();
+			databaseScope.done();
+		},
+	});
+	const server = await createWebServer(isDev, serverDir, database.db, databaseScope);
 	if (server) {
 		server.listen(port, () => {
 			console.log(`http://localhost:${port}`);

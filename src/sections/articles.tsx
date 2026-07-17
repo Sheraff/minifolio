@@ -7,7 +7,6 @@ const ArticleDescription = lazy(() => import('./articles-lazy'))
 
 const createArticlesResource = createServerResource(
 	"/api/articles/tanstack",
-	import.meta.env.SSR && import("#server/api/articles.ts").then((m) => m.fetchTanstackArticles),
 	v.pipe(v.object({
 		articles: v.array(v.object({
 			title: v.string(),

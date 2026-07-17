@@ -7,6 +7,7 @@ import { RESPONSE_ALREADY_SENT } from "@hono/node-server/utils/response";
 import { publicLog } from "./public-logs.ts";
 import type { ShutdownScope } from "./utils/shutdown.ts";
 import type { Server } from "node:http";
+import type { GitHubService } from "./github/types.ts";
 
 export function ogImage(imageDir: string) {
 	return serveStatic({
@@ -30,7 +31,11 @@ export function ogImage(imageDir: string) {
 	})
 }
 
-export function client(serverDir: string, parentScope: ShutdownScope) {
+export function client(
+	serverDir: string,
+	parentScope: ShutdownScope,
+	github: GitHubService,
+) {
 	const clientDistDir = path.resolve(serverDir, "../client");
 
 	let html = "";
@@ -40,8 +45,11 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 	const prerenderScope = parentScope.child("client prerender", {
 		close: async () => {
 			if (timeout) clearTimeout(timeout)
-			await htmlPromise
-			prerenderScope.done()
+			try {
+				await htmlPromise
+			} finally {
+				prerenderScope.done()
+			}
 		},
 	})
 
@@ -49,7 +57,7 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 	const _getHtml = async () => {
 		if (!html || Date.now() - lastGen > REGEN_DELAY) {
 			lastGen = Date.now()
-			html = await prerenderClientIndex(serverDir);
+			html = await prerenderClientIndex(serverDir, github);
 			if (timeout) clearTimeout(timeout)
 			timeout = setTimeout(getHtml, REGEN_DELAY - 1000)
 			timeout.unref()
@@ -60,9 +68,10 @@ export function client(serverDir: string, parentScope: ShutdownScope) {
 		if (htmlPromise) return htmlPromise
 		const promise = _getHtml()
 		htmlPromise = promise
-		promise.then(() => {
+		const clearPromise = () => {
 			if (htmlPromise === promise) htmlPromise = null
-		})
+		}
+		promise.then(clearPromise, clearPromise)
 		return htmlPromise
 	}
 	setImmediate(getHtml).unref()

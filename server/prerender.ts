@@ -3,6 +3,11 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import * as v from "valibot";
 import { publicLog } from "./public-logs.ts";
+import { fetchTanstackArticles } from "./api/articles.ts";
+import { fetchLabProjects } from "./api/projects.ts";
+import type { GitHubService } from "./github/types.ts";
+
+const DATA_TIMEOUT_MS = 60_000;
 
 const nonEmptyString = v.pipe(v.string(), v.nonEmpty());
 
@@ -15,7 +20,7 @@ const prerenderManifestSchema = v.object({
 	template: nonEmptyString,
 });
 
-export async function prerenderClientIndex(serverDir: string) {
+export async function prerenderClientIndex(serverDir: string, github: GitHubService) {
 	const manifestPath = path.resolve(serverDir, "prerender-manifest.json");
 	const manifest = v.parse(
 		prerenderManifestSchema,
@@ -40,7 +45,29 @@ export async function prerenderClientIndex(serverDir: string) {
 	}
 
 	publicLog("[ssr] prerendering html");
-	const shell = await render();
+	const data = Promise.all([
+		github.getContributions(),
+		github.getRepositories(),
+		fetchTanstackArticles(),
+		fetchLabProjects(),
+	]);
+	let timeout: NodeJS.Timeout | undefined;
+	const timeoutPromise = new Promise<never>((_, reject) => {
+		timeout = setTimeout(() => reject(new Error("Prerender data loading timed out")), DATA_TIMEOUT_MS);
+		timeout.unref();
+	});
+	const [contributions, repositories, articles, projects] = await Promise.race([
+		data,
+		timeoutPromise,
+	]).finally(() => {
+		if (timeout) clearTimeout(timeout);
+	});
+	const shell = await render({
+		"/api/github/contributions": contributions,
+		"/api/github/repositories": repositories,
+		"/api/articles/tanstack": articles,
+		"/api/projects": projects,
+	});
 	const result = manifest.template.replace(
 		manifest.placeholder,
 		manifest.before + "<body>" + shell + "</body>",

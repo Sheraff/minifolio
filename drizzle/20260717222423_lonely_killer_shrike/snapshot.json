@@ -1,0 +1,169 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "id": "2b299ef6-fd90-42ca-90a3-edb27e29b582",
+  "prevIds": [
+    "00000000-0000-0000-0000-000000000000"
+  ],
+  "ddl": [
+    {
+      "name": "github_snapshots",
+      "entityType": "tables"
+    },
+    {
+      "name": "github_windows",
+      "entityType": "tables"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "resource",
+      "entityType": "columns",
+      "table": "github_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "login",
+      "entityType": "columns",
+      "table": "github_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payload",
+      "entityType": "columns",
+      "table": "github_snapshots"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "github_snapshots"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "resource",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "login",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "from_date",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "to_date",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "text",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "state",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "payload",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "type": "integer",
+      "notNull": true,
+      "autoincrement": false,
+      "default": null,
+      "generated": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "table": "github_windows"
+    },
+    {
+      "columns": [
+        "resource",
+        "login"
+      ],
+      "nameExplicit": false,
+      "name": "github_snapshots_pk",
+      "entityType": "pks",
+      "table": "github_snapshots"
+    },
+    {
+      "columns": [
+        "resource",
+        "login",
+        "from_date",
+        "to_date"
+      ],
+      "nameExplicit": false,
+      "name": "github_windows_pk",
+      "entityType": "pks",
+      "table": "github_windows"
+    },
+    {
+      "value": "\"resource\" in ('contributions', 'repositories')",
+      "name": "github_snapshots_resource_check",
+      "entityType": "checks",
+      "table": "github_snapshots"
+    },
+    {
+      "value": "\"resource\" in ('contributions', 'repositories')",
+      "name": "github_windows_resource_check",
+      "entityType": "checks",
+      "table": "github_windows"
+    },
+    {
+      "value": "\"state\" in ('ready', 'split')",
+      "name": "github_windows_state_check",
+      "entityType": "checks",
+      "table": "github_windows"
+    }
+  ],
+  "renames": []
+}

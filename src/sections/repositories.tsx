@@ -5,7 +5,6 @@ import { createServerResource, type ServerResourceType } from "#/createServerRes
 
 const createGithubRepositoriesResource = createServerResource(
 	"/api/github/repositories",
-	import.meta.env.SSR && import("#server/api/githubRepositories.ts").then((m) => m.fetchContributedRepositories),
 	v.pipe(v.object({
 		repositories: v.array(v.object({
 			name: v.string(),

@@ -10,8 +10,6 @@ const Animator = lazy(() => import("./labs-lazy"));
 
 const createProjectsResource = createServerResource(
 	"/api/projects",
-	import.meta.env.SSR &&
-		import("#server/api/projects.ts").then((m) => m.fetchLabProjects),
 	v.pipe(
 		v.array(
 			v.object({
