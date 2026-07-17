@@ -7,11 +7,21 @@ import { Head } from "#/sections/head";
 import { Links } from "#/sections/links";
 import { Footer } from "#/sections/footer";
 import { GitGraph } from "#/sections/git";
+import { ServerResourceContext, type ServerResourceData } from "#/createServerResource";
 import { createSignal, lazy, Show, Suspense } from "solid-js";
 import { NoHydration } from "solid-js/web";
 
 const Glitch = lazy(() => import("#/svg/glitch"));
 const Logs = lazy(() => import("#/sections/logs"));
+const emptyServerResources: ServerResourceData = {};
+
+export function AppRoot(props: { serverData?: ServerResourceData }) {
+	return (
+		<ServerResourceContext.Provider value={props.serverData ?? emptyServerResources}>
+			<App />
+		</ServerResourceContext.Provider>
+	);
+}
 
 function App() {
 	return (
