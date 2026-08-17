@@ -10,7 +10,9 @@ Software engineer with 14 years of programming experience across web, robotics, 
 
 ## Experience
 
-### Matera (startup) | Staff Frontend Engineer | 2022 - Present
+### Socket | Frontend Engineer | Aug 2026 - Present
+
+### Matera (startup) | Staff Frontend Engineer | 2022 - Jul 2026
 
 - Led Matera's frontend platform reset across a 1M+ LoC monorepo: introduced TypeScript into a JavaScript codebase, migrated Webpack to Vite, and redesigned imports and bundling to cut initial JS from 9MB to 2MB.
 - Defined Matera's shared type-safe data layer on top of React Query, using a proxy API with generated query keys and integrated types to replace bespoke service code with one typed path for fetching, caching, mutations, and invalidation.
