@@ -3044,13 +3044,6 @@ await repo.commit({
 	},
 });
 
-await repo.switchBranch("main");
-
-await repo.merge("saas/socket", {
-	date: "2026-08-17T17:00:00Z",
-	message: "update current coordinates",
-});
-
 await repo.tag("now");
 
 await repo.finalize();
