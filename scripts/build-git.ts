@@ -2804,13 +2804,7 @@ await repo.merge("meta/minifolio", {
 	message: "portfolio recursion",
 });
 
-const finalJobs = markdown(
-	"Jobs",
-	`## 2022 - present
-- staff frontend engineer: Matera (france)
-  frontend platform, type-safe APIs, design system, tooling, performance
-
-## 2019 - 2022
+const jobsBeforeMatera = `## 2019 - 2022
 - frontend developer: Mazarine (france)
   dozens of agency websites; led frontend development for www.louvre.fr
 
@@ -2852,7 +2846,36 @@ const finalJobs = markdown(
 - summer job: grape harvest (france)
 
 ## 2008
-- summer job: gardener (france)`,
+- summer job: gardener (france)`;
+
+const materaJobs = markdown(
+	"Jobs",
+	`## 2022 - present
+- staff frontend engineer: Matera (france)
+  frontend platform, type-safe APIs, design system, tooling, performance
+
+${jobsBeforeMatera}`,
+);
+
+const materaEndJobs = markdown(
+	"Jobs",
+	`## 2022 - 2026
+- staff frontend engineer: Matera (france)
+  frontend platform, type-safe APIs, design system, tooling, performance
+
+${jobsBeforeMatera}`,
+);
+
+const finalJobs = markdown(
+	"Jobs",
+	`## 2026 - present
+- frontend engineer: Socket (remote)
+
+## 2022 - 2026
+- staff frontend engineer: Matera (france)
+  frontend platform, type-safe APIs, design system, tooling, performance
+
+${jobsBeforeMatera}`,
 );
 
 const finalEducation = markdown(
@@ -2986,7 +3009,7 @@ Work:
 - authored 20+ custom ESLint rules and migration scripts
 - added code-health dashboards and CLI tools`,
 		),
-		"resume/jobs.md": finalJobs,
+		"resume/jobs.md": materaJobs,
 		"skills/tech.md": finalTech,
 	},
 });
@@ -2994,7 +3017,7 @@ Work:
 await repo.switchBranch("main");
 
 await repo.merge("saas/matera", {
-	date: "2026-06-24T17:00:00Z",
+	date: "2026-07-17T17:00:00Z",
 	message: "merge the long branch",
 	files: {
 		"README.md": `# Minifolio
@@ -3005,10 +3028,27 @@ and with pseudo-accurate timelines.
 Branches are career threads, commits are milestones,
 and files accrete like a resume that was lived in.
 `,
-		"resume/jobs.md": finalJobs,
+		"resume/jobs.md": materaEndJobs,
 		"resume/education.md": finalEducation,
 		"skills/tech.md": finalTech,
 	},
+});
+
+await repo.switchBranch("saas/socket", { create: true });
+
+await repo.commit({
+	message: "first day at socket",
+	date: "2026-08-17T09:00:00Z",
+	files: {
+		"resume/jobs.md": finalJobs,
+	},
+});
+
+await repo.switchBranch("main");
+
+await repo.merge("saas/socket", {
+	date: "2026-08-17T17:00:00Z",
+	message: "update current coordinates",
 });
 
 await repo.tag("now");
