@@ -1,4 +1,5 @@
 tanstack/router
+- navigation/loading architecture
 - route-matching algorithm
 - client-side performance
 - SSR performance

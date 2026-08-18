@@ -29,9 +29,16 @@
       max-width: 8.5in;
       margin: 0 auto;
       min-height: 11.69in;
-      padding: 0.42in 0.52in 0.42in;
+      padding: 0.3in 0.52in;
       display: flex;
       flex-direction: column;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: baseline;
+      column-gap: 12px;
     }
 
     h1 {
@@ -41,7 +48,7 @@
     }
 
     .headline {
-      margin-top: 2px;
+      margin: 0;
       font-size: 10pt;
       font-weight: 700;
       letter-spacing: 0.02em;
@@ -49,6 +56,7 @@
     }
 
     .contact {
+      grid-column: 1 / -1;
       margin-top: 4px;
       font-size: 9.5pt;
       font-style: normal;
@@ -221,9 +229,8 @@
             <li>Led Matera's frontend platform reset across a 1M+ LoC monorepo: introduced TypeScript into a JavaScript
               codebase, migrated Webpack to Vite, and redesigned imports and bundling to cut initial JS from 9MB to 2MB.
             </li>
-            <li>Defined Matera's shared type-safe data layer on top of React Query, using a proxy API with generated
-              query keys and integrated types to replace bespoke service code with one typed path for fetching,
-              caching, mutations, and invalidation.</li>
+            <li>Defined Matera's shared type-safe React Query data layer, using a proxy API with generated query keys
+              and integrated types to unify fetching, caching, mutations, and invalidation.</li>
             <li>Built Matera's shared UI platform for a backend-heavy engineering org, including a 40+ component design
               system and in-app devtools for forms, state machines, and navigation.</li>
             <li>Built the tooling behind Matera's frontend transformation: rewrote CI for parallel execution, authored
@@ -234,10 +241,8 @@
         <article class="entry">
           <h3 class="entry-header">Mazarine (agency) | Frontend Developer | 2019 - 2022</h3>
           <ul>
-            <li>Built and launched dozens of client websites under agency constraints: changing stacks, fixed budgets,
-              and hard deadlines.</li>
-            <li>Led frontend development for the new <span class="url">www.louvre.fr</span> and was regularly brought
-              into projects that needed technical stabilization late in delivery.</li>
+            <li>Built and launched dozens of client websites across changing stacks, fixed budgets, and hard deadlines.</li>
+            <li>Led frontend development for <span class="url">www.louvre.fr</span> and stabilized projects late in delivery.</li>
           </ul>
         </article>
       </section>
@@ -247,6 +252,9 @@
         <article class="entry">
           <h3 class="entry-header">TanStack Router | Maintainer</h3>
           <ul class="entry-body">
+            <li>Rewrote TanStack Router's navigation and loading pipeline to separate publication, route state, shared
+              loader work, and framework rendering, fixing bugs across preloading, redirects, caching, pending UI, and
+              SSR.</li>
             <li>Re-architected TanStack Router's reactive core into a granular signal graph across React, Solid, and
               Vue, cutting client-navigation benchmark times to 4.5ms in React, 8ms in Solid, and 6ms in Vue.</li>
             <li>Rewrote route matching from a flat route list to a segment trie, changing complexity from
@@ -269,6 +277,10 @@
 
       <section>
         <h2>Writing</h2>
+        <article class="entry writing-entry">
+          <h3 class="writing-title">Inside a TanStack Router Navigation</h3>
+          <p class="writing-link url"><a href="https://tanstack.com/blog/tanstack-router-navigation-lanes">https://tanstack.com/blog/tanstack-router-navigation-lanes</a></p>
+        </article>
         <article class="entry writing-entry">
           <h3 class="writing-title">TanStack Router's New Reactive Core: A Signal Graph</h3>
           <p class="writing-link url"><a href="https://tanstack.com/blog/tanstack-router-signal-graph">https://tanstack.com/blog/tanstack-router-signal-graph</a></p>

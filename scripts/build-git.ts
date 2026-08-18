@@ -3034,6 +3034,52 @@ and files accrete like a resume that was lived in.
 	},
 });
 
+await repo.switchBranch("oss/tanstack");
+
+await repo.commit({
+	message: "navigation lanes",
+	date: "2026-08-14T12:00:00Z",
+	files: {
+		"open-source/tanstack.md": markdown(
+			"TanStack",
+			`TanStack Router / Start work.
+
+Route matching rewrite:
+- https://github.com/TanStack/router/pull/5722
+- replaced flat route matching with a segment tree
+
+Reactive core refactor:
+- moved router internals toward granular stores / signals
+- worked across React, Solid, and Vue packages
+- reduced unnecessary re-renders
+
+SSR performance:
+- profiled hot paths in TanStack Start
+- removed avoidable work from server rendering
+- helped drive 5x throughput improvements in benchmarks
+
+Navigation loading architecture:
+- https://github.com/TanStack/router/pull/7805
+- separated publication authority, private route state, shared loader ownership, and framework rendering
+- resolved interactions across preloading, redirects, caching, pending UI, and SSR`,
+		),
+		"writing/tanstack.md": markdown(
+			"TanStack Writing",
+			`Articles:
+
+- Inside a TanStack Router Navigation
+  https://tanstack.com/blog/tanstack-router-navigation-lanes
+- TanStack Router's New Reactive Core: A Signal Graph
+  https://tanstack.com/blog/tanstack-router-signal-graph
+- 5x SSR Throughput: Profiling SSR Hot Paths in TanStack Start
+  https://tanstack.com/blog/tanstack-start-5x-ssr-throughput
+- How we accidentally made route matching more performant by aiming for correctness
+  https://tanstack.com/blog/tanstack-router-route-matching-tree-rewrite`,
+		),
+	},
+});
+
+await repo.switchBranch("main");
 await repo.switchBranch("saas/socket", { create: true });
 
 await repo.commit({

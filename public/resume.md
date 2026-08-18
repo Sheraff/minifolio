@@ -15,19 +15,20 @@ Software engineer with 14 years of programming experience across web, robotics, 
 ### Matera (startup) | Staff Frontend Engineer | 2022 - Jul 2026
 
 - Led Matera's frontend platform reset across a 1M+ LoC monorepo: introduced TypeScript into a JavaScript codebase, migrated Webpack to Vite, and redesigned imports and bundling to cut initial JS from 9MB to 2MB.
-- Defined Matera's shared type-safe data layer on top of React Query, using a proxy API with generated query keys and integrated types to replace bespoke service code with one typed path for fetching, caching, mutations, and invalidation.
+- Defined Matera's shared type-safe React Query data layer, using a proxy API with generated query keys and integrated types to unify fetching, caching, mutations, and invalidation.
 - Built Matera's shared UI platform for a backend-heavy engineering org, including a 40+ component design system and in-app devtools for forms, state machines, and navigation.
 - Built the tooling behind Matera's frontend transformation: rewrote CI for parallel execution, authored 20+ custom ESLint rules and migration scripts, and added code-health dashboards and CLI tools.
 
 ### Mazarine (agency) | Frontend Developer | 2019 - 2022
 
-- Built and launched dozens of client websites under agency constraints: changing stacks, fixed budgets, and hard deadlines.
-- Led frontend development for the new www.louvre.fr and was regularly brought into projects that needed technical stabilization late in delivery.
+- Built and launched dozens of client websites across changing stacks, fixed budgets, and hard deadlines.
+- Led frontend development for www.louvre.fr and stabilized projects late in delivery.
 
 ## Open Source
 
 ### TanStack Router | Maintainer
 
+- Rewrote TanStack Router's navigation and loading pipeline to separate publication, route state, shared loader work, and framework rendering, fixing bugs across preloading, redirects, caching, pending UI, and SSR.
 - Re-architected TanStack Router's reactive core into a granular signal graph across React, Solid, and Vue, cutting client-navigation benchmark times to 4.5ms in React, 8ms in Solid, and 6ms in Vue.
 - Rewrote route matching from a flat route list to a segment trie, changing complexity from route-count-driven O(N) to path-depth-driven O(M) and measuring 60x faster matching on small apps and 10,000x on large apps.
 - Helped drive TanStack Start SSR performance work that increased throughput 5.5x (427 to 2357 req/s) and cut p99 latency 7.1x (6558ms to 928ms) under sustained load.
@@ -38,6 +39,10 @@ Software engineer with 14 years of programming experience across web, robotics, 
 - Designed and shipped out-of-order streaming for batched tRPC requests across client and server, including Node, Fastify, and Fetch adapters, so slow procedures no longer blocked faster responses.
 
 ## Writing
+
+### Inside a TanStack Router Navigation
+
+https://tanstack.com/blog/tanstack-router-navigation-lanes
 
 ### TanStack Router's New Reactive Core: A Signal Graph
 
