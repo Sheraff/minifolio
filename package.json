@@ -23,25 +23,25 @@
 		"db:check": "drizzle-kit check"
 	},
 	"dependencies": {
-		"@hono/node-server": "2.0.6",
-		"@hono/standard-validator": "0.2.2",
+		"@hono/node-server": "2.1.1",
+		"@hono/standard-validator": "0.4.0",
 		"drizzle-orm": "1.0.0-rc.4",
-		"fast-xml-parser": "5.9.3",
-		"hono": "4.12.27",
-		"just-bash": "3.0.2",
-		"solid-js": "1.9.13",
+		"fast-xml-parser": "5.11.1",
+		"hono": "4.13.8",
+		"just-bash": "3.4.2",
+		"solid-js": "1.9.15",
 		"ssh2": "1.17.0",
-		"valibot": "1.4.1"
+		"valibot": "1.5.0"
 	},
 	"devDependencies": {
-		"@types/node": "25.9.3",
-		"@types/ssh2": "1.15.5",
+		"@types/node": "26.6.1",
+		"@types/ssh2": "1.15.6",
 		"drizzle-kit": "1.0.0-rc.4",
 		"parse5": "8.0.1",
-		"typescript": "6.0.3",
-		"vite": "8.1.0",
-		"vite-plugin-solid": "2.11.12",
-		"vitest": "4.1.9"
+		"typescript": "7.0.2",
+		"vite": "8.3.0",
+		"vite-plugin-solid": "2.11.14",
+		"vitest": "5.0.1"
 	},
 	"packageManager": "pnpm@11.7.0",
 	"devEngines": {

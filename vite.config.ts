@@ -2,9 +2,9 @@
 
 import { defineConfig } from 'vite'
 import solid from 'vite-plugin-solid'
-import { prerenderPlugin } from './scripts/prerender-plugin'
-import { inlineCss } from './scripts/inline-css'
-import { gitLogAsset } from './scripts/git-log-asset'
+import { prerenderPlugin } from './scripts/prerender-plugin.ts'
+import { inlineCss } from './scripts/inline-css.ts'
+import { gitLogAsset } from './scripts/git-log-asset.ts'
 
 export default defineConfig({
   plugins: [
